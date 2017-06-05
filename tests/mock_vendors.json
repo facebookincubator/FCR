@@ -1,0 +1,32 @@
+{
+  "vendor_config": {
+    "vendor1": {
+      "vendor_name": "vendor1",
+      "session_type": "mock",
+      "cli_setup": [
+        "en",
+        "term len 0"
+      ],
+      "prompt_regex": [
+        "[$#]"
+      ],
+      "shell_prompts": [
+        "\\$"
+      ]
+    },
+    "vendor2": {
+      "vendor_name": "vendor2",
+      "session_type": "mock",
+      "cli_setup": [
+        "en",
+        "command timeout"
+      ],
+      "prompt_regex": [
+        "[$#]"
+      ],
+      "shell_prompts": [
+        "\\$"
+      ]
+    }
+  }
+}
