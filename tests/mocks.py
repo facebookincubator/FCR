@@ -7,7 +7,7 @@ import logging
 import pkg_resources
 
 from fbnet.command_runner.device_vendor import DeviceVendor, DeviceVendors
-from fbnet.command_runner.device_db import DeviceDB
+from fbnet.command_runner.device_db import BaseDeviceDB
 from fbnet.command_runner.base_service import ServiceTask
 from fbnet.command_runner.service import FcrServiceBase
 from fbnet.command_runner.device_info import DeviceInfo, DeviceIP
@@ -41,7 +41,7 @@ mock_vendors = """
 log = logging.getLogger()
 
 
-class MockDeviceDB(DeviceDB):
+class MockDeviceDB(BaseDeviceDB):
 
     def __init__(self, app):
         super().__init__(app)

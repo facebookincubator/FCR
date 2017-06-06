@@ -3,7 +3,7 @@
 from .base_service import PeriodicServiceTask
 
 
-class DeviceDB(PeriodicServiceTask):
+class BaseDeviceDB(PeriodicServiceTask):
     '''
     Interface to device database.
 
