@@ -132,8 +132,8 @@ class FcrServiceBase:
         This client is used to distribute requests for bulk calls
         '''
         return AsyncioThriftClient(
-            FcrClient, 'localhost', self.args.port,
-            counter_mgr=self, timeout=timeout, loop=self.loop)
+            FcrClient, 'localhost', self.config.port,
+            app=self, timeout=timeout, loop=self.loop)
 
     def check_ip(self, ipaddr):
         '''
@@ -157,4 +157,4 @@ class FcrServiceBase:
 
     def get_http_proxy_url(self, host):
         '''build a url for http proxy'''
-        raise NotImplemented("Proxy support not implemented")
+        raise NotImplementedError("Proxy support not implemented")

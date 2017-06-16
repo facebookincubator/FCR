@@ -248,7 +248,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         return self.app.device_db.get(device)
 
     def _get_fcr_client(self, timeout):
-        self.app.get_fcr_client(timeout=timeout)
+        return self.app.get_fcr_client(timeout=timeout)
 
     def _get_command_options(self, device, client_ip, client_port,
                              open_timeout, idle_timeout):

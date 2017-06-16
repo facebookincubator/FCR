@@ -66,7 +66,7 @@ class ServiceObj(metaclass=ServiceObjMeta):
         return self._logger
 
     def create_logger(self):
-        return logging.getLogger(self.objname)
+        return logging.getLogger('fcr.' + self.objname)
 
     def inc_counter(self, counter):
         if self.app and self.app.stats_mgr:
