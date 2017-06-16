@@ -21,12 +21,12 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     _COUNTER_PREFIX = "fbnet.command_runner"
     _LB_THRESHOLD = 100
 
-    def __init__(self, app, name=None):
-        Counters.__init__(self, app, name)
-        FacebookBase.__init__(self, app.app_name)
+    def __init__(self, service, name=None):
+        Counters.__init__(self, service, name)
+        FacebookBase.__init__(self, service.app_name)
         FcrIface.__init__(self)
 
-        self.app.register_stats_mgr(self)
+        self.service.register_stats_mgr(self)
 
     @classmethod
     def register_counters(cls, stats_mgr):
@@ -129,7 +129,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         try:
             devinfo = await self._lookup_device(device)
-            session = await devinfo.setup_session(self.app,
+            session = await devinfo.setup_session(self.service,
                                                   device,
                                                   options,
                                                   loop=self.loop)
@@ -196,7 +196,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         try:
             devinfo = await self._lookup_device(device)
 
-            async with devinfo.create_session(self.app,
+            async with devinfo.create_session(self.service,
                                               device,
                                               options,
                                               loop=self.loop) as session:
@@ -245,10 +245,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             return result
 
     def _lookup_device(self, device):
-        return self.app.device_db.get(device)
+        return self.service.device_db.get(device)
 
     def _get_fcr_client(self, timeout):
-        return self.app.get_fcr_client(timeout=timeout)
+        return self.service.get_fcr_client(timeout=timeout)
 
     def _get_command_options(self, device, client_ip, client_port,
                              open_timeout, idle_timeout):

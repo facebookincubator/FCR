@@ -41,8 +41,8 @@ class DeviceVendor(ServiceObj):
         b"ssh": SSHCommandSession,
     }
 
-    def __init__(self, vendor_name, app):
-        super().__init__(app, "DeviceVendor")
+    def __init__(self, vendor_name, service):
+        super().__init__(service, "DeviceVendor")
         self._vendor_name = vendor_name
         self._config = VendorConfig(self._DEFAULTS)
         self._prompt_re = self._PROMPTS_RE
@@ -128,8 +128,8 @@ class DeviceVendors(ServiceObj):
 
     DEVICE_VENDORS = 'device_vendors.json'
 
-    def __init__(self, app, name=None):
-        super().__init__(app, name)
+    def __init__(self, service, name=None):
+        super().__init__(service, name)
 
         self._vendors = {}
 
@@ -166,7 +166,7 @@ class DeviceVendors(ServiceObj):
         return self.load_vendors(vendors_file, jsonb.decode('utf-8'))
 
     def _createVendor(self, name):
-        vendor = DeviceVendor(name, self.app)
+        vendor = DeviceVendor(name, self.service)
 
         self._vendors[name] = vendor
         return vendor

@@ -21,8 +21,8 @@ class Counters(ServiceObj):
 
     _proc = psutil.Process(os.getpid())
 
-    def __init__(self, app, name):
-        super().__init__(app, name)
+    def __init__(self, service, name):
+        super().__init__(service, name)
 
         self.initCounters()
 

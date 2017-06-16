@@ -15,7 +15,7 @@ class TestService(AsyncTestCase):
 
     def test_abstract_service(self):
         with self.assertRaises(TypeError):
-            ServiceTask("RunTest", app=self._mock_service)
+            ServiceTask("RunTest", service=self._mock_service)
 
     def test_run(self):
 
@@ -47,7 +47,7 @@ class TestService(AsyncTestCase):
 
             async def run(self):
                 self._run_called = True
-                await asyncio.sleep(60, loop=self.app.loop)
+                await asyncio.sleep(60, loop=self.service.loop)
                 self._run_complete = True
 
         services = [

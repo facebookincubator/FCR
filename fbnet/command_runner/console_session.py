@@ -44,8 +44,8 @@ class ConsoleCommandSession(SSHCommandSession):
     _CONSOLE_PROMPT_RE = None
     _CONSOLE_EXPECT_DELAY = 5
 
-    def __init__(self, app, devinfo, options, loop):
-        super().__init__(app, devinfo, options, loop)
+    def __init__(self, service, devinfo, options, loop):
+        super().__init__(service, devinfo, options, loop)
         self._console = options['console']
 
     @classmethod

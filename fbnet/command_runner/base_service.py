@@ -43,9 +43,9 @@ class ServiceObj(metaclass=ServiceObjMeta):
 
     '''
 
-    def __init__(self, app, name=None):
-        self._app = app
-        self._loop = app.loop if app else asyncio.get_event_loop()
+    def __init__(self, service, name=None):
+        self._service = service
+        self._loop = service.loop if service else asyncio.get_event_loop()
         self._objname = name or self.__class__.__name__
         self._logger = self.create_logger()
 
@@ -58,8 +58,8 @@ class ServiceObj(metaclass=ServiceObjMeta):
         return self._objname
 
     @property
-    def app(self):
-        return self._app
+    def service(self):
+        return self._service
 
     @property
     def logger(self):
@@ -69,8 +69,8 @@ class ServiceObj(metaclass=ServiceObjMeta):
         return logging.getLogger('fcr.' + self.objname)
 
     def inc_counter(self, counter):
-        if self.app and self.app.stats_mgr:
-            self.app.stats_mgr.incrementCounter(counter)
+        if self.service and self.service.stats_mgr:
+            self.service.stats_mgr.incrementCounter(counter)
 
     @classmethod
     def register_counters(cls, stats_mgr):
@@ -94,8 +94,8 @@ class ServiceTask(ServiceObj):
     # in unit-tests and for debugging
     _ALL_TASKS = {}
 
-    def __init__(self, app, name=None, executor=None):
-        super().__init__(app, name)
+    def __init__(self, service, name=None, executor=None):
+        super().__init__(service, name)
         self._state = State.CREATE
 
         # A Task may want to run blocking calls in separate thread. To run a
@@ -195,8 +195,8 @@ class PeriodicServiceTask(ServiceTask):
     """
     PERIOD = 5 * 60
 
-    def __init__(self, app, name=None, period=None, executor=None):
-        super().__init__(app, name, executor=executor)
+    def __init__(self, service, name=None, period=None, executor=None):
+        super().__init__(service, name, executor=executor)
         self._period = period or self.PERIOD
 
     async def _run(self):

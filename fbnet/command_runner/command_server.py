@@ -16,10 +16,9 @@ class CommandServer(ServiceTask):
     Command server for thrift commands.
     """
 
-    def __init__(self, app, loop=None):
-        super().__init__(app, "CommandServer")
-        self._app = app
-        self._port = app.config.port
+    def __init__(self, service, loop=None):
+        super().__init__(service, "CommandServer")
+        self._port = service.config.port
         self._handler = None
         self._server = None
         self._backlog = 100
@@ -27,7 +26,7 @@ class CommandServer(ServiceTask):
     async def run(self):
 
         # Wait for FBNet to finish its run
-        await self._app.device_db.wait_for_data()
+        await self.service.device_db.wait_for_data()
 
         event_handler = self._create_thrift_event_handler()
         thrift_handler = self._create_thrift_handler(event_handler)
@@ -54,7 +53,7 @@ class CommandServer(ServiceTask):
         self._server = None
 
     def _create_thrift_handler(self, event_handler):
-        return CommandHandler(self.app)
+        return CommandHandler(self.service)
 
     def _create_server_event_handler(self):
         return TServerEventHandler()

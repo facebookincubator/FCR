@@ -17,13 +17,13 @@ class DeviceDB(BaseDeviceDB):
         vendor = 'Default'
         addr = DeviceIP(name, name, False)
         return DeviceInfo(
-            self.app,
+            self.service,
             name,
             None,
             None,
             [addr],
             addr,
-            self.app.vendors.get(vendor),
+            self.service.vendors.get(vendor),
             'GEN',
             'Generic'
         )
@@ -89,8 +89,8 @@ def _parse_args():
 
 def main():
 
-    app = FCRService(_parse_args())
-    app.start()
+    service = FCRService(_parse_args())
+    service.start()
 
 
 if __name__ == "__main__":

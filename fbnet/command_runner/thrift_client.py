@@ -16,8 +16,8 @@ class AsyncioThriftClient(ServiceObj):
     _TIMEOUT = 60  # By default timeout after 60s
 
     def __init__(self, client_class, host, port,
-                 app=None, timeout=None, open_timeout=None):
-        super().__init__(app)
+                 service=None, timeout=None, open_timeout=None):
+        super().__init__(service)
 
         self._client_class = client_class
         self._host = host
@@ -32,7 +32,7 @@ class AsyncioThriftClient(ServiceObj):
         # Set the timeout for thrift calls
         self._timeouts = {'': timeout or self._TIMEOUT}
 
-        if self.app:
+        if self.service:
             self._register_counter('connected')
             self._register_counter('lookup.failed')
 
@@ -40,13 +40,13 @@ class AsyncioThriftClient(ServiceObj):
         return 'thrift_client.{}.{}.{}'.format(self._host, self._port, counter)
 
     def _inc_counter(self, counter):
-        if self._app:
+        if self.service:
             c = self._format_counter(counter)
             self.inc_counter(c)
 
     def _register_counter(self, counter):
         c = self._format_counter(counter)
-        self.app.stats_mgr.register_counter(c)
+        self.service.stats_mgr.register_counter(c)
 
     async def _lookup_service(self):
         return self._host, self._port

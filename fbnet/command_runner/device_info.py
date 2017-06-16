@@ -16,9 +16,9 @@ class DeviceInfo(ServiceObj):
     An abstraction to represent the network devices.
     """
 
-    def __init__(self, app, hostname, username, password, pref_ips, ip,
+    def __init__(self, service, hostname, username, password, pref_ips, ip,
                  vendor_data, role, ch_model, alias=None):
-        super().__init__(app, 'DeviceInfo')
+        super().__init__(service, 'DeviceInfo')
         self._hostname = hostname
         self._username = username  # Default username for device
         self._password = password  # Default password for device
@@ -34,12 +34,12 @@ class DeviceInfo(ServiceObj):
         stats_mgr.register_counter("device_info.mgmt_ip")
         stats_mgr.register_counter("device_info.default_ip")
 
-    async def setup_session(self, app, device, options, loop):
+    async def setup_session(self, service, device, options, loop):
         """
         create and setup a session to the device.
         """
         try:
-            session = self.create_session(app, device, options, loop)
+            session = self.create_session(service, device, options, loop)
             await session.setup()
             return session
 
@@ -47,7 +47,7 @@ class DeviceInfo(ServiceObj):
             await session.close()  # Cleanup the session
             raise e
 
-    def create_session(self, app, device, options, loop):
+    def create_session(self, service, device, options, loop):
         """
         Create a session object.
 
@@ -67,7 +67,7 @@ class DeviceInfo(ServiceObj):
 
         """
         _SessionType = self._get_session_type(options)
-        return _SessionType(app, self, options, loop=loop)
+        return _SessionType(service, self, options, loop=loop)
 
     def connect_using_proxy(self):
         return False

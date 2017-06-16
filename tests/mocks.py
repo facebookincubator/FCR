@@ -43,8 +43,8 @@ log = logging.getLogger()
 
 class MockDeviceDB(BaseDeviceDB):
 
-    def __init__(self, app):
-        super().__init__(app)
+    def __init__(self, service):
+        super().__init__(service)
 
         self.mock_devices = [self.mock_dev(i) for i in range(1, 10)]
 
@@ -59,13 +59,13 @@ class MockDeviceDB(BaseDeviceDB):
         vendor_id = (idx // 5) + 1
         vendor = 'vendor%d' % (vendor_id)
         return DeviceInfo(
-            self.app,
+            self.service,
             'test-dev-%d' % (idx),
             test_user,
             test_pass,
             addrs,
             addrs[0],
-            self.app.vendors.get(vendor),
+            self.service.vendors.get(vendor),
             'role%d' % (idx % 3),
             'ch_model'
         )
@@ -77,8 +77,8 @@ class MockDeviceDB(BaseDeviceDB):
 
 class MockDeviceVendors(DeviceVendors):
 
-    def __init__(self, app):
-        super().__init__(app)
+    def __init__(self, service):
+        super().__init__(service)
 
         jsonb = pkg_resources.resource_string(__name__, 'mock_vendors.json')
         self.load_vendors('mock_vendors.json', jsonb.decode('utf-8'))

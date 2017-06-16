@@ -158,12 +158,12 @@ class CommandSession(ServiceObj):
 
     _STATUS_WAIT_FOR_PROMPT = "Waiting for prompt"
 
-    def __init__(self, app, devinfo, options, loop):
+    def __init__(self, service, devinfo, options, loop):
 
         # Setup devinfo as this is needed to create the logger
         self._devinfo = devinfo
 
-        super().__init__(app)
+        super().__init__(service)
 
         self._opts = options
         self._hostname = devinfo.hostname
@@ -218,15 +218,15 @@ class CommandSession(ServiceObj):
         return len(cls._ALL_SESSIONS)
 
     @classmethod
-    async def wait_sessions(cls, req_name, app):
+    async def wait_sessions(cls, req_name, service):
         session_count = cls.get_session_count()
 
         while session_count != 0:
-            await asyncio.sleep(1, loop=app.loop)
+            await asyncio.sleep(1, loop=service.loop)
             session_count = cls.get_session_count()
-            app.logger.info("%s: pending sessions: %d", req_name, session_count)
+            service.logger.info("%s: pending sessions: %d", req_name, session_count)
 
-        app.logger.info("%s: no pending sesison", req_name)
+        service.logger.info("%s: no pending sesison", req_name)
 
     async def __aenter__(self):
         try:
@@ -532,7 +532,7 @@ class SSHCommandSession(CommandSession):
         host, port = await self.dest_info()
 
         if self._devinfo.connect_using_proxy():
-            host = self.app.get_http_proxy_url(host)
+            host = self.service.get_http_proxy_url(host)
 
         self.logger.info("Connecting to: %s: %d", host, port)
 

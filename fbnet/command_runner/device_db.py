@@ -12,9 +12,9 @@ class BaseDeviceDB(PeriodicServiceTask):
 
     _TASK_PERIOD = 30 * 60
 
-    def __init__(self, app, name=None, period=None):
+    def __init__(self, service, name=None, period=None):
         super().__init__(
-            app,
+            service,
             name or self.__class__.__name__,
             period=period or self._TASK_PERIOD)
 

@@ -133,7 +133,7 @@ class FcrServiceBase:
         '''
         return AsyncioThriftClient(
             FcrClient, 'localhost', self.config.port,
-            app=self, timeout=timeout, loop=self.loop)
+            service=self, timeout=timeout, loop=self.loop)
 
     def check_ip(self, ipaddr):
         '''
