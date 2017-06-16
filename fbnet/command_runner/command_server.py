@@ -9,6 +9,7 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Processor
 
 from .base_service import ServiceTask
 from .command_handler import CommandHandler
+from .options import Option
 
 
 class CommandServer(ServiceTask):
@@ -16,9 +17,12 @@ class CommandServer(ServiceTask):
     Command server for thrift commands.
     """
 
+    PORT = Option(
+        "-p", "--port", help="TCP port for FCR service",
+        type=int, default=5000)
+
     def __init__(self, service, loop=None):
         super().__init__(service, "CommandServer")
-        self._port = service.config.port
         self._handler = None
         self._server = None
         self._backlog = 100
@@ -39,16 +43,16 @@ class CommandServer(ServiceTask):
 
         self._server = await self.loop.create_server(
             pfactory,
-            port=self._port,
+            port=self.PORT,
             backlog=self._backlog
         )
 
-        self.logger.info("server started: %d ", self._port)
+        self.logger.info("server started: %d ", self.PORT)
 
         # Wait for the server to be closed. Typically this will never close.
         await self._server.wait_closed()
 
-        self.logger.info("server done: %d", self._port)
+        self.logger.info("server done: %d", self.PORT)
 
         self._server = None
 

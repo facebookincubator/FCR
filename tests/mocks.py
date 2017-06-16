@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-from argparse import Namespace
 import logging
 import pkg_resources
 
@@ -88,17 +86,7 @@ class MockService(FcrServiceBase):
 
     def __init__(self, mock_options, loop):
 
-        args = Namespace(
-            log_level=os.getenv('LOG_LEVEL', 'critical'),
-            device_name_filter_loading=None,
-            remote_call_overhead=60,
-            max_default_executor_threads=4,
-            ping_service_tier=None,
-            ping_service_host=None,
-            ping_service_port=None
-        )
-
-        super().__init__('MockService', args, loop=loop)
+        super().__init__('MockService', args=[], loop=loop)
 
         self.mock_options = mock_options
         self.vendors = MockDeviceVendors(self)

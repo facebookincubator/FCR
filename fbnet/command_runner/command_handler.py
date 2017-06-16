@@ -11,6 +11,7 @@ from fb303_asyncio.FacebookBase import FacebookBase
 
 from .command_session import CommandSession
 from .counters import Counters
+from .options import Option
 
 
 class CommandHandler(Counters, FacebookBase, FcrIface):
@@ -20,6 +21,11 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
     _COUNTER_PREFIX = "fbnet.command_runner"
     _LB_THRESHOLD = 100
+
+    REMOTE_CALL_OVERHEAD = Option(
+        '--remote_call_overhead',
+        help="Overhead for running commands remotely (for bulk calls)",
+        type=int, default=20)
 
     def __init__(self, service, name=None):
         Counters.__init__(self, service, name)
@@ -232,7 +238,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         # Determine a timeout for remote call.
         call_timeout = open_timeout + timeout
-        remote_timeout = timeout - self._remote_call_overhead
+        remote_timeout = timeout - self.REMOTE_CALL_OVERHEAD
 
         # Make sure we have a sane timeout value
         assert remote_timeout > 10, \

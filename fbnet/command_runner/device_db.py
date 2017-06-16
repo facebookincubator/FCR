@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from .base_service import PeriodicServiceTask
+from .options import Option
 
 
 class BaseDeviceDB(PeriodicServiceTask):
@@ -10,19 +11,24 @@ class BaseDeviceDB(PeriodicServiceTask):
     Adapt this to get devices from your backend system.
     '''
 
-    _TASK_PERIOD = 30 * 60
+    DEVICE_DB_UPDATE_INTERVAL = Option(
+        '--device_db_update_interval',
+        help="device db update interval (in seconds)",
+        type=int,
+        default=30 * 60)
+
+    DEVICE_NAME_FILTER = Option(
+        '--device_name_filter',
+        help='A regex to restrict the database to matching device names')
 
     def __init__(self, service, name=None, period=None):
         super().__init__(
             service,
             name or self.__class__.__name__,
-            period=period or self._TASK_PERIOD)
+            period=period or self.DEVICE_DB_UPDATE_INTERVAL)
 
         self._data_valid = False
         self._devices = {}
-
-    def _device_name_filter(self):
-        return None
 
     async def run(self):
         """
@@ -32,7 +38,7 @@ class BaseDeviceDB(PeriodicServiceTask):
         your data depends on your local setup. Override this according to your
         setup
         """
-        await self._fetch_devices(self._device_name_filter())
+        await self._fetch_devices(self.DEVICE_NAME_FILTER)
         self._data_valid = True
 
     async def _fetch_devices(self, name_filter=None):

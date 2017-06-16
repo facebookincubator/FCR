@@ -10,7 +10,9 @@ from concurrent.futures import ThreadPoolExecutor
 from fbnet.command_runner_asyncio.CommandRunner.Command import Client as FcrClient
 from .thrift_client import AsyncioThriftClient
 from .command_session import CommandSession
+from .command_server import CommandServer
 from .base_service import ServiceObjMeta
+from .options import Option
 
 
 class FcrServiceBase:
@@ -21,15 +23,33 @@ class FcrServiceBase:
     for the application modules.
     '''
 
-    def __init__(self, app_name, config, loop=None):
+    ASYNCIO_DEBUG = Option(
+        '--asyncio_debug', help='turn on debug for asyncio',
+        action="store_true", default=False)
+
+    LOG_LEVEL = Option(
+        '--log_level', help='logging level',
+        choices=['debug', 'info', 'warning', 'error', 'critical'],
+        default='info')
+
+    MAX_DEFAULT_EXECUTOR_THREADS = Option(
+        "--max_default_executor_threads", help="Max number of worker threads",
+        type=int, default=4)
+
+    EXIT_MAX_WAIT = Option(
+        "--exit_max_wait", help="Max time (seconds) to wait for session to terminate",
+        type=int, default=300)
+
+    def __init__(self, app_name, args=None, loop=None):
         self._app_name = app_name
-        self._config = config
         self._shutting_down = False
         self._stats_mgr = None
 
+        Option.parse_args(args)
+
         self._loop = loop or asyncio.get_event_loop()
 
-        executor = ThreadPoolExecutor(max_workers=config.max_default_executor_threads)
+        executor = ThreadPoolExecutor(max_workers=self.MAX_DEFAULT_EXECUTOR_THREADS)
         self._loop.set_default_executor(executor)
 
         self._init_logging()
@@ -53,7 +73,7 @@ class FcrServiceBase:
 
     @property
     def config(self):
-        return self._config
+        return Option.config
 
     @property
     def app_name(self):
@@ -78,7 +98,7 @@ class FcrServiceBase:
         try:
             coro = CommandSession.wait_sessions('Shutdown', loop=self.loop)
             await asyncio.wait_for(coro,
-                                   timeout=self.config.exit_max_wait,
+                                   timeout=self.EXIT_MAX_WAIT,
                                    loop=self.loop)
 
         except asyncio.TimeoutError:
@@ -110,10 +130,10 @@ class FcrServiceBase:
 
     def _init_logging(self):
 
-        level = getattr(logging, self.config.log_level.upper(), None)
+        level = getattr(logging, self.LOG_LEVEL.upper(), None)
 
         if not isinstance(level, int):
-            raise ValueError('Invalid log level: %s' % self.config.log_level)
+            raise ValueError('Invalid log level: %s' % self.LOG_LEVEL)
 
         logging.basicConfig(level=level)
 
@@ -132,7 +152,7 @@ class FcrServiceBase:
         This client is used to distribute requests for bulk calls
         '''
         return AsyncioThriftClient(
-            FcrClient, 'localhost', self.config.port,
+            FcrClient, 'localhost', CommandServer.PORT,
             service=self, timeout=timeout, loop=self.loop)
 
     def check_ip(self, ipaddr):
