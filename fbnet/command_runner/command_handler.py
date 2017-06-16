@@ -34,6 +34,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         self.service.register_stats_mgr(self)
 
+    def cleanup(self):
+        pass
+
     @classmethod
     def register_counters(cls, stats_mgr):
         stats_mgr.register_counter("bulk_run.remote")

@@ -35,6 +35,8 @@ class CommandServer(ServiceTask):
         event_handler = self._create_thrift_event_handler()
         thrift_handler = self._create_thrift_handler(event_handler)
 
+        self._handler = thrift_handler
+
         processor = Processor(thrift_handler, loop=self.loop)
         processor.setEventHandler(event_handler)
 

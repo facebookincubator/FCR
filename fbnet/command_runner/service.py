@@ -11,7 +11,7 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Client as FcrClie
 from .thrift_client import AsyncioThriftClient
 from .command_session import CommandSession
 from .command_server import CommandServer
-from .base_service import ServiceObjMeta
+from .base_service import ServiceObjMeta, ServiceTask
 from .options import Option
 
 
@@ -96,7 +96,7 @@ class FcrServiceBase:
 
     async def _clean_shutdown(self):
         try:
-            coro = CommandSession.wait_sessions('Shutdown', loop=self.loop)
+            coro = CommandSession.wait_sessions('Shutdown', service=self)
             await asyncio.wait_for(coro,
                                    timeout=self.EXIT_MAX_WAIT,
                                    loop=self.loop)
@@ -123,6 +123,9 @@ class FcrServiceBase:
         '''initiate a clean shutdown'''
         if not self._shutting_down:
             self._shutting_down = True
+            for name, task in ServiceTask.all_tasks():
+                self.logger.info("Stopping: %s", name)
+                task.cancel()
             asyncio.ensure_future(self._clean_shutdown(), loop=self.loop)
         else:
             # Forcibly shutdown.
