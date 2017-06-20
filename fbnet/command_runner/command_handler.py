@@ -27,6 +27,13 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         help="Overhead for running commands remotely (for bulk calls)",
         type=int, default=20)
 
+    LB_THRESHOLD = Option(
+        '--lb_threshold',
+        help='''Load Balance threashold for bulk_run calls. If number of
+        devices is greater than this threashold, the requests are broken and
+        send to other instances using bulk_run_local() api''',
+        type=int, default=100)
+
     def __init__(self, service, name=None):
         Counters.__init__(self, service, name)
         FacebookBase.__init__(self, service.app_name)
@@ -73,7 +80,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                        client_ip,
                        client_port):
 
-        if len(device_to_commands) < self._LB_THRESHOLD:
+        if len(device_to_commands) < self.LB_THRESHOLD:
             # Run these command locally.
             self.incrementCounter('bulk_run.local')
             return await self.bulk_run_local(device_to_commands, timeout,
@@ -88,7 +95,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         # Split the request into chunks and run them on remote hosts
         tasks = [_remote_task(chunk)
                  for chunk in self._chunked_dict(device_to_commands,
-                                                 self._LB_THRESHOLD)]
+                                                 self.LB_THRESHOLD)]
 
         all_results = {}
         for task in asyncio.as_completed(tasks, loop=self.loop):

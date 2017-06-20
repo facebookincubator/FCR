@@ -48,6 +48,7 @@ class FcrServiceBase:
         Option.parse_args(args)
 
         self._loop = loop or asyncio.get_event_loop()
+        self._loop.set_debug(self.ASYNCIO_DEBUG)
 
         executor = ThreadPoolExecutor(max_workers=self.MAX_DEFAULT_EXECUTOR_THREADS)
         self._loop.set_default_executor(executor)
