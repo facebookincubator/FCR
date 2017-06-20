@@ -17,7 +17,9 @@ class VendorConfig:
         self._defaults = defaults
 
     def __getattr__(self, attr):
-        return self._cfg.get(attr) or self._defaults.get(attr)
+        if attr in self._cfg:
+            return self._cfg.get(attr)
+        return self._defaults.get(attr)
 
     def update(self, cfg):
         for prop, val in cfg.items():
@@ -53,7 +55,7 @@ class DeviceVendor(ServiceObj):
             "prompt_regex": self._config.prompt_regex,
             "cmd_timeout_sec": self._config.cmd_timeout_sec
         }
-        return "DeviceVendor(%s) %s" % (self._name, props)
+        return "DeviceVendor(%s) %s" % (self.vendor_name, props)
 
     @classmethod
     def register_counters(cls, counters):
@@ -120,8 +122,8 @@ class DeviceVendor(ServiceObj):
         # reduces the probability of this matching some random text in the
         # output. Not that we are matching at end of the text, not at the end of
         # each line in text (re.M is not specified)
-        return re.compile(b"(?<=\n)\r*(?P<prompt>" + b"|".join(all_prompts) +
-                          b")\s*" + trailer + b"$")
+        return re.compile(b"^(?P<prompt>" + b"|".join(all_prompts) + b")\s*" +
+                          trailer + b"$", re.M)
 
 
 class DeviceVendors(ServiceObj):
