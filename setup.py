@@ -19,7 +19,9 @@ setup(
     ],
     package_dir={},
     include_package_data=True,
-    package_data={},
+    package_data={
+        'fbnet.command_runner': ['*.json']
+    },
     entry_points={},
 
     test_suite="tests",
@@ -31,5 +33,9 @@ setup(
     install_requires=[
         'asyncssh',
         'future',
+        'psutil'
+    ],
+    setup_requires=[
+        'mock'
     ]
 )
