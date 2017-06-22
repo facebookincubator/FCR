@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import json
 import re
-import pkg_resources
 
 from .base_service import ServiceObj
 from .command_session import SSHCommandSession
 from .import utils
+from .options import Option
 
 
 class VendorConfig:
@@ -128,12 +129,18 @@ class DeviceVendor(ServiceObj):
 
 class DeviceVendors(ServiceObj):
 
-    DEVICE_VENDORS = 'device_vendors.json'
+    # User specified device vendor information
+    device_vendors = Option(
+        '--device_vendors',
+        help="A JSON file containing vendor information",
+        default=None)
 
     def __init__(self, service, name=None):
         super().__init__(service, name)
 
         self._vendors = {}
+
+        self._load_vendors_data()
 
     @classmethod
     def register_counters(cls, stats_mgr):
@@ -157,15 +164,21 @@ class DeviceVendors(ServiceObj):
         cfg = json.loads(json_str)
         return self._update_device_vendors(path, cfg)
 
-    def load_local_json_file(self, vendors_file):
-        try:
-            # first try if vendors file has been overridden
-            jsonb = pkg_resources.resource_string(self.__module__, vendors_file)
-        except Exception:
-            # Fallback to package vendor file
-            jsonb = pkg_resources.resource_string(__name__, vendors_file)
+    def _load_device_vendors(self):
+        '''
+        Load device vendors specified on command line
+        '''
+        if self.device_vendors and os.path.exists(self.device_vendors):
+            self.logger.info("loading local file")
+            with open(self.device_vendors, 'rb') as fh:
+                jsonb = fh.read()
+            return self.load_vendors(self.device_vendors, jsonb.decode('utf-8'))
 
-        return self.load_vendors(vendors_file, jsonb.decode('utf-8'))
+    def _load_vendors_data(self):
+        '''
+        Load vendors information
+        '''
+        self.load_device_vendors()
 
     def _createVendor(self, name):
         vendor = DeviceVendor(name, self.service)
