@@ -16,6 +16,208 @@ log = logging.getLogger('fcr.CommandSession')
 ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "match"])
 
 
+class LogAdapter(logging.LoggerAdapter):
+
+    def process(self, msg, kwargs):
+        return "%s: %s" % (self.extra["session"].id, msg), kwargs
+
+
+class CommandSession(ServiceObj):
+    """
+    A session for running commands on devices. Before running a command a
+    CommandSession needs to be created. The connection to the device is
+    established asynchronously, The user should wait for the session to
+    be connected before trying to send commands to the device.
+
+    Once a session is established, a set of read and write streams will be
+    associated with the session.
+    """
+
+    _ALL_SESSIONS = {}
+
+    # the prompt is at the end of input. So rather then searching in the entire
+    # buffer, we will only look in the trailing data
+    _MAX_PROMPT_SIZE = 100
+
+    def __init__(self, service, devinfo, options, loop):
+
+        # Setup devinfo as this is needed to create the logger
+        self._devinfo = devinfo
+
+        super().__init__(service)
+
+        self._opts = options
+        self._hostname = devinfo.hostname
+
+        self._extra_info = {}
+        self._exit_status = None
+
+        # use the specified username/password or fallback to device defaults
+        self._username = options.get("username") or devinfo.username
+        self._password = options.get("password") or devinfo.password
+        self._client_ip = options["client_ip"]
+        self._client_port = options["client_port"]
+        self._loop = loop
+
+        self._connected = False
+        self._event = asyncio.Condition(loop=self._loop)
+
+        self.logger.info("Created key=%s", self.key)
+
+        # Record the session in the cache
+        self._ALL_SESSIONS[self.key] = self
+
+    def create_logger(self):
+        logger = logging.getLogger(
+            "fcr.{klass}.{dev.vendor_name}.{dev.hostname}".format(
+                klass=self.__class__.__name__, dev=self._devinfo))
+
+        return LogAdapter(logger, {"session": self})
+
+    def __repr__(self):
+        return "%s [%s] [%s]" % (self.__class__.__name__,
+                                 self._devinfo.hostname,
+                                 self.id)
+
+    @classmethod
+    def register_counters(cls, counters):
+        counters.register_counter('%s.setup' % cls.__name__)
+        counters.register_counter('%s.connected' % cls.__name__)
+        counters.register_counter('%s.failed' % cls.__name__)
+        counters.register_counter('%s.closed' % cls.__name__)
+
+    @classmethod
+    def get_session_count(cls):
+        return len(cls._ALL_SESSIONS)
+
+    @classmethod
+    async def wait_sessions(cls, req_name, service):
+        session_count = cls.get_session_count()
+
+        while session_count != 0:
+            await asyncio.sleep(1, loop=service.loop)
+            session_count = cls.get_session_count()
+            service.logger.info("%s: pending sessions: %d", req_name, session_count)
+
+        service.logger.info("%s: no pending sesison", req_name)
+
+    async def __aenter__(self):
+        try:
+            await self.setup()
+        except Exception as e:
+            await self.close()
+            raise e
+
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self.close()
+
+    @classmethod
+    def get(cls, session_id, client_ip, client_port):
+        key = (session_id, client_ip, client_port)
+        try:
+            return cls._ALL_SESSIONS[key]
+        except KeyError as ke:
+            raise KeyError("Session not found", key) from ke
+
+    @property
+    def hostname(self):
+        return self._hostname
+
+    @property
+    def id(self):
+        return id(self)
+
+    @property
+    def key(self):
+        return (self.id, self._client_ip, self._client_port)
+
+    @property
+    def open_timeout(self):
+        return self._opts.get('open_timeout')
+
+    @property
+    def exit_status(self):
+        return self._exit_status
+
+    async def _create_connection(self):
+        await self.connect()
+
+    async def setup(self):
+        self.inc_counter('%s.setup' % self.objname)
+        await asyncio.wait_for(self._create_connection(), self.open_timeout,
+                               loop=self._loop)
+        return self
+
+    async def connect(self):
+        """
+        Initiates a connection on the session
+        """
+        try:
+            self._cmd_stream = await self._connect()
+            self.inc_counter('%s.connected' % self.objname)
+            self.logger.info("Connected: %s", self._extra_info)
+        except Exception as e:
+            self.logger.error("Connect Failed %r", e)
+            self.inc_counter('%s.failed' % self.objname)
+            raise e
+
+    async def close(self):
+        """
+        Close the session. This removes the session from the cache. Also
+        invokes the session specific _close method
+        """
+        try:
+            self.logger.debug("Closing session")
+            del self._ALL_SESSIONS[self.key]
+        finally:
+            self.inc_counter('%s.closed' % self.objname)
+            await self._close()
+            if self._cmd_stream is not None:
+                self._cmd_stream.close()
+
+    @abc.abstractmethod
+    async def _connect(self):
+        """
+        This needs to be implemented by the actual session classes
+        """
+        pass
+
+    @abc.abstractmethod
+    async def _close(self):
+        """
+        This needs to be implemented by the actual session classes
+        """
+        pass
+
+    async def wait_until_connected(self, timeout=None):
+        """
+        Wait until the session is marked as connected
+        """
+        await self.wait_for(lambda _: self._connected, timeout=timeout)
+
+    async def _notify(self):
+        """
+        notify a change in stream state
+        """
+        await self._event.acquire()
+        self._event.notify_all()
+        self._event.release()
+
+    async def wait_for(self, predicate, timeout=None):
+        """
+        Wait for condition to become true on the session
+        """
+        await self._event.acquire()
+        await asyncio.wait_for(
+            self._event.wait_for(lambda: predicate(self)),
+            timeout=timeout,
+            loop=self._loop,
+        )
+        self._event.release()
+
+
 class CommandStreamReader(asyncio.StreamReader):
     """
     A Reader for commmand responses
@@ -133,140 +335,25 @@ class CommandStream(asyncio.StreamReaderProtocol):
         self._session.exit_status_received(status)
 
 
-class LogAdapter(logging.LoggerAdapter):
-
-    def process(self, msg, kwargs):
-        return "%s: %s" % (self.extra["session"].id, msg), kwargs
-
-
-class CommandSession(ServiceObj):
-    """
-    A session for running commands on devices. Before running a command a
-    CommandSession needs to be created. The connection to the device is
-    established asynchronously, The user should wait for the session to
-    be connected before trying to send commands to the device.
-
-    Once a session is established, a set of read and write streams will be
-    associated with the session.
-    """
-
-    _ALL_SESSIONS = {}
-
-    # the prompt is at the end of input. So rather then searching in the entire
-    # buffer, we will only look in the trailing data
-    _MAX_PROMPT_SIZE = 100
-
-    _STATUS_WAIT_FOR_PROMPT = "Waiting for prompt"
+class CliCommandSession(CommandSession):
+    '''
+    A command session for CLI commands. Does prompt processing on the command stream.
+    '''
 
     def __init__(self, service, devinfo, options, loop):
+        super().__init__(service, devinfo, options, loop)
 
-        # Setup devinfo as this is needed to create the logger
-        self._devinfo = devinfo
-
-        super().__init__(service)
-
-        self._opts = options
-        self._hostname = devinfo.hostname
-
-        # use the specified username/password or fallback to device defaults
-        self._username = options.get("username") or devinfo.username
-        self._password = options.get("password") or devinfo.password
-        self._client_ip = options["client_ip"]
-        self._client_port = options["client_port"]
-        self._loop = loop
-
-        self._extra_info = {}
-
-        self._connected = False
-        self._exit_status = None
         self._cmd_stream = None
         self._stream_reader = None  # for reading data from device
         self._stream_writer = None  # for writing data to the device
         # TODO: investigate if we need an error stream
-        self._event = asyncio.Condition(loop=self._loop)
-
-        self.logger.info("Created key=%s", self.key)
-
-        # Record the session in the cache
-        self._ALL_SESSIONS[self.key] = self
-
-    def create_logger(self):
-        logger = logging.getLogger(
-            "fcr.{klass}.{dev.vendor_name}.{dev.hostname}".format(
-                klass=self.__class__.__name__, dev=self._devinfo))
-
-        return LogAdapter(logger, {"session": self})
-
-    def __repr__(self):
-        return "%s [%s] [%s]" % (self.__class__.__name__,
-                                 self._devinfo.hostname,
-                                 self.id)
 
     @classmethod
     def register_counters(cls, counters):
-        counters.register_counter('%s.setup' % cls.__name__)
-        counters.register_counter('%s.connected' % cls.__name__)
-        counters.register_counter('%s.failed' % cls.__name__)
-        counters.register_counter('%s.closed' % cls.__name__)
-
+        super().register_counters(counters)
         counters.register_counter("streamreader.wait_for_retry")
         counters.register_counter("streamreader.overrun")
         counters.register_counter("streamreader.overrun")
-
-    @classmethod
-    def get_session_count(cls):
-        return len(cls._ALL_SESSIONS)
-
-    @classmethod
-    async def wait_sessions(cls, req_name, service):
-        session_count = cls.get_session_count()
-
-        while session_count != 0:
-            await asyncio.sleep(1, loop=service.loop)
-            session_count = cls.get_session_count()
-            service.logger.info("%s: pending sessions: %d", req_name, session_count)
-
-        service.logger.info("%s: no pending sesison", req_name)
-
-    async def __aenter__(self):
-        try:
-            await self.setup()
-        except Exception as e:
-            await self.close()
-            raise e
-
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return await self.close()
-
-    @classmethod
-    def get(cls, session_id, client_ip, client_port):
-        key = (session_id, client_ip, client_port)
-        try:
-            return cls._ALL_SESSIONS[key]
-        except KeyError as ke:
-            raise KeyError("Session not found", key) from ke
-
-    @property
-    def hostname(self):
-        return self._hostname
-
-    @property
-    def id(self):
-        return id(self)
-
-    @property
-    def key(self):
-        return (self.id, self._client_ip, self._client_port)
-
-    @property
-    def open_timeout(self):
-        return self._opts.get('open_timeout')
-
-    @property
-    def exit_status(self):
-        return self._exit_status
 
     async def _setup_connection(self):
         await self.wait_prompt()
@@ -274,42 +361,9 @@ class CommandSession(ServiceObj):
             await self.run_command(cmd + b"\n")
 
     async def _create_connection(self):
-        await self.connect()
+        await super()._create_connection()
         await self.wait_until_connected(self.open_timeout)
         await self._setup_connection()
-
-    async def setup(self):
-        self.inc_counter('%s.setup' % self.objname)
-        await asyncio.wait_for(self._create_connection(), self.open_timeout,
-                               loop=self._loop)
-        return self
-
-    async def connect(self):
-        """
-        Initiates a connection on the session
-        """
-        try:
-            self._cmd_stream = await self._connect()
-            self.inc_counter('%s.connected' % self.objname)
-            self.logger.info("Connected: %s", self._extra_info)
-        except Exception as e:
-            self.logger.error("Connect Failed %r", e)
-            self.inc_counter('%s.failed' % self.objname)
-            raise e
-
-    async def close(self):
-        """
-        Close the session. This removes the session from the cache. Also
-        invokes the session specific _close method
-        """
-        try:
-            self.logger.debug("Closing session")
-            del self._ALL_SESSIONS[self.key]
-        finally:
-            self.inc_counter('%s.closed' % self.objname)
-            await self._close()
-            if self._cmd_stream is not None:
-                self._cmd_stream.close()
 
     async def wait_prompt(self, prompt_re=None):
         """
@@ -318,12 +372,11 @@ class CommandSession(ServiceObj):
         return await self._stream_reader.readuntil_re(
             prompt_re or self._devinfo.prompt_re, -self._MAX_PROMPT_SIZE)
 
-    async def _wait_response(self, cmd, status, prompt_re):
+    async def _wait_response(self, cmd, prompt_re):
         """
         Wait for command response from the device
         """
         self.logger.debug("Waiting for prompt")
-        status["last"] = self._STATUS_WAIT_FOR_PROMPT
         resp = await self.wait_prompt(prompt_re)
         return resp
 
@@ -413,35 +466,19 @@ class CommandSession(ServiceObj):
             self._stream_writer.write(cmdinfo.cmd)
 
             try:
-                status = {}
-
                 prompt = prompt_re or cmdinfo.prompt_re
 
                 resp = await asyncio.wait_for(
-                    self._wait_response(command, status, prompt),
+                    self._wait_response(command, prompt),
                     timeout or self._devinfo.vendor_data.cmd_timeout_sec,
                     loop=self._loop)
                 output.append(self._format_output(command, resp))
             except asyncio.TimeoutError:
                 self.logger.error("Timeout waiting for command response")
                 data = await self._stream_reader.drain()
-                raise RuntimeError("TimeoutError", status["last"], data)
+                raise RuntimeError("Command Response Timeout", data)
 
         return b'\n'.join(output).rstrip()
-
-    @abc.abstractmethod
-    async def _connect(self):
-        """
-        This needs to be implemented by the actual session classes
-        """
-        pass
-
-    @abc.abstractmethod
-    async def _close(self):
-        """
-        This needs to be implemented by the actual session classes
-        """
-        pass
 
     def _session_connected(self, stream_reader, stream_writer):
         """
@@ -460,32 +497,6 @@ class CommandSession(ServiceObj):
         self.logger.info("exit status received: %s", status)
         self._connected = False
         self._exit_status = status
-
-    async def wait_until_connected(self, timeout=None):
-        """
-        Wait until the session is marked as connected
-        """
-        await self.wait_for(lambda _: self._connected, timeout=timeout)
-
-    async def _notify(self):
-        """
-        notify a change in stream state
-        """
-        await self._event.acquire()
-        self._event.notify_all()
-        self._event.release()
-
-    async def wait_for(self, predicate, timeout=None):
-        """
-        Wait for condition to become true on the session
-        """
-        await self._event.acquire()
-        await asyncio.wait_for(
-            self._event.wait_for(lambda: predicate(self)),
-            timeout=timeout,
-            loop=self._loop,
-        )
-        self._event.release()
 
 
 class SSHCommandClient(asyncssh.SSHClient):
@@ -506,7 +517,7 @@ class SSHCommandClient(asyncssh.SSHClient):
         self._session.connection_made(conn)
 
 
-class SSHCommandSession(CommandSession):
+class SSHCommandSession(CliCommandSession):
     TERM_TYPE = "vt100"
 
     def __init__(self, counter_mgr, devinfo, options, loop):

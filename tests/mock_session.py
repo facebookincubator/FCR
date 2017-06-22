@@ -74,7 +74,7 @@ class MockSessionFactory:
         pass
 
 
-class MockCommandSession(command_session.CommandSession):
+class MockCommandSession(command_session.CliCommandSession):
     """
     A mock commands session used for testing
     """
