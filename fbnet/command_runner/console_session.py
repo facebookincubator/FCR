@@ -66,7 +66,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
     async def dest_info(self):
         console = await self.get_console_info()
-        self.log.info("%s", str(console))
+        self.logger.info("%s", str(console))
         return (console.server, console.port)
 
     async def expect(self, regex, timeout=_CONSOLE_EXPECT_DELAY):
@@ -74,14 +74,15 @@ class ConsoleCommandSession(SSHCommandSession):
             return await asyncio.wait_for(self.wait_prompt(regex),
                                           timeout, loop=self._loop)
         except asyncio.TimeoutError as e:
-            self.log.info('Timeout waiting for: %s', regex)
+            self.logger.info('Timeout waiting for: %s', regex)
             return None
 
     def send(self, data, end=b'\n'):
         '''
         send some data and optionally wait for some data
         '''
-        data = data.encode('utf8')
+        if isinstance(data, str):
+            data = data.encode('utf8')
         self._stream_writer.write(data + end)
 
     async def _try_login(self, username=None, passwd=None):
@@ -94,7 +95,7 @@ class ConsoleCommandSession(SSHCommandSession):
         if res:
             if res.match.group('ignore'):
                 # If we match anything in the ignore prompts, set a \r\n
-                self.send('\r', end=b'')
+                self.send(b'\r', end=b'')
                 await asyncio.sleep(0.2)  # Let the console catch up
                 # Now again try to login.
                 return await self._try_login(username=username, passwd=passwd)
@@ -121,7 +122,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
             elif res.match.group('prompt'):
                 # Finally we matched a prompt. we are done
-                return self.send('\r')
+                return self.send(b'\r')
 
             else:
                 raise RuntimeError("Matched no group: %s" % (res.groupdict()))
