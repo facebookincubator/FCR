@@ -537,10 +537,10 @@ class SSHCommandSession(CliCommandSession):
 
     async def dest_info(self):
         ip = self._devinfo.get_ip(self._opts.get('mgmt_ip'))
-        return ip, 22
+        return (ip, 22, self._username, self._password)
 
     async def _connect(self):
-        host, port = await self.dest_info()
+        host, port, user, passwd = await self.dest_info()
 
         if self._devinfo.connect_using_proxy():
             host = self.service.get_http_proxy_url(host)
@@ -553,8 +553,8 @@ class SSHCommandSession(CliCommandSession):
             self._client_factory,
             host=host,
             port=port,
-            username=self._username,
-            password=self._password,
+            username=user,
+            password=passwd,
             client_keys=None,
             known_hosts=None
         )
