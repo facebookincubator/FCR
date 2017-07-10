@@ -199,5 +199,6 @@ class CommandSessionTest(AsyncTestCase):
         with self.assertRaises(RuntimeError) as rexc:
             await self.session.run_command(b"command timeout\n", 1)
 
-        self.assertEqual(rexc.exception.args[0], "TimeoutError")
-        self.assertEqual(rexc.exception.args[1], "Waiting for prompt")
+        self.assertEqual(rexc.exception.args[0], "Command Response Timeout")
+        self.assertEqual(rexc.exception.args[1],
+                         b"command timeout\nMock response for command timeout")

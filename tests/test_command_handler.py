@@ -5,8 +5,8 @@ from .testutil import AsyncTestCase, async_test
 from .mocks import MockService
 
 from fbnet.command_runner.command_handler import CommandHandler
+from fbnet.command_runner.options import Option
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
-
 from mock import Mock
 
 client_ip = "127.0.0.1"
@@ -145,7 +145,7 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertEqual(
             exc.exception.message,
-            "run failed: RuntimeError('TimeoutError', 'Waiting for prompt', "
+            "run failed: RuntimeError('Command Response Timeout', "
             "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>')")
 
     @async_test
@@ -225,9 +225,8 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertEqual(
             exc.exception.message,
-            "run_session failed: RuntimeError('%s', '%s', b'%s')" % (
-                'TimeoutError',
-                'Waiting for prompt',
+            "run_session failed: RuntimeError('%s', b'%s')" % (
+                'Command Response Timeout',
                 'command timeout\\nMock response for command timeout'))
 
     @async_test
@@ -281,6 +280,7 @@ class TestCommandHandler(AsyncTestCase):
                 continue
             for result in all_results[host]:
                 self.assert_command_result(result)
+        Option.config.lb_threshold = 20
 
     @async_test
     async def test_bulk_run_local_with_command_timeout(self):
@@ -330,7 +330,7 @@ class TestCommandHandler(AsyncTestCase):
 
     @async_test
     async def test_bluk_run_load_balance(self):
-        self.cmd_handler._LB_THRESHOLD = 2
+        Option.config.lb_threshold = 2
         device_names = {"test-dev-%d" % i for i in range(0, 10)}
 
         commands = {self.mock_device(name): ["show version\n"] for name in device_names}
@@ -359,7 +359,7 @@ class TestCommandHandler(AsyncTestCase):
 
     @async_test
     async def test_bluk_run_below_threshold(self):
-        self.cmd_handler._LB_THRESHOLD = 20
+        Option.config.lb_threshold = 20
         device_names = {"test-dev-%d" % i for i in range(0, 10)}
 
         commands = {self.mock_device(name): ["show version\n"] for name in device_names}
@@ -401,10 +401,9 @@ class TestCommandHandler(AsyncTestCase):
                              "$ show version\nMock response for show version")
         elif result.command == "command timeout\n":
             status_fmt = "run failed: RuntimeError" + \
-                "('{0}', '{1}', b'{2}\\nMock response for {2}')"
+                "('{0}', b'{2}\\nMock response for {2}')"
             self.assertEqual(result.status,
-                             status_fmt.format('TimeoutError',
-                                               'Waiting for prompt',
+                             status_fmt.format('Command Response Timeout',
                                                'command timeout'))
         else:
             self.fail("unexpected result: %r" % result)
