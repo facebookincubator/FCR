@@ -269,8 +269,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     def _get_command_options(self, device, client_ip, client_port,
                              open_timeout, idle_timeout):
         options = {
-            "username": device.username,
-            "password": self._decrypt(device.password),
+            "username": self._get_device_username(device),
+            "password": self._get_device_password(device),
             "console": device.console,
             "command_prompts": {},
             "client_ip": client_ip,
@@ -284,6 +284,14 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 c.encode(): p.encode() for c, p in device.command_prompts.items()}
 
         return options
+
+    def _get_device_username(self, device):
+        return device.username
+
+    def _get_device_password(self, device):
+        # If the username is specified then password must also be specified.
+        if device.username:
+            return self._decrypt(device.password)
 
     def _decrypt(self, data):
         return data
