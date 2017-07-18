@@ -178,7 +178,7 @@ class DeviceVendors(ServiceObj):
         '''
         Load vendors information
         '''
-        self.load_device_vendors()
+        self._load_device_vendors()
 
     def _createVendor(self, name):
         vendor = DeviceVendor(name, self.service)

@@ -1,0 +1,10 @@
+{
+    "vendor_config": {
+        "docker": {
+            "vendor_name": "docker",
+                "session_type": "ssh",
+                "prompt_regex": ["[\\w]+@[\\w.-]+:[/\\w~]+[#$]\\s*"],
+                "cli_setup": ["bind '?':complete"]
+        }
+    }
+}
