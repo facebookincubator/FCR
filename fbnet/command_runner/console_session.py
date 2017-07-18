@@ -49,19 +49,23 @@ class ConsoleCommandSession(SSHCommandSession):
         self._console = options['console']
 
     @classmethod
+    def _build_prompt_re(cls, prompts, ignore):
+        prompts = [b'(?P<%s>%s)' % (group, regex)
+                   for group, regex in prompts.items()]
+        # Add a set of prompts that we want to ignore
+        ignore_prompts = b'|'.join((b'(%s)' % p for p in ignore))
+        prompts.append(b'(?P<ignore>%s)' % ignore_prompts)
+        prompt_re = b'|'.join(prompts)
+        cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + b'\s*$')
+
+    @classmethod
     def get_prompt_re(cls):
         '''
         The first time this is called, we will builds the prompt for the
         console. After that we will return the pre-computed regex
         '''
         if not cls._CONSOLE_PROMPT_RE:
-            prompts = [b'(?P<%s>%s)' % (group, regex)
-                       for group, regex in cls._CONSOLE_PROMPTS.items()]
-            # Add a set of prompts that we want to ignore
-            ignore_prompts = b'|'.join((b'(%s)' % p for p in cls._CONSOLE_INGORE))
-            prompts.append(b'(?P<ignore>%s)' % ignore_prompts)
-            prompt_re = b'|'.join(prompts)
-            cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + b'\s*$')
+            cls._build_prompt_re(cls._CONSOLE_PROMPTS, cls._CONSOLE_INGORE)
         return cls._CONSOLE_PROMPT_RE
 
     async def dest_info(self):
