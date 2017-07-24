@@ -1,8 +1,10 @@
-// Copyright 2004-present Facebook. All Rights Reserved.
+// Copyright (c) 2017-present, Facebook, Inc.
+// All rights reserved.
 //
-// @author Rohan Sharma (rohansharma@fb.com), Eric Sung (ysung@fb.com)
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree. An additional grant
+// of patent rights can be found in the PATENTS file in the same directory.
 //
-// Command runner
 
 include "common/fb303/if/fb303.thrift"
 
