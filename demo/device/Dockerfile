@@ -18,4 +18,5 @@ RUN \
 EXPOSE 22
 
 ADD startup.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/startup.sh
 CMD /usr/local/bin/startup.sh

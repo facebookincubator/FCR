@@ -94,7 +94,7 @@ class DeviceCli(cmd.Cmd, Fcr):
         return True
 
     def default(self, line):
-        results = self.run(line)
+        results = self._run(line)
         self._format_results(results)
 
     def completenames(self, text, line, begidx, endidx):
