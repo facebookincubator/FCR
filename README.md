@@ -224,8 +224,8 @@ This information can be provided to FCR service in json file. This file can be s
 ```json
 {
   "vendor_config": {
-    "arista": {
-        "vendor_name": "arista",
+    "vendor1": {
+        "vendor_name": "vendor1",
         "session_type": "ssh",
         "prompt_regex": ["[\\w.]+#\\s*"],
         "cli_setup": [
@@ -234,8 +234,8 @@ This information can be provided to FCR service in json file. This file can be s
         ],
         "shell_prompts": ["\\$"]
     },
-    "exr": {
-        "vendor_name": "exr",
+    "vendor2": {
+        "vendor_name": "vendor2",
         "session_type": "ssh",
         "prompt_regex": ["[\\w./:]+[$#]\\s*"],
         "cli_setup": [ "term len 0" ]
