@@ -131,7 +131,8 @@ class DeviceVendor(ServiceObj):
         # reduces the probability of this matching some random text in the
         # output. Not that we are matching at end of the text, not at the end of
         # each line in text (re.M is not specified)
-        return re.compile(b"^(?P<prompt>" + b"|".join(all_prompts) + b")\s*" +
+        return re.compile(b"(?<=[\n\r])(?P<prompt>" +
+                          b"|".join(all_prompts) + b")\s*" +
                           trailer + b"$", re.M)
 
 
