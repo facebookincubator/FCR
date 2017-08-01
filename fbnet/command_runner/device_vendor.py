@@ -102,6 +102,17 @@ class DeviceVendor(ServiceObj):
     def session_type(self):
         return self._SESSION_TYPES[self._config.session_type]
 
+    def select_session_type(self, options):
+        '''
+        Select session type for given set of options.
+        Users can override session type here, by specifying session_type in
+        options. This needs to be implemented for vendors supporting multiple
+        session types
+
+        For now we will just return the default session_type
+        '''
+        return self.session_type
+
     def update_config(self, vendor_config):
         self._config.update(vendor_config)
         self._update_prompts_re()

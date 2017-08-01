@@ -180,7 +180,7 @@ class DeviceInfo(ServiceObj):
     def _get_session_type(self, options):
         if options['console']:
             return ConsoleCommandSession
-        return self._vendor_data.session_type
+        return self._vendor_data.select_session_type(options)
 
     def _is_mgmt_ip(self, ip):
         return False

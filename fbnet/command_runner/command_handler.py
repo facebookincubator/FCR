@@ -148,7 +148,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                            client_ip,
                            client_port):
 
-        options = self._get_command_options(
+        options = self._get_options(
             device, client_ip, client_port, open_timeout, idle_timeout)
 
         try:
@@ -208,7 +208,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                             client_port,
                             return_exceptions=False):
 
-        options = self._get_command_options(
+        options = self._get_options(
             device, client_ip, client_port, open_timeout, timeout)
 
         if device.command_prompts:
@@ -274,8 +274,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     def _get_fcr_client(self, timeout):
         return self.service.get_fcr_client(timeout=timeout)
 
-    def _get_command_options(self, device, client_ip, client_port,
-                             open_timeout, idle_timeout):
+    def _get_options(self, device, client_ip, client_port,
+                     open_timeout, idle_timeout):
         options = {
             "username": self._get_device_username(device),
             "password": self._get_device_password(device),
