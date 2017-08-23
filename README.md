@@ -21,7 +21,7 @@ FCR can be quickly installed using `pip`. Just clone the git repo and install us
 
 ```bash
 # Clone the git repo.
-git clone https://github.com/facebookincubator/FCR.git
+git clone --recursive https://github.com/facebookincubator/FCR.git
 
 # Create a virtual environment 
 python3 -m venv venv
@@ -29,8 +29,8 @@ python3 -m venv venv
 
 cd FCR
 # use pip to install the required modules.
-# This will also install the FCR modules
 pip3 install -r requirements.txt
+pip3 install .
 ```
 
 ## FCR client
