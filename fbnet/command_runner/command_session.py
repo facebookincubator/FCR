@@ -12,6 +12,7 @@
 import asyncio
 import logging
 import re
+import time
 import asyncssh
 from collections import namedtuple
 
@@ -234,6 +235,9 @@ class CommandStreamReader(asyncio.StreamReader):
     match on received data
     """
 
+    QUICK_COMMAND_RUNTIME = 1
+    COMMAND_DATA_TIMEOUT = 1
+
     def __init__(self, session, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._session = session
@@ -253,6 +257,8 @@ class CommandStreamReader(asyncio.StreamReader):
 
         res = predicate(self._buffer)
 
+        start_ts = time.time()
+
         while res is None:
             self.logger.debug("match failed in: %d: %d: %s",
                               len(self._buffer), self._limit, self._buffer[-100:])
@@ -262,7 +268,24 @@ class CommandStreamReader(asyncio.StreamReader):
                 self._session.inc_counter("streamreader.overrun")
                 raise RuntimeError("Reader buffer overrun: %d: %d" %
                                    (len(self._buffer), self._limit))
-            await self._wait_for_data("CommandStreamReader.wait_for")
+
+            now = time.time()
+
+            if now - start_ts > self.QUICK_COMMAND_RUNTIME:
+                # Keep waiting for data till we get a timeout
+                try:
+                    while True:
+                        fut = self._wait_for_data("CommandStreamReader.wait_for")
+                        await asyncio.wait_for(fut,
+                                               timeout=self.COMMAND_DATA_TIMEOUT,
+                                               loop=self._loop)
+                except asyncio.TimeoutError:
+                    # Now try to match the prompt
+                    pass
+            else:
+                # match quickly initially
+                await self._wait_for_data("CommandStreamReader.wait_for")
+
             res = predicate(self._buffer)
 
         self.logger.debug("match found at: %s", res)
@@ -484,7 +507,7 @@ class CliCommandSession(CommandSession):
             except asyncio.TimeoutError:
                 self.logger.error("Timeout waiting for command response")
                 data = await self._stream_reader.drain()
-                raise RuntimeError("Command Response Timeout", data)
+                raise RuntimeError("Command Response Timeout", data[-200:])
 
         return b'\n'.join(output).rstrip()
 
