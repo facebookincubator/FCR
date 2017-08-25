@@ -567,7 +567,7 @@ class SSHCommandSession(CliCommandSession):
         return SSHCommandClient(self)
 
     async def dest_info(self):
-        ip = self._devinfo.get_ip(self._opts.get('mgmt_ip'))
+        ip = self._devinfo.get_ip(self._opts)
         return (ip, 22, self._username, self._password)
 
     async def _connect(self):

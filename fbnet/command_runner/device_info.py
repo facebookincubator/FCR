@@ -87,11 +87,12 @@ class DeviceInfo(ServiceObj):
     def hostname(self):
         return self._hostname
 
-    def get_ip(self, mgmt_ip=False):
-        if mgmt_ip:
+    def get_ip(self, options):
+        use_mgmt_ip = options.get('mgmt_ip')
+        if use_mgmt_ip:
             self.inc_counter("device_info.mgmt_ip")
         for ip in self._pref_ips:
-            if mgmt_ip and not self._is_mgmt_ip(ip):
+            if use_mgmt_ip and not self._is_mgmt_ip(ip):
                 # User request to only use the management IP
                 continue
 
