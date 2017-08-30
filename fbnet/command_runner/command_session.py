@@ -22,7 +22,7 @@ from .base_service import ServiceObj
 
 log = logging.getLogger('fcr.CommandSession')
 
-ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "match"])
+ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "match"])
 
 
 class LogAdapter(logging.LoggerAdapter):
@@ -306,6 +306,28 @@ class CommandStreamReader(asyncio.StreamReader):
             match = await self.wait_for(lambda data: regex.search(data, start))
 
             m_beg, m_end = match.span()
+            # We are matching against the data stored stored in bytebuffer
+            # The bytebuffer is manipulated in place. After we read the data
+            # the buffer may get overwritten. The match object seems to be
+            # directly referring the data in bytebuffer. This causes a problem
+            # when we try to find the matched groups in match object.
+            #
+            # In [38]: data = bytearray(b"localhost login:")
+            #
+            # In [39]: rex = re.compile(b'(?P<login>.*((?<!Last ).ogin|.sername):)|(?P<passwd>\n.*assword:)|(?P<prompt>\n.*[%#>])|(?P<ignore>( to cli \\])|(who is on this device.\\]\r\n)|(Press R
+            #     ...: ETURN to get started\r\n))\\s*$')
+            #
+            # In [40]: m = rex.search(data)
+            #
+            # In [41]: m.groupdict()
+            # Out[41]: {'ignore': None, 'login': b'localhost login:', 'passwd': None, 'prompt': None}
+            #
+            # In [42]: data[:]=b'overwrite'
+            #
+            # In [43]: m.groupdict()
+            # Out[43]: {'ignore': None, 'login': b'overwrite', 'passwd': None, 'prompt': None}
+            #
+            groupdict = match.groupdict()
             rdata = await self.read(m_end)
             data = rdata[:m_beg]  # Data before the regex match
             matched = rdata[m_beg:m_end]  # portion that matched regex
@@ -315,11 +337,12 @@ class CommandStreamReader(asyncio.StreamReader):
                 data = await self.read(len(self._buffer))
                 matched = b''
                 match = None
+                groupdict = None
             else:
                 # re-raise the exception
                 raise
 
-        return ResponseMatch(data, matched, match)
+        return ResponseMatch(data, matched, groupdict, match)
 
     async def drain(self):
         """

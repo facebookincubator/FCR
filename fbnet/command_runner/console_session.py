@@ -105,14 +105,14 @@ class ConsoleCommandSession(SSHCommandSession):
         await asyncio.sleep(0.1)
         res = await self.expect(self.get_prompt_re())
         if res:
-            if res.match.group('ignore'):
+            if res.groupdict.get('ignore'):
                 # If we match anything in the ignore prompts, set a \r\n
                 self.send(b'\r', end=b'')
                 await asyncio.sleep(0.2)  # Let the console catch up
                 # Now again try to login.
                 return await self._try_login(username=username, passwd=passwd)
 
-            elif res.match.group('login'):
+            elif res.groupdict.get('login'):
                 # The device is requesting login information
                 # If we don't have a username, then likely we already sent a
                 # username. The consoles are slow, we may have send extra
@@ -123,7 +123,7 @@ class ConsoleCommandSession(SSHCommandSession):
                 # if we don't have username, we are likely waiting for password
                 return await self._try_login(passwd=passwd)
 
-            elif res.match.group('passwd'):
+            elif res.groupdict.get('passwd'):
                 if passwd is None:
                     # passwd information not available
                     # Likely we have alreay sent the password. Bail out instead
@@ -132,12 +132,12 @@ class ConsoleCommandSession(SSHCommandSession):
                 self.send(self._password)
                 return await self._try_login()
 
-            elif res.match.group('prompt'):
+            elif res.groupdict.get('prompt'):
                 # Finally we matched a prompt. we are done
                 return self.send(b'\r')
 
             else:
-                raise RuntimeError("Matched no group: %s" % (res.groupdict()))
+                raise RuntimeError("Matched no group: %s" % (res.groupdict))
         else:
             raise RuntimeError("Login failed")
 
