@@ -81,9 +81,12 @@ def counters(ctx):
 @click.option('--timeout', type=int, help='timeout')
 @click.option('--exit_prompt', help='exit prompt')
 @click.option('--mgmt_ip', is_flag=True, help='use mgmt ips')
+@click.option('--ip_address', help='address to use to connect to device')
 @click.argument('cmd', nargs=-1)
 @click.pass_context
-def run(ctx, host, cmd, console=None, timeout=None, exit_prompt=None, mgmt_ip=False):
+def run(ctx, host, cmd, console=None, timeout=None, exit_prompt=None,
+        mgmt_ip=False, ip_address=None,
+        ):
     cmd = ' '.join(cmd)
     command_prompts = None
 
@@ -96,6 +99,7 @@ def run(ctx, host, cmd, console=None, timeout=None, exit_prompt=None, mgmt_ip=Fa
                       password=ctx.obj.passwd,
                       console=console or '',
                       mgmt_ip=mgmt_ip or False,
+                      ip_address=ip_address,
                       command_prompts=command_prompts)
 
     res = ctx.obj.run(cmd, d, timeout)

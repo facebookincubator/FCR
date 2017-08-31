@@ -88,6 +88,12 @@ class DeviceInfo(ServiceObj):
         return self._hostname
 
     def get_ip(self, options):
+        # If user specified an ip address, then use it directly
+        # Else we call the parent class to do the address selection
+        ip_address = options.get("ip_address")
+        if ip_address:
+            return ip_address
+
         use_mgmt_ip = options.get('mgmt_ip')
         if use_mgmt_ip:
             self.inc_counter("device_info.mgmt_ip")

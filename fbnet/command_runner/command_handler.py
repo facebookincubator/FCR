@@ -286,6 +286,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             "mgmt_ip": device.mgmt_ip or False,
             "open_timeout": open_timeout,
             "idle_timeout": idle_timeout,
+            "ip_address": device.ip_address,
         }
 
         if device.command_prompts:

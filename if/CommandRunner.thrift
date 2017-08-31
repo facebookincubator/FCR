@@ -51,6 +51,12 @@ struct Device {
    *    device = Device(hostname='bb01.iad1', prompts=prompts)
    */
   15: optional map<string, string> command_prompts,
+
+  /*
+   * IP address (v4/v6) to be used for the device. If specified, this will be
+   * used instead of doing a lookup.
+   */
+  16: optional string ip_address,
 }
 
 struct CommandResult {
