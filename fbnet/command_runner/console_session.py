@@ -97,7 +97,7 @@ class ConsoleCommandSession(SSHCommandSession):
             data = data.encode('utf8')
         self._stream_writer.write(data + end)
 
-    async def _try_login(self, username=None, passwd=None):
+    async def _try_login(self, username=None, passwd=None, kickstart=False):
         '''
         A helper function that tries to login into the device
         '''
@@ -139,10 +139,19 @@ class ConsoleCommandSession(SSHCommandSession):
             else:
                 raise RuntimeError("Matched no group: %s" % (res.groupdict))
         else:
-            raise RuntimeError("Login failed")
+            if kickstart and username:
+                # We likey didn't get anything from the console. Try sending a
+                # newline to kickstart the login process
+                self.logger.debug("kickstart console login")
+
+                # Clear the current line and send a newline
+                self.send(b'\x15\r\n')
+                return await self._try_login(username=username, passwd=passwd)
+            else:
+                raise RuntimeError("Login failed")
 
     async def _setup_connection(self):
-        await self._try_login(self._username, self._password)
+        await self._try_login(self._username, self._password, kickstart=True)
         # Now send the setup commands
         await super()._setup_connection()
 
