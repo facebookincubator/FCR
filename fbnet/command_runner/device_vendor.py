@@ -42,7 +42,8 @@ class DeviceVendor(ServiceObj):
         "prompt_regex": [b"[\w.]+[>#$]"],
         "cmd_timeout_sec": 30,
         "clear_command": b"\x15",
-        "session_type": b"ssh"
+        "session_type": b"ssh",
+        "autocomplete": True,
     }
 
     _PROMPTS_RE = re.compile(
@@ -62,7 +63,8 @@ class DeviceVendor(ServiceObj):
         props = {
             "cli_setup": self._config.cli_setup,
             "prompt_regex": self._config.prompt_regex,
-            "cmd_timeout_sec": self._config.cmd_timeout_sec
+            "cmd_timeout_sec": self._config.cmd_timeout_sec,
+            "autocomplete": self._config.autocomplete
         }
         return "DeviceVendor(%s) %s" % (self.vendor_name, props)
 
@@ -101,6 +103,10 @@ class DeviceVendor(ServiceObj):
     @property
     def session_type(self):
         return self._SESSION_TYPES[self._config.session_type]
+
+    @property
+    def autocomplete(self):
+        return self._config.autocomplete
 
     def select_session_type(self, options):
         '''

@@ -145,6 +145,9 @@ class DeviceInfo(ServiceObj):
     def _is_question(self, cmd):
         return cmd.endswith(b'?')
 
+    def _autocomplete(self):
+        return self.vendor_data.autocomplete
+
     def get_command_info(self, cmd, command_prompts=None):
         '''
         get command information.
@@ -169,7 +172,7 @@ class DeviceInfo(ServiceObj):
                 cmd += b'\n'
 
         if not prompt_rex:
-            if self._is_question(cmd):
+            if self._is_question(cmd) and self._autocomplete():
                 # We expect the command to be echoed back after prompt
                 trailer = cmd[:-1].strip()  # remove the last char ('?')
                 trailer = b'(?P<command>%s)[\b\s]*' % re.escape(trailer)
