@@ -337,6 +337,22 @@ class TestCommandHandler(AsyncTestCase):
                 self.assertEqual(result.status, 'run failed: TimeoutError()')
 
     @async_test
+    async def test_bulk_run_local_overload(self):
+        devices = ["test-dev-%d" % i for i in range(1, 5)]
+        commands = {self.mock_device(name): ["show version\n"] for name in devices}
+
+        Option.config.bulk_session_limit = 4
+        CommandHandler._bulk_session_count = 4
+
+        with self.assertRaises(ttypes.InstanceOverloaded) as exc:
+            await self.cmd_handler.bulk_run_local(
+                commands, 1, 1, client_ip, client_port)
+
+        self.assertEqual(
+            exc.exception.message,
+            "Too many session open: 4")
+
+    @async_test
     async def test_bluk_run_load_balance(self):
         Option.config.lb_threshold = 2
         device_names = {"test-dev-%d" % i for i in range(0, 10)}

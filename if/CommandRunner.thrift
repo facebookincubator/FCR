@@ -27,6 +27,10 @@ exception UnsupportedCommandException {
   1: string message,
 }
 
+exception InstanceOverloaded {
+  1: string message,
+}
+
 const string CONS_AUTO = 'auto'
 const string FAILURE_STATUS = 'failure'
 const string SUCCESS_STATUS = 'success'
@@ -149,7 +153,7 @@ service Command extends fb303.FacebookService {
      */
     10: string client_ip = ""
     11: string client_port = ""
-   )
+   ) throws (1: InstanceOverloaded ioe)
 
   /*
    * The following APIs is used to interact with a single device just

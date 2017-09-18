@@ -1020,6 +1020,7 @@ class bulk_run_local_result:
   """
   Attributes:
    - success
+   - ioe
   """
 
   thrift_spec = None
@@ -1085,6 +1086,12 @@ class bulk_run_local_result:
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.ioe = InstanceOverloaded()
+          self.ioe.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1113,6 +1120,10 @@ class bulk_run_local_result:
         oprot.writeListEnd()
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
+    if self.ioe != None:
+      oprot.writeFieldBegin('ioe', TType.STRUCT, 1)
+      self.ioe.write(oprot)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1122,6 +1133,9 @@ class bulk_run_local_result:
     value = pprint.pformat(self.success, indent=0)
     value = padding.join(value.splitlines(True))
     L.append('    success=%s' % (value))
+    value = pprint.pformat(self.ioe, indent=0)
+    value = padding.join(value.splitlines(True))
+    L.append('    ioe=%s' % (value))
     return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
 
   def __eq__(self, other):
@@ -1140,6 +1154,7 @@ class bulk_run_local_result:
 all_structs.append(bulk_run_local_result)
 bulk_run_local_result.thrift_spec = (
   (0, TType.MAP, 'success', (TType.STRING,True,TType.LIST,(TType.STRUCT,[CommandResult, CommandResult.thrift_spec, False])), None, 2, ), # 0
+  (1, TType.STRUCT, 'ioe', [InstanceOverloaded, InstanceOverloaded.thrift_spec, False], None, 2, ), # 1
 )
 
 bulk_run_local_result.thrift_struct_annotations = {
@@ -1147,8 +1162,9 @@ bulk_run_local_result.thrift_struct_annotations = {
 bulk_run_local_result.thrift_field_annotations = {
 }
 
-def bulk_run_local_result__init__(self, success=None,):
+def bulk_run_local_result__init__(self, success=None, ioe=None,):
   self.success = success
+  self.ioe = ioe
 
 bulk_run_local_result.__init__ = bulk_run_local_result__init__
 
@@ -2069,6 +2085,9 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     if result.success != None:
       fut.set_result(result.success)
       return
+    if result.ioe != None:
+      fut.set_exception(result.ioe)
+      return
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "bulk_run_local failed: unknown result"))
     return
 
@@ -2261,7 +2280,7 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
       fut = self._loop.run_in_executor(None, self._handler.bulk_run_local, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
     else:
       fut = call_as_future(self._handler.bulk_run_local, self._loop, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
-    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'ioe': InstanceOverloaded}, f))
     return fut
 
   @process_method(open_session_args, oneway=False, asyncio=True)
@@ -2344,7 +2363,7 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
       fut = self._loop.run_in_executor(None, self._handler.bulk_run_local, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
     else:
       fut = call_as_future(self._handler.bulk_run_local, self._loop, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
-    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'ioe': InstanceOverloaded}, f))
     return fut
 
   @process_method(open_session_args, oneway=False, asyncio=True)

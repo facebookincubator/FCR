@@ -10,6 +10,7 @@
 #
 
 import asyncio
+import random
 from itertools import islice
 
 from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
@@ -42,6 +43,35 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         send to other instances using bulk_run_local() api''',
         type=int, default=100)
 
+    BULK_SESSION_LIMIT = Option(
+        '--bulk_session_limit',
+        help='''session limit above which we reject the bulk run local
+        calls''',
+        type=int, default=200)
+
+    BULK_RETRY_LIMIT = Option(
+        '--bulk_retry_limit',
+        help='''number of times to retry bulk call on the remote instances''',
+        type=int, default=5)
+
+    BULK_RUN_JITTER = Option(
+        '--bulk_run_jitter',
+        help='''A random delay added for bulk commands to stagger the calls to
+        distribute the load.''',
+        type=int, default=5)
+
+    BULK_RETRY_DELAY_MIN = Option(
+        '--bulk_retry_delay_min',
+        help='''number of seconds to wait before retrying''',
+        type=int, default=5)
+
+    BULK_RETRY_DELAY_MAX = Option(
+        '--bulk_retry_delay_max',
+        help='''number of seconds to wait before retrying''',
+        type=int, default=10)
+
+    _bulk_session_count = 0
+
     def __init__(self, service, name=None):
         Counters.__init__(self, service, name)
         FacebookBase.__init__(self, service.app_name)
@@ -56,6 +86,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     def register_counters(cls, stats_mgr):
         stats_mgr.register_counter("bulk_run.remote")
         stats_mgr.register_counter("bulk_run.local")
+        stats_mgr.register_counter("bulk_run.local.overload_error")
 
     def getCounters(self):
         ret = {}
@@ -81,6 +112,21 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                                           client_port)
         return result[0]
 
+    def _bulk_failure(self, device_to_commands, message):
+
+        def command_failures(cmds):
+            return [
+                ttypes.CommandResult(output=message,
+                                     status=constants.FAILURE_STATUS,
+                                     command=cmd)
+                for cmd in cmds
+            ]
+
+        return {
+            self._get_result_key(dev): command_failures(cmds)
+            for dev, cmds in device_to_commands.items()
+        }
+
     async def bulk_run(self,
                        device_to_commands,
                        timeout,
@@ -88,17 +134,35 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                        client_ip,
                        client_port):
 
-        if len(device_to_commands) < self.LB_THRESHOLD:
+        if ((len(device_to_commands) < self.LB_THRESHOLD) and
+                (self._bulk_session_count < self.BULK_SESSION_LIMIT)):
             # Run these command locally.
             self.incrementCounter('bulk_run.local')
             return await self.bulk_run_local(device_to_commands, timeout,
                                              open_timeout, client_ip, client_port)
 
-        def _remote_task(chunk):
+        async def _remote_task(chunk):
             # Run the chunk of commands on remote instance
             self.incrementCounter('bulk_run.remote')
-            return self._bulk_run_remote(chunk, timeout, open_timeout,
-                                         client_ip, client_port)
+            retry_count = 0
+            while True:
+                try:
+                    return await self._bulk_run_remote(
+                        chunk, timeout, open_timeout,
+                        client_ip, client_port)
+                except ttypes.InstanceOverloaded as ioe:
+                    # Instance we ran the call on was overloaded. We can retry
+                    # the command again, hopefully on a different instance
+                    self.incrementCounter('bulk_run.remote.overload_error')
+                    self.logger.error("Instance Overloaded: %d: %s", retry_count, ioe)
+                    if retry_count > self.BULK_RETRY_LIMIT:
+                        # Fail the calls
+                        return self._bulk_failure(chunk, str(ioe))
+                    # Stagger the retries
+                    delay = random.uniform(self.BULK_RETRY_DELAY_MIN,
+                                           self.BULK_RETRY_DELAY_MAX)
+                    await asyncio.sleep(delay)
+                    retry_count += 1
 
         # Split the request into chunks and run them on remote hosts
         tasks = [_remote_task(chunk)
@@ -121,9 +185,20 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         devices = sorted(device_to_commands.keys(), key=lambda d: d.hostname)
 
-        commands = []
-        for device in devices:
-            cmd = self._run_commands(
+        session_count = self._bulk_session_count
+        if session_count + len(device_to_commands) > self.BULK_SESSION_LIMIT:
+            self.logger.error("To many session open: %d", session_count)
+            raise ttypes.InstanceOverloaded(
+                message='Too many session open: %d' % session_count)
+
+        self._bulk_session_count += len(devices)
+
+        async def _run_one_device(device):
+            # Instead of running all commands at once, stagger the commands to
+            # distribute the load
+            delay = random.uniform(0, self.BULK_RUN_JITTER)
+            await asyncio.sleep(delay)
+            return await self._run_commands(
                 device_to_commands[device],
                 device,
                 timeout,
@@ -131,12 +206,18 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 client_ip,
                 client_port,
                 return_exceptions=True)
-            commands.append(cmd)
 
-        # Run commands in parallel
-        cmd_results = await asyncio.gather(*commands,
-                                           loop=self.loop,
-                                           return_exceptions=True)
+        try:
+            commands = []
+            for device in devices:
+                commands.append(_run_one_device(device))
+
+            # Run commands in parallel
+            cmd_results = await asyncio.gather(*commands,
+                                               loop=self.loop,
+                                               return_exceptions=True)
+        finally:
+            self._bulk_session_count -= len(devices)
 
         return {self._get_result_key(dev): res
                 for dev, res in zip(devices, cmd_results)}
