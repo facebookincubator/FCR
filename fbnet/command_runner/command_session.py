@@ -410,7 +410,10 @@ class CliCommandSession(CommandSession):
         counters.register_counter("streamreader.overrun")
 
     async def _setup_connection(self):
-        await self.wait_prompt()
+        # At this point login process should already be complete. If a
+        # particular session needs to send password, it should override this
+        # method and complete the login before calling this method
+        await self.run_command(b"\n")
         for cmd in self._devinfo.vendor_data.cli_setup:
             await self.run_command(cmd + b"\n")
 
