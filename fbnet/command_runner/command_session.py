@@ -370,6 +370,11 @@ class CommandStream(asyncio.StreamReaderProtocol):
         """
         called when transport is connected
         """
+        # Sometimes the remote side doesn't send the newline for the first
+        # prompt. This causes our prompt matching to fail. Here we inject a
+        # newline to normalize these cases. This keeps our prompt processing
+        # simple.
+        super().data_received(b"\n")
         self._session._session_connected(stream_reader, stream_writer)
 
     def close(self):
@@ -413,7 +418,7 @@ class CliCommandSession(CommandSession):
         # At this point login process should already be complete. If a
         # particular session needs to send password, it should override this
         # method and complete the login before calling this method
-        await self.run_command(b"\n")
+        await self.wait_prompt()
         for cmd in self._devinfo.vendor_data.cli_setup:
             await self.run_command(cmd + b"\n")
 
