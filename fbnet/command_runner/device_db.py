@@ -47,17 +47,17 @@ class BaseDeviceDB(PeriodicServiceTask):
         your data depends on your local setup. Override this according to your
         setup
         """
-        await self._fetch_devices(self.DEVICE_NAME_FILTER)
+        await self._fetch_devices(name_filter=self.DEVICE_NAME_FILTER)
         self._data_valid = True
 
-    async def _fetch_devices(self, name_filter=None):
-        devices = await self._fetch_device_data(name_filter)
+    async def _fetch_devices(self, name_filter=None, hostname=None):
+        devices = await self._fetch_device_data(name_filter, hostname)
         for d in devices:
             self._devices[d.hostname] = d
             if d.alias:
                 self._devices[d.alias] = d
 
-    async def _fetch_device_data(self, name_filter=None):
+    async def _fetch_device_data(self, name_filter=None, hostname=None):
         '''
         Fetch device data
 
@@ -81,7 +81,7 @@ class BaseDeviceDB(PeriodicServiceTask):
         '''
         if device.hostname not in self._devices and autofetch:
             # Try to fetch the device info
-            await self._fetch_devices(device.hostname)
+            await self._fetch_devices(hostname=device.hostname)
 
         if device.hostname in self._devices:
             # Found the device
