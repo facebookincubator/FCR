@@ -76,7 +76,7 @@ class MockDeviceDB(BaseDeviceDB):
             'ch_model'
         )
 
-    async def _fetch_device_data(self, name_filter=None):
+    async def _fetch_device_data(self, name_filter=None, hostname=None):
         self.logger.info('got devices: %s', self.mock_devices)
         return self.mock_devices
 
