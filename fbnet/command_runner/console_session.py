@@ -107,7 +107,7 @@ class ConsoleCommandSession(SSHCommandSession):
         if res:
             if res.groupdict.get('ignore'):
                 # If we match anything in the ignore prompts, set a \r\n
-                self.send(b'\r', end=b'')
+                self._send_newline(end=b'')
                 await asyncio.sleep(0.2)  # Let the console catch up
                 # Now again try to login.
                 return await self._try_login(username=username, passwd=passwd)
@@ -134,7 +134,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
             elif res.groupdict.get('prompt'):
                 # Finally we matched a prompt. we are done
-                return self.send(b'\r')
+                return self._send_newline()
 
             else:
                 raise RuntimeError("Matched no group: %s" % (res.groupdict))
@@ -145,10 +145,16 @@ class ConsoleCommandSession(SSHCommandSession):
                 self.logger.debug("kickstart console login")
 
                 # Clear the current line and send a newline
-                self.send(b'\x15\r\n')
+                self._send_clearline()
                 return await self._try_login(username=username, passwd=passwd)
             else:
                 raise RuntimeError("Login failed")
+
+    def _send_clearline(self):
+        self.send(b'\x15\r\n')
+
+    def _send_newline(self, end="\n"):
+        self.send(b'\r', end)
 
     async def _setup_connection(self):
         await self._try_login(self._username, self._password, kickstart=True)
