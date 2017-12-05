@@ -153,7 +153,7 @@ class ConsoleCommandSession(SSHCommandSession):
     def _send_clearline(self):
         self.send(b'\x15\r\n')
 
-    def _send_newline(self, end="\n"):
+    def _send_newline(self, end=b"\n"):
         self.send(b'\r', end)
 
     async def _setup_connection(self):
