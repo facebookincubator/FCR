@@ -604,7 +604,7 @@ class SSHCommandSession(CliCommandSession):
     async def _connect(self):
         host, port, user, passwd = await self.dest_info()
 
-        if self._devinfo.connect_using_proxy():
+        if self._devinfo.connect_using_proxy(host):
             host = self.service.get_http_proxy_url(host)
 
         self.logger.info("Connecting to: %s: %d", host, port)
