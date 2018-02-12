@@ -69,7 +69,7 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertEqual(
             exc.exception.message,
-            "run failed: KeyError('Device not found', 'test-dev-100')")
+            "KeyError('Device not found', 'test-dev-100')")
 
     @async_test
     async def test_run_connect_timeout(self):
@@ -89,7 +89,8 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertEqual(
             exc.exception.message,
-            "run failed: TimeoutError()")
+            "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+            "TimeoutError()")
 
     @async_test
     async def test_run_command_timeout(self):
@@ -107,7 +108,8 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertEqual(
             exc.exception.message,
-            "run failed: TimeoutError()")
+            "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+            "TimeoutError()")
 
     @async_test
     async def test_run_success_user_prompt(self):
@@ -153,7 +155,8 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertEqual(
             exc.exception.message,
-            "run failed: RuntimeError('Command Response Timeout', "
+            "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+            "RuntimeError('Command Response Timeout', "
             "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>')")
 
     @async_test
@@ -283,7 +286,8 @@ class TestCommandHandler(AsyncTestCase):
             if host == "test-dev-0":
                 result = all_results[host][0]
                 self.assertEqual(result.status,
-                                 "run failed: KeyError('%s', '%s')" % (
+                                 "SessionException(\n    message=\""
+                                 "KeyError('%s', '%s')\")" % (
                                      'Device not found', 'test-dev-0'))
                 continue
             for result in all_results[host]:
@@ -306,7 +310,8 @@ class TestCommandHandler(AsyncTestCase):
             if host == "test-dev-0":
                 result = all_results[host][0]
                 self.assertEqual(result.status,
-                                 "run failed: KeyError('%s', '%s')" % (
+                                 "SessionException(\n    message=\""
+                                 "KeyError('%s', '%s')\")" % (
                                      'Device not found', 'test-dev-0'))
                 continue
             for result in all_results[host]:
@@ -330,11 +335,16 @@ class TestCommandHandler(AsyncTestCase):
             if host == "test-dev-0":
                 result = all_results[host][0]
                 self.assertEqual(result.status,
-                                 "run failed: KeyError('%s', '%s')" % (
+                                 "SessionException(\n    message=\""
+                                 "KeyError('%s', '%s')\")" % (
                                      'Device not found', 'test-dev-0'))
                 continue
             for result in all_results[host]:
-                self.assertEqual(result.status, 'run failed: TimeoutError()')
+                self.assertEqual(
+                    result.status,
+                    "SessionException(\n    message=\"Failed (session: "
+                    "MockCommandSession, peer: ('test-ip', 22)): "
+                    "TimeoutError()\")")
 
     @async_test
     async def test_bulk_run_local_overload(self):
@@ -424,8 +434,8 @@ class TestCommandHandler(AsyncTestCase):
             self.assertEqual(result.output,
                              "$ show version\nMock response for show version")
         elif result.command == "command timeout\n":
-            status_fmt = "run failed: RuntimeError" + \
-                "('{0}', b'{2}\\nMock response for {2}')"
+            status_fmt = "Failed (session: MockCommandSession, peer: "\
+                "('test-ip' 22)): RuntimeError('{0}', b'{2}\\nMock response for {2}')"
             self.assertEqual(result.status,
                              status_fmt.format('Command Response Timeout',
                                                'command timeout'))

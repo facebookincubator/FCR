@@ -18,6 +18,8 @@ from collections import namedtuple
 
 import abc
 
+from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
+
 from .base_service import ServiceObj
 
 log = logging.getLogger('fcr.CommandSession')
@@ -76,6 +78,12 @@ class CommandSession(ServiceObj):
         # Record the session in the cache
         self._ALL_SESSIONS[self.key] = self
 
+    def get_session_name(self):
+        return self.objname
+
+    def get_peer_info(self):
+        return self._extra_info['peer']
+
     def create_logger(self):
         logger = logging.getLogger(
             "fcr.{klass}.{dev.vendor_name}.{dev.hostname}".format(
@@ -115,12 +123,21 @@ class CommandSession(ServiceObj):
             await self.setup()
         except Exception as e:
             await self.close()
-            raise e
+            raise self._build_session_exc(e) from e
 
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return await self.close()
+        await self.close()
+        if exc_val:
+            raise self._build_session_exc(exc_val) from exc_val
+
+    def _build_session_exc(self, exc):
+        msg = 'Failed (session: %s, peer: %s): %r' % (
+            self.get_session_name(),
+            self.get_peer_info(),
+            exc)
+        return SessionException(message=msg)
 
     @classmethod
     def get(cls, session_id, client_ip, client_port):
@@ -603,6 +620,7 @@ class SSHCommandSession(CliCommandSession):
 
     async def _connect(self):
         host, port, user, passwd = await self.dest_info()
+        self._extra_info['peer'] = (host, port)
 
         if self._devinfo.connect_using_proxy(host):
             host = self.service.get_http_proxy_url(host)
