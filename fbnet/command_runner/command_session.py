@@ -622,7 +622,9 @@ class SSHCommandSession(CliCommandSession):
         host, port, user, passwd = await self.dest_info()
         self._extra_info['peer'] = (host, port)
 
-        if self._devinfo.connect_using_proxy(host):
+        # TODO: We need to resolve the console hostnames to ip addresses.
+        # Ignoring consoles for now.
+        if not self._console and self._devinfo.connect_using_proxy(host):
             host = self.service.get_http_proxy_url(host)
 
         self.logger.info("Connecting to: %s: %d", host, port)
