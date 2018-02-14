@@ -283,7 +283,7 @@ class DeviceDB(BaseDeviceDB):
         return DeviceInfo(
             self.service,
             hostname=devinfo['host'],
-            username='default',     # typically a user with a bare minimum RO priviledges
+            username='default',     # typically a user with a bare minimum RO privileges
             password='passwd',
             pref_ips=devinfo['ip'], # a list of IP addresses in order of preferences
             ip=devinfo['ip'][0],    # the default fallback IP (after exhausting the pref_ips
