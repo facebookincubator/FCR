@@ -624,7 +624,8 @@ class SSHCommandSession(CliCommandSession):
 
         # TODO: We need to resolve the console hostnames to ip addresses.
         # Ignoring consoles for now.
-        if not self._console and self._devinfo.connect_using_proxy(host):
+        if (not getattr(self, '_console', False) and
+           self._devinfo.connect_using_proxy(host)):
             host = self.service.get_http_proxy_url(host)
 
         self.logger.info("Connecting to: %s: %d", host, port)
