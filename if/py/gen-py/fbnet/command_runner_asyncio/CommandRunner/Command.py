@@ -24,10 +24,12 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 from thrift.protocol import THeaderProtocol
-try:
-  from thrift.protocol import fastproto
-except:
-  fastproto = None
+fastproto = None
+if not '__pypy__' in sys.builtin_module_names:
+  try:
+    from thrift.protocol import fastproto
+  except:
+    pass
 
 all_structs = []
 UTF8STRINGS = bool(0) or sys.version_info.major >= 3
@@ -288,25 +290,31 @@ class run_args:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.command, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    command=%s' % (value))
-    value = pprint.pformat(self.device, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    device=%s' % (value))
-    value = pprint.pformat(self.timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    timeout=%s' % (value))
-    value = pprint.pformat(self.open_timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    open_timeout=%s' % (value))
-    value = pprint.pformat(self.client_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_ip=%s' % (value))
-    value = pprint.pformat(self.client_port, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_port=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.command is not None:
+      value = pprint.pformat(self.command, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    command=%s' % (value))
+    if self.device is not None:
+      value = pprint.pformat(self.device, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    device=%s' % (value))
+    if self.timeout is not None:
+      value = pprint.pformat(self.timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    timeout=%s' % (value))
+    if self.open_timeout is not None:
+      value = pprint.pformat(self.open_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    open_timeout=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -351,6 +359,18 @@ def run_args__init__(self, command=None, device=None, timeout=run_args.thrift_sp
   self.client_port = client_port
 
 run_args.__init__ = run_args__init__
+
+def run_args__setstate__(self, state):
+  state.setdefault('command', None)
+  state.setdefault('device', None)
+  state.setdefault('timeout', 300)
+  state.setdefault('open_timeout', 30)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+run_args.__getstate__ = lambda self: self.__dict__.copy()
+run_args.__setstate__ = run_args__setstate__
 
 class run_result:
   """
@@ -435,16 +455,19 @@ class run_result:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.success, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    success=%s' % (value))
-    value = pprint.pformat(self.se, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    se=%s' % (value))
-    value = pprint.pformat(self.ude, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    ude=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    if self.ude is not None:
+      value = pprint.pformat(self.ude, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    ude=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -477,6 +500,15 @@ def run_result__init__(self, success=None, se=None, ude=None,):
   self.ude = ude
 
 run_result.__init__ = run_result__init__
+
+def run_result__setstate__(self, state):
+  state.setdefault('success', None)
+  state.setdefault('se', None)
+  state.setdefault('ude', None)
+  self.__dict__ = state
+
+run_result.__getstate__ = lambda self: self.__dict__.copy()
+run_result.__setstate__ = run_result__setstate__
 
 class bulk_run_args:
   """
@@ -619,22 +651,27 @@ class bulk_run_args:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.device_to_commands, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    device_to_commands=%s' % (value))
-    value = pprint.pformat(self.timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    timeout=%s' % (value))
-    value = pprint.pformat(self.open_timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    open_timeout=%s' % (value))
-    value = pprint.pformat(self.client_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_ip=%s' % (value))
-    value = pprint.pformat(self.client_port, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_port=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.device_to_commands is not None:
+      value = pprint.pformat(self.device_to_commands, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    device_to_commands=%s' % (value))
+    if self.timeout is not None:
+      value = pprint.pformat(self.timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    timeout=%s' % (value))
+    if self.open_timeout is not None:
+      value = pprint.pformat(self.open_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    open_timeout=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -678,6 +715,17 @@ def bulk_run_args__init__(self, device_to_commands=None, timeout=bulk_run_args.t
   self.client_port = client_port
 
 bulk_run_args.__init__ = bulk_run_args__init__
+
+def bulk_run_args__setstate__(self, state):
+  state.setdefault('device_to_commands', None)
+  state.setdefault('timeout', 300)
+  state.setdefault('open_timeout', 30)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+bulk_run_args.__getstate__ = lambda self: self.__dict__.copy()
+bulk_run_args.__setstate__ = bulk_run_args__setstate__
 
 class bulk_run_result:
   """
@@ -782,10 +830,11 @@ class bulk_run_result:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.success, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    success=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -814,6 +863,13 @@ def bulk_run_result__init__(self, success=None,):
   self.success = success
 
 bulk_run_result.__init__ = bulk_run_result__init__
+
+def bulk_run_result__setstate__(self, state):
+  state.setdefault('success', None)
+  self.__dict__ = state
+
+bulk_run_result.__getstate__ = lambda self: self.__dict__.copy()
+bulk_run_result.__setstate__ = bulk_run_result__setstate__
 
 class bulk_run_local_args:
   """
@@ -956,22 +1012,27 @@ class bulk_run_local_args:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.device_to_commands, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    device_to_commands=%s' % (value))
-    value = pprint.pformat(self.timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    timeout=%s' % (value))
-    value = pprint.pformat(self.open_timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    open_timeout=%s' % (value))
-    value = pprint.pformat(self.client_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_ip=%s' % (value))
-    value = pprint.pformat(self.client_port, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_port=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.device_to_commands is not None:
+      value = pprint.pformat(self.device_to_commands, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    device_to_commands=%s' % (value))
+    if self.timeout is not None:
+      value = pprint.pformat(self.timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    timeout=%s' % (value))
+    if self.open_timeout is not None:
+      value = pprint.pformat(self.open_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    open_timeout=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1015,6 +1076,17 @@ def bulk_run_local_args__init__(self, device_to_commands=None, timeout=bulk_run_
   self.client_port = client_port
 
 bulk_run_local_args.__init__ = bulk_run_local_args__init__
+
+def bulk_run_local_args__setstate__(self, state):
+  state.setdefault('device_to_commands', None)
+  state.setdefault('timeout', 300)
+  state.setdefault('open_timeout', 30)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+bulk_run_local_args.__getstate__ = lambda self: self.__dict__.copy()
+bulk_run_local_args.__setstate__ = bulk_run_local_args__setstate__
 
 class bulk_run_local_result:
   """
@@ -1130,13 +1202,15 @@ class bulk_run_local_result:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.success, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    success=%s' % (value))
-    value = pprint.pformat(self.ioe, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    ioe=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    if self.ioe is not None:
+      value = pprint.pformat(self.ioe, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    ioe=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1167,6 +1241,14 @@ def bulk_run_local_result__init__(self, success=None, ioe=None,):
   self.ioe = ioe
 
 bulk_run_local_result.__init__ = bulk_run_local_result__init__
+
+def bulk_run_local_result__setstate__(self, state):
+  state.setdefault('success', None)
+  state.setdefault('ioe', None)
+  self.__dict__ = state
+
+bulk_run_local_result.__getstate__ = lambda self: self.__dict__.copy()
+bulk_run_local_result.__setstate__ = bulk_run_local_result__setstate__
 
 class open_session_args:
   """
@@ -1269,22 +1351,27 @@ class open_session_args:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.device, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    device=%s' % (value))
-    value = pprint.pformat(self.open_timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    open_timeout=%s' % (value))
-    value = pprint.pformat(self.idle_timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    idle_timeout=%s' % (value))
-    value = pprint.pformat(self.client_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_ip=%s' % (value))
-    value = pprint.pformat(self.client_port, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_port=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.device is not None:
+      value = pprint.pformat(self.device, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    device=%s' % (value))
+    if self.open_timeout is not None:
+      value = pprint.pformat(self.open_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    open_timeout=%s' % (value))
+    if self.idle_timeout is not None:
+      value = pprint.pformat(self.idle_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    idle_timeout=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1328,6 +1415,17 @@ def open_session_args__init__(self, device=None, open_timeout=open_session_args.
   self.client_port = client_port
 
 open_session_args.__init__ = open_session_args__init__
+
+def open_session_args__setstate__(self, state):
+  state.setdefault('device', None)
+  state.setdefault('open_timeout', 60)
+  state.setdefault('idle_timeout', 300)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+open_session_args.__getstate__ = lambda self: self.__dict__.copy()
+open_session_args.__setstate__ = open_session_args__setstate__
 
 class open_session_result:
   """
@@ -1401,13 +1499,15 @@ class open_session_result:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.success, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    success=%s' % (value))
-    value = pprint.pformat(self.se, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    se=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1438,6 +1538,14 @@ def open_session_result__init__(self, success=None, se=None,):
   self.se = se
 
 open_session_result.__init__ = open_session_result__init__
+
+def open_session_result__setstate__(self, state):
+  state.setdefault('success', None)
+  state.setdefault('se', None)
+  self.__dict__ = state
+
+open_session_result.__getstate__ = lambda self: self.__dict__.copy()
+open_session_result.__setstate__ = open_session_result__setstate__
 
 class run_session_args:
   """
@@ -1540,22 +1648,27 @@ class run_session_args:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.session, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    session=%s' % (value))
-    value = pprint.pformat(self.command, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    command=%s' % (value))
-    value = pprint.pformat(self.timeout, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    timeout=%s' % (value))
-    value = pprint.pformat(self.client_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_ip=%s' % (value))
-    value = pprint.pformat(self.client_port, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_port=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.session is not None:
+      value = pprint.pformat(self.session, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    session=%s' % (value))
+    if self.command is not None:
+      value = pprint.pformat(self.command, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    command=%s' % (value))
+    if self.timeout is not None:
+      value = pprint.pformat(self.timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    timeout=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1599,6 +1712,17 @@ def run_session_args__init__(self, session=None, command=None, timeout=run_sessi
   self.client_port = client_port
 
 run_session_args.__init__ = run_session_args__init__
+
+def run_session_args__setstate__(self, state):
+  state.setdefault('session', None)
+  state.setdefault('command', None)
+  state.setdefault('timeout', 300)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+run_session_args.__getstate__ = lambda self: self.__dict__.copy()
+run_session_args.__setstate__ = run_session_args__setstate__
 
 class run_session_result:
   """
@@ -1672,13 +1796,15 @@ class run_session_result:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.success, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    success=%s' % (value))
-    value = pprint.pformat(self.se, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    se=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1709,6 +1835,14 @@ def run_session_result__init__(self, success=None, se=None,):
   self.se = se
 
 run_session_result.__init__ = run_session_result__init__
+
+def run_session_result__setstate__(self, state):
+  state.setdefault('success', None)
+  state.setdefault('se', None)
+  self.__dict__ = state
+
+run_session_result.__getstate__ = lambda self: self.__dict__.copy()
+run_session_result.__setstate__ = run_session_result__setstate__
 
 class close_session_args:
   """
@@ -1791,16 +1925,19 @@ class close_session_args:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.session, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    session=%s' % (value))
-    value = pprint.pformat(self.client_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_ip=%s' % (value))
-    value = pprint.pformat(self.client_port, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    client_port=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.session is not None:
+      value = pprint.pformat(self.session, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    session=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1842,6 +1979,15 @@ def close_session_args__init__(self, session=None, client_ip=close_session_args.
   self.client_port = client_port
 
 close_session_args.__init__ = close_session_args__init__
+
+def close_session_args__setstate__(self, state):
+  state.setdefault('session', None)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+close_session_args.__getstate__ = lambda self: self.__dict__.copy()
+close_session_args.__setstate__ = close_session_args__setstate__
 
 class close_session_result:
   """
@@ -1904,10 +2050,11 @@ class close_session_result:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.se, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    se=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -1937,6 +2084,13 @@ def close_session_result__init__(self, se=None,):
   self.se = se
 
 close_session_result.__init__ = close_session_result__init__
+
+def close_session_result__setstate__(self, state):
+  state.setdefault('se', None)
+  self.__dict__ = state
+
+close_session_result.__getstate__ = lambda self: self.__dict__.copy()
+close_session_result.__setstate__ = close_session_result__setstate__
 
 class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
   def __init__(self, oprot, loop=None):
@@ -1982,7 +2136,11 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
       fut.set_exception(x)
       return
     result = run_result()
-    result.read(iprot)
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
     iprot.readMessageEnd()
     if result.success != None:
       fut.set_result(result.success)
@@ -2034,7 +2192,11 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
       fut.set_exception(x)
       return
     result = bulk_run_result()
-    result.read(iprot)
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
     iprot.readMessageEnd()
     if result.success != None:
       fut.set_result(result.success)
@@ -2080,7 +2242,11 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
       fut.set_exception(x)
       return
     result = bulk_run_local_result()
-    result.read(iprot)
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
     iprot.readMessageEnd()
     if result.success != None:
       fut.set_result(result.success)
@@ -2129,7 +2295,11 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
       fut.set_exception(x)
       return
     result = open_session_result()
-    result.read(iprot)
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
     iprot.readMessageEnd()
     if result.success != None:
       fut.set_result(result.success)
@@ -2178,7 +2348,11 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
       fut.set_exception(x)
       return
     result = run_session_result()
-    result.read(iprot)
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
     iprot.readMessageEnd()
     if result.success != None:
       fut.set_result(result.success)
@@ -2223,7 +2397,11 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
       fut.set_exception(x)
       return
     result = close_session_result()
-    result.read(iprot)
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
     iprot.readMessageEnd()
     if result.se != None:
       fut.set_exception(result.se)
@@ -2238,11 +2416,17 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def __init__(self, handler, loop=None):
     fb303_asyncio.fb303.FacebookService.Processor.__init__(self, handler, loop)
     self._processMap["run"] = Processor.process_run
+    self._priorityMap["run"] = TPriority.NORMAL
     self._processMap["bulk_run"] = Processor.process_bulk_run
+    self._priorityMap["bulk_run"] = TPriority.NORMAL
     self._processMap["bulk_run_local"] = Processor.process_bulk_run_local
+    self._priorityMap["bulk_run_local"] = TPriority.NORMAL
     self._processMap["open_session"] = Processor.process_open_session
+    self._priorityMap["open_session"] = TPriority.NORMAL
     self._processMap["run_session"] = Processor.process_run_session
+    self._priorityMap["run_session"] = TPriority.NORMAL
     self._processMap["close_session"] = Processor.process_close_session
+    self._priorityMap["close_session"] = TPriority.NORMAL
 
   def onewayMethods(self):
     l = []
@@ -2321,11 +2505,17 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def __init__(self, handler, loop=None):
     fb303_asyncio.fb303.FacebookService.ContextProcessor.__init__(self, handler, loop)
     self._processMap["run"] = ContextProcessor.process_run
+    self._priorityMap["run"] = TPriority.NORMAL
     self._processMap["bulk_run"] = ContextProcessor.process_bulk_run
+    self._priorityMap["bulk_run"] = TPriority.NORMAL
     self._processMap["bulk_run_local"] = ContextProcessor.process_bulk_run_local
+    self._priorityMap["bulk_run_local"] = TPriority.NORMAL
     self._processMap["open_session"] = ContextProcessor.process_open_session
+    self._priorityMap["open_session"] = TPriority.NORMAL
     self._processMap["run_session"] = ContextProcessor.process_run_session
+    self._priorityMap["run_session"] = TPriority.NORMAL
     self._processMap["close_session"] = ContextProcessor.process_close_session
+    self._priorityMap["close_session"] = TPriority.NORMAL
 
   def onewayMethods(self):
     l = []

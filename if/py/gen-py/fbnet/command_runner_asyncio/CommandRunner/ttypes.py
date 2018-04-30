@@ -22,14 +22,30 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 from thrift.protocol import THeaderProtocol
-try:
-  from thrift.protocol import fastproto
-except:
-  fastproto = None
+fastproto = None
+if not '__pypy__' in sys.builtin_module_names:
+  try:
+    from thrift.protocol import fastproto
+  except:
+    pass
 all_structs = []
 UTF8STRINGS = bool(0) or sys.version_info.major >= 3
 
-__all__ = ['UTF8STRINGS', 'FBNetDataException', 'UnsupportedDeviceException', 'SessionException', 'UnsupportedCommandException', 'InstanceOverloaded', 'Device', 'CommandResult', 'Session']
+__all__ = ['UTF8STRINGS', 'SessionType', 'FBNetDataException', 'UnsupportedDeviceException', 'SessionException', 'UnsupportedCommandException', 'InstanceOverloaded', 'SessionData', 'Device', 'CommandResult', 'Session']
+
+class SessionType:
+  SSH = 1
+  SSH_NETCONF = 2
+
+  _VALUES_TO_NAMES = {
+    1: "SSH",
+    2: "SSH_NETCONF",
+  }
+
+  _NAMES_TO_VALUES = {
+    "SSH": 1,
+    "SSH_NETCONF": 2,
+  }
 
 class FBNetDataException(TException):
   """
@@ -94,14 +110,15 @@ class FBNetDataException(TException):
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.message, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    message=%s' % (value))
+    if self.message is not None:
+      value = pprint.pformat(self.message, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    message=%s' % (value))
     if 'message' not in self.__dict__:
       message = getattr(self, 'message', None)
       if message:
         L.append('message=%r' % message)
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -179,14 +196,15 @@ class UnsupportedDeviceException(TException):
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.message, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    message=%s' % (value))
+    if self.message is not None:
+      value = pprint.pformat(self.message, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    message=%s' % (value))
     if 'message' not in self.__dict__:
       message = getattr(self, 'message', None)
       if message:
         L.append('message=%r' % message)
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -264,14 +282,15 @@ class SessionException(TException):
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.message, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    message=%s' % (value))
+    if self.message is not None:
+      value = pprint.pformat(self.message, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    message=%s' % (value))
     if 'message' not in self.__dict__:
       message = getattr(self, 'message', None)
       if message:
         L.append('message=%r' % message)
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -349,14 +368,15 @@ class UnsupportedCommandException(TException):
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.message, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    message=%s' % (value))
+    if self.message is not None:
+      value = pprint.pformat(self.message, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    message=%s' % (value))
     if 'message' not in self.__dict__:
       message = getattr(self, 'message', None)
       if message:
         L.append('message=%r' % message)
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -434,14 +454,108 @@ class InstanceOverloaded(TException):
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.message, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    message=%s' % (value))
+    if self.message is not None:
+      value = pprint.pformat(self.message, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    message=%s' % (value))
     if 'message' not in self.__dict__:
       message = getattr(self, 'message', None)
       if message:
         L.append('message=%r' % message)
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+class SessionData:
+  """
+  Attributes:
+   - subsystem
+   - exec_command
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.subsystem = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.exec_command = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('SessionData')
+    if self.subsystem != None:
+      oprot.writeFieldBegin('subsystem', TType.STRING, 1)
+      oprot.writeString(self.subsystem.encode('utf-8')) if UTF8STRINGS and not isinstance(self.subsystem, bytes) else oprot.writeString(self.subsystem)
+      oprot.writeFieldEnd()
+    if self.exec_command != None:
+      oprot.writeFieldBegin('exec_command', TType.STRING, 2)
+      oprot.writeString(self.exec_command.encode('utf-8')) if UTF8STRINGS and not isinstance(self.exec_command, bytes) else oprot.writeString(self.exec_command)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.subsystem is not None:
+      value = pprint.pformat(self.subsystem, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    subsystem=%s' % (value))
+    if self.exec_command is not None:
+      value = pprint.pformat(self.exec_command, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    exec_command=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -466,6 +580,8 @@ class Device:
    - mgmt_ip
    - command_prompts
    - ip_address
+   - session_type
+   - session_data
   """
 
   thrift_spec = None
@@ -537,6 +653,17 @@ class Device:
           self.ip_address = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 17:
+        if ftype == TType.I32:
+          self.session_type = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 18:
+        if ftype == TType.STRUCT:
+          self.session_data = SessionData()
+          self.session_data.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -595,34 +722,57 @@ class Device:
       oprot.writeFieldBegin('ip_address', TType.STRING, 16)
       oprot.writeString(self.ip_address.encode('utf-8')) if UTF8STRINGS and not isinstance(self.ip_address, bytes) else oprot.writeString(self.ip_address)
       oprot.writeFieldEnd()
+    if self.session_type != None:
+      oprot.writeFieldBegin('session_type', TType.I32, 17)
+      oprot.writeI32(self.session_type)
+      oprot.writeFieldEnd()
+    if self.session_data != None:
+      oprot.writeFieldBegin('session_data', TType.STRUCT, 18)
+      self.session_data.write(oprot)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.hostname, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    hostname=%s' % (value))
-    value = pprint.pformat(self.username, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    username=%s' % (value))
-    value = pprint.pformat(self.password, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    password=%s' % (value))
-    value = pprint.pformat(self.console, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    console=%s' % (value))
-    value = pprint.pformat(self.mgmt_ip, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    mgmt_ip=%s' % (value))
-    value = pprint.pformat(self.command_prompts, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    command_prompts=%s' % (value))
-    value = pprint.pformat(self.ip_address, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    ip_address=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.hostname is not None:
+      value = pprint.pformat(self.hostname, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    hostname=%s' % (value))
+    if self.username is not None:
+      value = pprint.pformat(self.username, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    username=%s' % (value))
+    if self.password is not None:
+      value = pprint.pformat(self.password, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    password=%s' % (value))
+    if self.console is not None:
+      value = pprint.pformat(self.console, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    console=%s' % (value))
+    if self.mgmt_ip is not None:
+      value = pprint.pformat(self.mgmt_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    mgmt_ip=%s' % (value))
+    if self.command_prompts is not None:
+      value = pprint.pformat(self.command_prompts, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    command_prompts=%s' % (value))
+    if self.ip_address is not None:
+      value = pprint.pformat(self.ip_address, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    ip_address=%s' % (value))
+    if self.session_type is not None:
+      value = pprint.pformat(self.session_type, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    session_type=%s' % (value))
+    if self.session_data is not None:
+      value = pprint.pformat(self.session_data, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    session_data=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -726,16 +876,19 @@ class CommandResult:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.output, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    output=%s' % (value))
-    value = pprint.pformat(self.status, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    status=%s' % (value))
-    value = pprint.pformat(self.command, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    command=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.output is not None:
+      value = pprint.pformat(self.output, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    output=%s' % (value))
+    if self.status is not None:
+      value = pprint.pformat(self.status, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    status=%s' % (value))
+    if self.command is not None:
+      value = pprint.pformat(self.command, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    command=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -839,16 +992,19 @@ class Session:
   def __repr__(self):
     L = []
     padding = ' ' * 4
-    value = pprint.pformat(self.id, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    id=%s' % (value))
-    value = pprint.pformat(self.name, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    name=%s' % (value))
-    value = pprint.pformat(self.hostname, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    hostname=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
+    if self.id is not None:
+      value = pprint.pformat(self.id, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    id=%s' % (value))
+    if self.name is not None:
+      value = pprint.pformat(self.name, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    name=%s' % (value))
+    if self.hostname is not None:
+      value = pprint.pformat(self.hostname, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    hostname=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
@@ -879,6 +1035,13 @@ def FBNetDataException__init__(self, message=None,):
 
 FBNetDataException.__init__ = FBNetDataException__init__
 
+def FBNetDataException__setstate__(self, state):
+  state.setdefault('message', None)
+  self.__dict__ = state
+
+FBNetDataException.__getstate__ = lambda self: self.__dict__.copy()
+FBNetDataException.__setstate__ = FBNetDataException__setstate__
+
 all_structs.append(UnsupportedDeviceException)
 UnsupportedDeviceException.thrift_spec = (
   None, # 0
@@ -894,6 +1057,13 @@ def UnsupportedDeviceException__init__(self, message=None,):
   self.message = message
 
 UnsupportedDeviceException.__init__ = UnsupportedDeviceException__init__
+
+def UnsupportedDeviceException__setstate__(self, state):
+  state.setdefault('message', None)
+  self.__dict__ = state
+
+UnsupportedDeviceException.__getstate__ = lambda self: self.__dict__.copy()
+UnsupportedDeviceException.__setstate__ = UnsupportedDeviceException__setstate__
 
 all_structs.append(SessionException)
 SessionException.thrift_spec = (
@@ -911,6 +1081,13 @@ def SessionException__init__(self, message=None,):
 
 SessionException.__init__ = SessionException__init__
 
+def SessionException__setstate__(self, state):
+  state.setdefault('message', None)
+  self.__dict__ = state
+
+SessionException.__getstate__ = lambda self: self.__dict__.copy()
+SessionException.__setstate__ = SessionException__setstate__
+
 all_structs.append(UnsupportedCommandException)
 UnsupportedCommandException.thrift_spec = (
   None, # 0
@@ -927,6 +1104,13 @@ def UnsupportedCommandException__init__(self, message=None,):
 
 UnsupportedCommandException.__init__ = UnsupportedCommandException__init__
 
+def UnsupportedCommandException__setstate__(self, state):
+  state.setdefault('message', None)
+  self.__dict__ = state
+
+UnsupportedCommandException.__getstate__ = lambda self: self.__dict__.copy()
+UnsupportedCommandException.__setstate__ = UnsupportedCommandException__setstate__
+
 all_structs.append(InstanceOverloaded)
 InstanceOverloaded.thrift_spec = (
   None, # 0
@@ -942,6 +1126,39 @@ def InstanceOverloaded__init__(self, message=None,):
   self.message = message
 
 InstanceOverloaded.__init__ = InstanceOverloaded__init__
+
+def InstanceOverloaded__setstate__(self, state):
+  state.setdefault('message', None)
+  self.__dict__ = state
+
+InstanceOverloaded.__getstate__ = lambda self: self.__dict__.copy()
+InstanceOverloaded.__setstate__ = InstanceOverloaded__setstate__
+
+all_structs.append(SessionData)
+SessionData.thrift_spec = (
+  None, # 0
+  (1, TType.STRING, 'subsystem', True, None, 1, ), # 1
+  (2, TType.STRING, 'exec_command', True, None, 1, ), # 2
+)
+
+SessionData.thrift_struct_annotations = {
+}
+SessionData.thrift_field_annotations = {
+}
+
+def SessionData__init__(self, subsystem=None, exec_command=None,):
+  self.subsystem = subsystem
+  self.exec_command = exec_command
+
+SessionData.__init__ = SessionData__init__
+
+def SessionData__setstate__(self, state):
+  state.setdefault('subsystem', None)
+  state.setdefault('exec_command', None)
+  self.__dict__ = state
+
+SessionData.__getstate__ = lambda self: self.__dict__.copy()
+SessionData.__setstate__ = SessionData__setstate__
 
 all_structs.append(Device)
 Device.thrift_spec = (
@@ -962,6 +1179,8 @@ Device.thrift_spec = (
   (14, TType.BOOL, 'mgmt_ip', None, False, 1, ), # 14
   (15, TType.MAP, 'command_prompts', (TType.STRING,True,TType.STRING,True), None, 1, ), # 15
   (16, TType.STRING, 'ip_address', True, None, 1, ), # 16
+  (17, TType.I32, 'session_type', SessionType, None, 1, ), # 17
+  (18, TType.STRUCT, 'session_data', [SessionData, SessionData.thrift_spec, False], None, 1, ), # 18
 )
 
 Device.thrift_struct_annotations = {
@@ -969,7 +1188,7 @@ Device.thrift_struct_annotations = {
 Device.thrift_field_annotations = {
 }
 
-def Device__init__(self, hostname=None, username=None, password=None, console=Device.thrift_spec[13][4], mgmt_ip=Device.thrift_spec[14][4], command_prompts=None, ip_address=None,):
+def Device__init__(self, hostname=None, username=None, password=None, console=Device.thrift_spec[13][4], mgmt_ip=Device.thrift_spec[14][4], command_prompts=None, ip_address=None, session_type=None, session_data=None,):
   self.hostname = hostname
   self.username = username
   self.password = password
@@ -977,8 +1196,25 @@ def Device__init__(self, hostname=None, username=None, password=None, console=De
   self.mgmt_ip = mgmt_ip
   self.command_prompts = command_prompts
   self.ip_address = ip_address
+  self.session_type = session_type
+  self.session_data = session_data
 
 Device.__init__ = Device__init__
+
+def Device__setstate__(self, state):
+  state.setdefault('hostname', None)
+  state.setdefault('username', None)
+  state.setdefault('password', None)
+  state.setdefault('console', "")
+  state.setdefault('mgmt_ip', False)
+  state.setdefault('command_prompts', None)
+  state.setdefault('ip_address', None)
+  state.setdefault('session_type', None)
+  state.setdefault('session_data', None)
+  self.__dict__ = state
+
+Device.__getstate__ = lambda self: self.__dict__.copy()
+Device.__setstate__ = Device__setstate__
 
 all_structs.append(CommandResult)
 CommandResult.thrift_spec = (
@@ -1000,6 +1236,15 @@ def CommandResult__init__(self, output=None, status=None, command=None,):
 
 CommandResult.__init__ = CommandResult__init__
 
+def CommandResult__setstate__(self, state):
+  state.setdefault('output', None)
+  state.setdefault('status', None)
+  state.setdefault('command', None)
+  self.__dict__ = state
+
+CommandResult.__getstate__ = lambda self: self.__dict__.copy()
+CommandResult.__setstate__ = CommandResult__setstate__
+
 all_structs.append(Session)
 Session.thrift_spec = (
   None, # 0
@@ -1019,6 +1264,15 @@ def Session__init__(self, id=None, name=None, hostname=None,):
   self.hostname = hostname
 
 Session.__init__ = Session__init__
+
+def Session__setstate__(self, state):
+  state.setdefault('id', None)
+  state.setdefault('name', None)
+  state.setdefault('hostname', None)
+  self.__dict__ = state
+
+Session.__getstate__ = lambda self: self.__dict__.copy()
+Session.__setstate__ = Session__setstate__
 
 fix_spec(all_structs)
 del all_structs
