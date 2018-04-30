@@ -317,4 +317,69 @@ conf t
     10: string client_ip = ""
     11: string client_port = ""
   ) throws (1: SessionException se)
+
+  // open_raw_session() should be used when user want to bypass session setup
+  // (login and run setup commands).
+  // If open_raw_session(), following calls should be run_raw_session() and
+  // close_raw_session().
+  Session open_raw_session(
+    1: Device device
+
+    /*
+     * optional arguments
+     */
+    // max time (sec) allowed to spend authenticating into the device
+    2: i32 open_timeout = 60
+    // max time (sec) allowed for the session to go unused
+    3: i32 idle_timeout = 300
+
+    /*
+     * don't populate the following arguments unless you know what you are doing
+     */
+    10: string client_ip = ""
+    11: string client_port = ""
+  ) throws (1: SessionException se)
+
+
+  /*
+   * This is similar to run_session(). This is used in conjunction with
+   * open_raw_session. The user needs to explicitly specify the expected
+   * prompt_regex.
+   *
+   * @return CommandResult
+   */
+  CommandResult run_raw_session(
+    1: Session session
+    2: string command
+
+    /*
+     * optional arguments
+     */
+    // max time (sec) to wait to get the full response
+    3: i32 timeout = 300
+
+    // Specify a prompt that you expect at the end of command.
+    4: string prompt_regex
+
+    /*
+     * don't populate the following arguments unless you know what you are doing
+     */
+    10: string client_ip = ""
+    11: string client_port = ""
+  ) throws (1: SessionException se)
+
+  /* Close the session. Each open_raw_session call should be accompanied with a
+   * close_session call to free connection with the device.
+   *
+   * @return void
+   */
+  void close_raw_session(
+    1: Session session
+
+    /*
+     * don't populate the following arguments unless you know what you are doing
+     */
+    10: string client_ip = ""
+    11: string client_port = ""
+  ) throws (1: SessionException se)
 }

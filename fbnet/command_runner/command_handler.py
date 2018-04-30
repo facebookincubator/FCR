@@ -11,6 +11,7 @@
 
 import asyncio
 import random
+import re
 from itertools import islice
 
 from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
@@ -229,8 +230,65 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                            client_ip,
                            client_port):
 
+        return await self._open_session(
+            device, open_timeout, idle_timeout,
+            client_ip, client_port, raw_session=False)
+
+    async def run_session(self,
+                          tsession,
+                          command,
+                          timeout,
+                          client_ip,
+                          client_port):
+        return await self._run_session(
+            tsession, command, timeout, client_ip, client_port)
+
+    async def close_session(self, tsession, client_ip, client_port):
+        try:
+            session = CommandSession.get(tsession.id, client_ip, client_port)
+            await session.close()
+        except Exception as e:
+            raise ttypes.SessionException(
+                message="close_session failed: %r" % (e)) from e
+
+    async def open_raw_session(self,
+                               device,
+                               open_timeout,
+                               idle_timeout,
+                               client_ip,
+                               client_port):
+        return await self._open_session(
+            device, open_timeout, idle_timeout, client_ip, client_port,
+            raw_session=True)
+
+    async def run_raw_session(self,
+                              tsession,
+                              command,
+                              timeout,
+                              prompt_regex,
+                              client_ip,
+                              client_port):
+        if not prompt_regex:
+            raise ttypes.SessionException(message="prompt_regex not specified")
+
+        prompt_re = re.compile(prompt_regex.encode('utf8'), re.M)
+
+        return await self._run_session(
+            tsession, command, timeout, client_ip, client_port, prompt_re)
+
+    async def close_raw_session(self, tsession, client_ip, client_port):
+        return await self.close_session(tsession, client_ip, client_port)
+
+    async def _open_session(self,
+                            device,
+                            open_timeout,
+                            idle_timeout,
+                            client_ip,
+                            client_port,
+                            raw_session=False):
         options = self._get_options(
-            device, client_ip, client_port, open_timeout, idle_timeout)
+            device, client_ip, client_port, open_timeout, idle_timeout,
+            raw_session=raw_session)
 
         try:
             devinfo = await self._lookup_device(device)
@@ -246,35 +304,29 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raise ttypes.SessionException(
                 message='open_session failed: %r' % e) from e
 
-    async def run_session(self,
-                          tsession,
-                          command,
-                          timeout,
-                          client_ip,
-                          client_port):
+    async def _run_session(self,
+                           tsession,
+                           command,
+                           timeout,
+                           client_ip,
+                           client_port,
+                           prompt_re=None):
         try:
             session = CommandSession.get(tsession.id, client_ip, client_port)
-            return await self._run_command(session, command, timeout)
-
+            return await self._run_command(session, command, timeout,
+                                           prompt_re)
         except Exception as e:
             raise ttypes.SessionException(
                 message="run_session failed: %r" % (e)) from e
-
-    async def close_session(self, tsession, client_ip, client_port):
-        try:
-            session = CommandSession.get(tsession.id, client_ip, client_port)
-            await session.close()
-        except Exception as e:
-            raise ttypes.SessionException(
-                message="close_session failed: %r" % (e)) from e
 
     def _get_result_key(self, device):
         # TODO: just returning the hostname for now. Some additional processing
         # may be required e.g. using shortnames, adding console info, etc
         return device.hostname
 
-    async def _run_command(self, session, command, timeout):
-        output = await session.run_command(command.encode('utf8'), timeout)
+    async def _run_command(self, session, command, timeout, prompt_re=None):
+        output = await session.run_command(
+            command.encode('utf8'), timeout=timeout, prompt_re=prompt_re)
         return ttypes.CommandResult(
             output=output.decode('utf8', errors='ignore'),
             status=session.exit_status or constants.SUCCESS_STATUS,
@@ -357,7 +409,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         return self.service.get_fcr_client(timeout=timeout)
 
     def _get_options(self, device, client_ip, client_port,
-                     open_timeout, idle_timeout):
+                     open_timeout, idle_timeout, raw_session=False):
         options = {
             "username": self._get_device_username(device),
             "password": self._get_device_password(device),
@@ -371,6 +423,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             "ip_address": device.ip_address,
             "session_type": device.session_type,
             "device": device,
+            "raw_session": raw_session,
         }
 
         if device.command_prompts:

@@ -109,6 +109,38 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
     """
     pass
 
+  def open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+    """
+    Parameters:
+     - device
+     - open_timeout
+     - idle_timeout
+     - client_ip
+     - client_port
+    """
+    pass
+
+  def run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+    """
+    Parameters:
+     - session
+     - command
+     - timeout
+     - prompt_regex
+     - client_ip
+     - client_port
+    """
+    pass
+
+  def close_raw_session(self, session=None, client_ip="", client_port=""):
+    """
+    Parameters:
+     - session
+     - client_ip
+     - client_port
+    """
+    pass
+
 
 class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
   def run(self, handler_ctx, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
@@ -168,6 +200,38 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
     pass
 
   def close_session(self, handler_ctx, session=None, client_ip="", client_port=""):
+    """
+    Parameters:
+     - session
+     - client_ip
+     - client_port
+    """
+    pass
+
+  def open_raw_session(self, handler_ctx, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+    """
+    Parameters:
+     - device
+     - open_timeout
+     - idle_timeout
+     - client_ip
+     - client_port
+    """
+    pass
+
+  def run_raw_session(self, handler_ctx, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+    """
+    Parameters:
+     - session
+     - command
+     - timeout
+     - prompt_regex
+     - client_ip
+     - client_port
+    """
+    pass
+
+  def close_raw_session(self, handler_ctx, session=None, client_ip="", client_port=""):
     """
     Parameters:
      - session
@@ -2092,6 +2156,864 @@ def close_session_result__setstate__(self, state):
 close_session_result.__getstate__ = lambda self: self.__dict__.copy()
 close_session_result.__setstate__ = close_session_result__setstate__
 
+class open_raw_session_args:
+  """
+  Attributes:
+   - device
+   - open_timeout
+   - idle_timeout
+   - client_ip
+   - client_port
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.device = Device()
+          self.device.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.open_timeout = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I32:
+          self.idle_timeout = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 10:
+        if ftype == TType.STRING:
+          self.client_ip = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 11:
+        if ftype == TType.STRING:
+          self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('open_raw_session_args')
+    if self.device != None:
+      oprot.writeFieldBegin('device', TType.STRUCT, 1)
+      self.device.write(oprot)
+      oprot.writeFieldEnd()
+    if self.open_timeout != None:
+      oprot.writeFieldBegin('open_timeout', TType.I32, 2)
+      oprot.writeI32(self.open_timeout)
+      oprot.writeFieldEnd()
+    if self.idle_timeout != None:
+      oprot.writeFieldBegin('idle_timeout', TType.I32, 3)
+      oprot.writeI32(self.idle_timeout)
+      oprot.writeFieldEnd()
+    if self.client_ip != None:
+      oprot.writeFieldBegin('client_ip', TType.STRING, 10)
+      oprot.writeString(self.client_ip.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_ip, bytes) else oprot.writeString(self.client_ip)
+      oprot.writeFieldEnd()
+    if self.client_port != None:
+      oprot.writeFieldBegin('client_port', TType.STRING, 11)
+      oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.device is not None:
+      value = pprint.pformat(self.device, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    device=%s' % (value))
+    if self.open_timeout is not None:
+      value = pprint.pformat(self.open_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    open_timeout=%s' % (value))
+    if self.idle_timeout is not None:
+      value = pprint.pformat(self.idle_timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    idle_timeout=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+all_structs.append(open_raw_session_args)
+open_raw_session_args.thrift_spec = (
+  None, # 0
+  (1, TType.STRUCT, 'device', [Device, Device.thrift_spec, False], None, 2, ), # 1
+  (2, TType.I32, 'open_timeout', None, 60, 2, ), # 2
+  (3, TType.I32, 'idle_timeout', None, 300, 2, ), # 3
+  None, # 4
+  None, # 5
+  None, # 6
+  None, # 7
+  None, # 8
+  None, # 9
+  (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
+  (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+)
+
+open_raw_session_args.thrift_struct_annotations = {
+}
+open_raw_session_args.thrift_field_annotations = {
+}
+
+def open_raw_session_args__init__(self, device=None, open_timeout=open_raw_session_args.thrift_spec[2][4], idle_timeout=open_raw_session_args.thrift_spec[3][4], client_ip=open_raw_session_args.thrift_spec[10][4], client_port=open_raw_session_args.thrift_spec[11][4],):
+  self.device = device
+  self.open_timeout = open_timeout
+  self.idle_timeout = idle_timeout
+  self.client_ip = client_ip
+  self.client_port = client_port
+
+open_raw_session_args.__init__ = open_raw_session_args__init__
+
+def open_raw_session_args__setstate__(self, state):
+  state.setdefault('device', None)
+  state.setdefault('open_timeout', 60)
+  state.setdefault('idle_timeout', 300)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+open_raw_session_args.__getstate__ = lambda self: self.__dict__.copy()
+open_raw_session_args.__setstate__ = open_raw_session_args__setstate__
+
+class open_raw_session_result:
+  """
+  Attributes:
+   - success
+   - se
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRUCT:
+          self.success = Session()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.se = SessionException()
+          self.se.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('open_raw_session_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
+      oprot.writeFieldEnd()
+    if self.se != None:
+      oprot.writeFieldBegin('se', TType.STRUCT, 1)
+      self.se.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+all_structs.append(open_raw_session_result)
+open_raw_session_result.thrift_spec = (
+  (0, TType.STRUCT, 'success', [Session, Session.thrift_spec, False], None, 2, ), # 0
+  (1, TType.STRUCT, 'se', [SessionException, SessionException.thrift_spec, False], None, 2, ), # 1
+)
+
+open_raw_session_result.thrift_struct_annotations = {
+}
+open_raw_session_result.thrift_field_annotations = {
+}
+
+def open_raw_session_result__init__(self, success=None, se=None,):
+  self.success = success
+  self.se = se
+
+open_raw_session_result.__init__ = open_raw_session_result__init__
+
+def open_raw_session_result__setstate__(self, state):
+  state.setdefault('success', None)
+  state.setdefault('se', None)
+  self.__dict__ = state
+
+open_raw_session_result.__getstate__ = lambda self: self.__dict__.copy()
+open_raw_session_result.__setstate__ = open_raw_session_result__setstate__
+
+class run_raw_session_args:
+  """
+  Attributes:
+   - session
+   - command
+   - timeout
+   - prompt_regex
+   - client_ip
+   - client_port
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.session = Session()
+          self.session.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.command = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I32:
+          self.timeout = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.prompt_regex = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 10:
+        if ftype == TType.STRING:
+          self.client_ip = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 11:
+        if ftype == TType.STRING:
+          self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('run_raw_session_args')
+    if self.session != None:
+      oprot.writeFieldBegin('session', TType.STRUCT, 1)
+      self.session.write(oprot)
+      oprot.writeFieldEnd()
+    if self.command != None:
+      oprot.writeFieldBegin('command', TType.STRING, 2)
+      oprot.writeString(self.command.encode('utf-8')) if UTF8STRINGS and not isinstance(self.command, bytes) else oprot.writeString(self.command)
+      oprot.writeFieldEnd()
+    if self.timeout != None:
+      oprot.writeFieldBegin('timeout', TType.I32, 3)
+      oprot.writeI32(self.timeout)
+      oprot.writeFieldEnd()
+    if self.prompt_regex != None:
+      oprot.writeFieldBegin('prompt_regex', TType.STRING, 4)
+      oprot.writeString(self.prompt_regex.encode('utf-8')) if UTF8STRINGS and not isinstance(self.prompt_regex, bytes) else oprot.writeString(self.prompt_regex)
+      oprot.writeFieldEnd()
+    if self.client_ip != None:
+      oprot.writeFieldBegin('client_ip', TType.STRING, 10)
+      oprot.writeString(self.client_ip.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_ip, bytes) else oprot.writeString(self.client_ip)
+      oprot.writeFieldEnd()
+    if self.client_port != None:
+      oprot.writeFieldBegin('client_port', TType.STRING, 11)
+      oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.session is not None:
+      value = pprint.pformat(self.session, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    session=%s' % (value))
+    if self.command is not None:
+      value = pprint.pformat(self.command, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    command=%s' % (value))
+    if self.timeout is not None:
+      value = pprint.pformat(self.timeout, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    timeout=%s' % (value))
+    if self.prompt_regex is not None:
+      value = pprint.pformat(self.prompt_regex, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    prompt_regex=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+all_structs.append(run_raw_session_args)
+run_raw_session_args.thrift_spec = (
+  None, # 0
+  (1, TType.STRUCT, 'session', [Session, Session.thrift_spec, False], None, 2, ), # 1
+  (2, TType.STRING, 'command', True, None, 2, ), # 2
+  (3, TType.I32, 'timeout', None, 300, 2, ), # 3
+  (4, TType.STRING, 'prompt_regex', True, None, 2, ), # 4
+  None, # 5
+  None, # 6
+  None, # 7
+  None, # 8
+  None, # 9
+  (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
+  (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+)
+
+run_raw_session_args.thrift_struct_annotations = {
+}
+run_raw_session_args.thrift_field_annotations = {
+}
+
+def run_raw_session_args__init__(self, session=None, command=None, timeout=run_raw_session_args.thrift_spec[3][4], prompt_regex=None, client_ip=run_raw_session_args.thrift_spec[10][4], client_port=run_raw_session_args.thrift_spec[11][4],):
+  self.session = session
+  self.command = command
+  self.timeout = timeout
+  self.prompt_regex = prompt_regex
+  self.client_ip = client_ip
+  self.client_port = client_port
+
+run_raw_session_args.__init__ = run_raw_session_args__init__
+
+def run_raw_session_args__setstate__(self, state):
+  state.setdefault('session', None)
+  state.setdefault('command', None)
+  state.setdefault('timeout', 300)
+  state.setdefault('prompt_regex', None)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+run_raw_session_args.__getstate__ = lambda self: self.__dict__.copy()
+run_raw_session_args.__setstate__ = run_raw_session_args__setstate__
+
+class run_raw_session_result:
+  """
+  Attributes:
+   - success
+   - se
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRUCT:
+          self.success = CommandResult()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.se = SessionException()
+          self.se.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('run_raw_session_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
+      oprot.writeFieldEnd()
+    if self.se != None:
+      oprot.writeFieldBegin('se', TType.STRUCT, 1)
+      self.se.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.success is not None:
+      value = pprint.pformat(self.success, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    success=%s' % (value))
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+all_structs.append(run_raw_session_result)
+run_raw_session_result.thrift_spec = (
+  (0, TType.STRUCT, 'success', [CommandResult, CommandResult.thrift_spec, False], None, 2, ), # 0
+  (1, TType.STRUCT, 'se', [SessionException, SessionException.thrift_spec, False], None, 2, ), # 1
+)
+
+run_raw_session_result.thrift_struct_annotations = {
+}
+run_raw_session_result.thrift_field_annotations = {
+}
+
+def run_raw_session_result__init__(self, success=None, se=None,):
+  self.success = success
+  self.se = se
+
+run_raw_session_result.__init__ = run_raw_session_result__init__
+
+def run_raw_session_result__setstate__(self, state):
+  state.setdefault('success', None)
+  state.setdefault('se', None)
+  self.__dict__ = state
+
+run_raw_session_result.__getstate__ = lambda self: self.__dict__.copy()
+run_raw_session_result.__setstate__ = run_raw_session_result__setstate__
+
+class close_raw_session_args:
+  """
+  Attributes:
+   - session
+   - client_ip
+   - client_port
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.session = Session()
+          self.session.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 10:
+        if ftype == TType.STRING:
+          self.client_ip = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 11:
+        if ftype == TType.STRING:
+          self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('close_raw_session_args')
+    if self.session != None:
+      oprot.writeFieldBegin('session', TType.STRUCT, 1)
+      self.session.write(oprot)
+      oprot.writeFieldEnd()
+    if self.client_ip != None:
+      oprot.writeFieldBegin('client_ip', TType.STRING, 10)
+      oprot.writeString(self.client_ip.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_ip, bytes) else oprot.writeString(self.client_ip)
+      oprot.writeFieldEnd()
+    if self.client_port != None:
+      oprot.writeFieldBegin('client_port', TType.STRING, 11)
+      oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.session is not None:
+      value = pprint.pformat(self.session, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    session=%s' % (value))
+    if self.client_ip is not None:
+      value = pprint.pformat(self.client_ip, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_ip=%s' % (value))
+    if self.client_port is not None:
+      value = pprint.pformat(self.client_port, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    client_port=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+all_structs.append(close_raw_session_args)
+close_raw_session_args.thrift_spec = (
+  None, # 0
+  (1, TType.STRUCT, 'session', [Session, Session.thrift_spec, False], None, 2, ), # 1
+  None, # 2
+  None, # 3
+  None, # 4
+  None, # 5
+  None, # 6
+  None, # 7
+  None, # 8
+  None, # 9
+  (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
+  (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+)
+
+close_raw_session_args.thrift_struct_annotations = {
+}
+close_raw_session_args.thrift_field_annotations = {
+}
+
+def close_raw_session_args__init__(self, session=None, client_ip=close_raw_session_args.thrift_spec[10][4], client_port=close_raw_session_args.thrift_spec[11][4],):
+  self.session = session
+  self.client_ip = client_ip
+  self.client_port = client_port
+
+close_raw_session_args.__init__ = close_raw_session_args__init__
+
+def close_raw_session_args__setstate__(self, state):
+  state.setdefault('session', None)
+  state.setdefault('client_ip', "")
+  state.setdefault('client_port', "")
+  self.__dict__ = state
+
+close_raw_session_args.__getstate__ = lambda self: self.__dict__.copy()
+close_raw_session_args.__setstate__ = close_raw_session_args__setstate__
+
+class close_raw_session_result:
+  """
+  Attributes:
+   - se
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  __init__ = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      self.checkRequired()
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      self.checkRequired()
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.se = SessionException()
+          self.se.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+    self.checkRequired()
+
+  def checkRequired(self):
+    return
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('close_raw_session_result')
+    if self.se != None:
+      oprot.writeFieldBegin('se', TType.STRUCT, 1)
+      self.se.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    if self.se is not None:
+      value = pprint.pformat(self.se, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    se=%s' % (value))
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  # Override the __hash__ function for Python3 - t10434117
+  if not six.PY2:
+    __hash__ = object.__hash__
+
+all_structs.append(close_raw_session_result)
+close_raw_session_result.thrift_spec = (
+  None, # 0
+  (1, TType.STRUCT, 'se', [SessionException, SessionException.thrift_spec, False], None, 2, ), # 1
+)
+
+close_raw_session_result.thrift_struct_annotations = {
+}
+close_raw_session_result.thrift_field_annotations = {
+}
+
+def close_raw_session_result__init__(self, se=None,):
+  self.se = se
+
+close_raw_session_result.__init__ = close_raw_session_result__init__
+
+def close_raw_session_result__setstate__(self, state):
+  state.setdefault('se', None)
+  self.__dict__ = state
+
+close_raw_session_result.__getstate__ = lambda self: self.__dict__.copy()
+close_raw_session_result.__setstate__ = close_raw_session_result__setstate__
+
 class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
   def __init__(self, oprot, loop=None):
     fb303_asyncio.fb303.FacebookService.Client.__init__(self, oprot, loop)
@@ -2409,6 +3331,160 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_result(None)
     return
 
+  def open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+    """
+    Parameters:
+     - device
+     - open_timeout
+     - idle_timeout
+     - client_ip
+     - client_port
+    """
+    self._seqid += 1
+    fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
+    self.send_open_raw_session(device, open_timeout, idle_timeout, client_ip, client_port)
+    return fut
+
+  def send_open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+    self._oprot.writeMessageBegin('open_raw_session', TMessageType.CALL, self._seqid)
+    args = open_raw_session_args()
+    args.device = device
+    args.open_timeout = open_timeout
+    args.idle_timeout = idle_timeout
+    args.client_ip = client_ip
+    args.client_port = client_port
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_open_raw_session(self, iprot, mtype, rseqid):
+    try:
+        fut = self._futures.pop(rseqid)
+    except KeyError:
+        return   # request timed out
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(iprot)
+      iprot.readMessageEnd()
+      fut.set_exception(x)
+      return
+    result = open_raw_session_result()
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
+    iprot.readMessageEnd()
+    if result.success != None:
+      fut.set_result(result.success)
+      return
+    if result.se != None:
+      fut.set_exception(result.se)
+      return
+    fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "open_raw_session failed: unknown result"))
+    return
+
+  def run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+    """
+    Parameters:
+     - session
+     - command
+     - timeout
+     - prompt_regex
+     - client_ip
+     - client_port
+    """
+    self._seqid += 1
+    fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
+    self.send_run_raw_session(session, command, timeout, prompt_regex, client_ip, client_port)
+    return fut
+
+  def send_run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+    self._oprot.writeMessageBegin('run_raw_session', TMessageType.CALL, self._seqid)
+    args = run_raw_session_args()
+    args.session = session
+    args.command = command
+    args.timeout = timeout
+    args.prompt_regex = prompt_regex
+    args.client_ip = client_ip
+    args.client_port = client_port
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_run_raw_session(self, iprot, mtype, rseqid):
+    try:
+        fut = self._futures.pop(rseqid)
+    except KeyError:
+        return   # request timed out
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(iprot)
+      iprot.readMessageEnd()
+      fut.set_exception(x)
+      return
+    result = run_raw_session_result()
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
+    iprot.readMessageEnd()
+    if result.success != None:
+      fut.set_result(result.success)
+      return
+    if result.se != None:
+      fut.set_exception(result.se)
+      return
+    fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "run_raw_session failed: unknown result"))
+    return
+
+  def close_raw_session(self, session=None, client_ip="", client_port=""):
+    """
+    Parameters:
+     - session
+     - client_ip
+     - client_port
+    """
+    self._seqid += 1
+    fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
+    self.send_close_raw_session(session, client_ip, client_port)
+    return fut
+
+  def send_close_raw_session(self, session=None, client_ip="", client_port=""):
+    self._oprot.writeMessageBegin('close_raw_session', TMessageType.CALL, self._seqid)
+    args = close_raw_session_args()
+    args.session = session
+    args.client_ip = client_ip
+    args.client_port = client_port
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_close_raw_session(self, iprot, mtype, rseqid):
+    try:
+        fut = self._futures.pop(rseqid)
+    except KeyError:
+        return   # request timed out
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(iprot)
+      iprot.readMessageEnd()
+      fut.set_exception(x)
+      return
+    result = close_raw_session_result()
+    try:
+      result.read(iprot)
+    except Exception as e:
+      fut.set_exception(e)
+      return
+    iprot.readMessageEnd()
+    if result.se != None:
+      fut.set_exception(result.se)
+      return
+    fut.set_result(None)
+    return
+
 
 class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor):
   _onewayMethods = ()
@@ -2427,6 +3503,12 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
     self._priorityMap["run_session"] = TPriority.NORMAL
     self._processMap["close_session"] = Processor.process_close_session
     self._priorityMap["close_session"] = TPriority.NORMAL
+    self._processMap["open_raw_session"] = Processor.process_open_raw_session
+    self._priorityMap["open_raw_session"] = TPriority.NORMAL
+    self._processMap["run_raw_session"] = Processor.process_run_raw_session
+    self._priorityMap["run_raw_session"] = TPriority.NORMAL
+    self._processMap["close_raw_session"] = Processor.process_close_raw_session
+    self._priorityMap["close_raw_session"] = TPriority.NORMAL
 
   def onewayMethods(self):
     l = []
@@ -2497,6 +3579,36 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
+  @process_method(open_raw_session_args, oneway=False, asyncio=True)
+  def process_open_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
+    result = open_raw_session_result()
+    if should_run_on_thread(self._handler.open_raw_session):
+      fut = self._loop.run_in_executor(None, self._handler.open_raw_session, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+    else:
+      fut = call_as_future(self._handler.open_raw_session, self._loop, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
+    return fut
+
+  @process_method(run_raw_session_args, oneway=False, asyncio=True)
+  def process_run_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
+    result = run_raw_session_result()
+    if should_run_on_thread(self._handler.run_raw_session):
+      fut = self._loop.run_in_executor(None, self._handler.run_raw_session, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+    else:
+      fut = call_as_future(self._handler.run_raw_session, self._loop, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
+    return fut
+
+  @process_method(close_raw_session_args, oneway=False, asyncio=True)
+  def process_close_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
+    result = close_raw_session_result()
+    if should_run_on_thread(self._handler.close_raw_session):
+      fut = self._loop.run_in_executor(None, self._handler.close_raw_session, args.session, args.client_ip, args.client_port)
+    else:
+      fut = call_as_future(self._handler.close_raw_session, self._loop, args.session, args.client_ip, args.client_port)
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
+    return fut
+
 Iface._processor_type = Processor
 
 class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, ContextIface, TProcessor):
@@ -2516,6 +3628,12 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
     self._priorityMap["run_session"] = TPriority.NORMAL
     self._processMap["close_session"] = ContextProcessor.process_close_session
     self._priorityMap["close_session"] = TPriority.NORMAL
+    self._processMap["open_raw_session"] = ContextProcessor.process_open_raw_session
+    self._priorityMap["open_raw_session"] = TPriority.NORMAL
+    self._processMap["run_raw_session"] = ContextProcessor.process_run_raw_session
+    self._priorityMap["run_raw_session"] = TPriority.NORMAL
+    self._processMap["close_raw_session"] = ContextProcessor.process_close_raw_session
+    self._priorityMap["close_raw_session"] = TPriority.NORMAL
 
   def onewayMethods(self):
     l = []
@@ -2583,6 +3701,36 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
       fut = self._loop.run_in_executor(None, self._handler.close_session, handler_ctx, args.session, args.client_ip, args.client_port)
     else:
       fut = call_as_future(self._handler.close_session, self._loop, handler_ctx, args.session, args.client_ip, args.client_port)
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
+    return fut
+
+  @process_method(open_raw_session_args, oneway=False, asyncio=True)
+  def process_open_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
+    result = open_raw_session_result()
+    if should_run_on_thread(self._handler.open_raw_session):
+      fut = self._loop.run_in_executor(None, self._handler.open_raw_session, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+    else:
+      fut = call_as_future(self._handler.open_raw_session, self._loop, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
+    return fut
+
+  @process_method(run_raw_session_args, oneway=False, asyncio=True)
+  def process_run_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
+    result = run_raw_session_result()
+    if should_run_on_thread(self._handler.run_raw_session):
+      fut = self._loop.run_in_executor(None, self._handler.run_raw_session, handler_ctx, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+    else:
+      fut = call_as_future(self._handler.run_raw_session, self._loop, handler_ctx, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
+    return fut
+
+  @process_method(close_raw_session_args, oneway=False, asyncio=True)
+  def process_close_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
+    result = close_raw_session_result()
+    if should_run_on_thread(self._handler.close_raw_session):
+      fut = self._loop.run_in_executor(None, self._handler.close_raw_session, handler_ctx, args.session, args.client_ip, args.client_port)
+    else:
+      fut = call_as_future(self._handler.close_raw_session, self._loop, handler_ctx, args.session, args.client_ip, args.client_port)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 

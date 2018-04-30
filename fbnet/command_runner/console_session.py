@@ -157,9 +157,14 @@ class ConsoleCommandSession(SSHCommandSession):
         self.send(b'\r', end)
 
     async def _setup_connection(self):
-        await self._try_login(self._username, self._password, kickstart=True)
-        # Now send the setup commands
-        await super()._setup_connection()
+        if self._opts.get("raw_session"):
+            await asyncio.sleep(1)
+        else:
+            # Since this is a normal session, try to login to device.
+            await self._try_login(self._username, self._password,
+                                  kickstart=True)
+            # Now send the setup commands
+            await super()._setup_connection()
 
     async def get_console_info(self):
         '''
@@ -171,3 +176,12 @@ class ConsoleCommandSession(SSHCommandSession):
         con_srv, con_port = self._console.split(':')
 
         return ConsoleInfo("CON", self.hostname, con_srv, con_port)
+
+    async def run_command(self, cmd, timeout=None, prompt_re=None):
+        if self._opts.get("raw_session"):
+            await self._stream_reader.drain()
+            self.send(cmd)
+            resp = await self.wait_prompt(prompt_re)
+            return resp.data + resp.matched
+        else:
+            return await super().run_command(cmd, timeout, prompt_re)
