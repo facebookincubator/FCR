@@ -369,6 +369,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             "open_timeout": open_timeout,
             "idle_timeout": idle_timeout,
             "ip_address": device.ip_address,
+            "session_type": device.session_type,
+            "device": device,
         }
 
         if device.command_prompts:

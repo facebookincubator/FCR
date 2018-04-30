@@ -618,7 +618,24 @@ class SSHCommandSession(CliCommandSession):
         ip = self._devinfo.get_ip(self._opts)
         return (ip, 22, self._username, self._password)
 
-    async def _connect(self):
+    async def _connect(self, subsystem=None, exec_command=None):
+        '''
+        Some session types require us to run a command to start a session. The
+        SSH protocol defines three ways to start a session.
+        1. shell: this starts a regular user shell on the remote system. This is
+                  the most common way of using SSH. If none of 'subsystem' or
+                  'command' is specified, this is the method that we use.
+
+        2. exec: Here we specify the command we want to run on remote system.
+                 This allows the user start a custom shell. For example run
+                 a 'netconf' command to start netconf session
+
+        3. subsystem: Here instead of running a comman we specify a subsystems
+                      that has been configured on the remote system. These are
+                      predefined systems
+
+        see sec 6.5 https://tools.ietf.org/html/rfc4254 for more details
+        '''
         host, port, user, passwd = await self.dest_info()
         self._extra_info['peer'] = (host, port)
 
@@ -645,7 +662,9 @@ class SSHCommandSession(CliCommandSession):
         chan, cmd_stream = await self._conn.create_session(
             lambda: CommandStream(self, self._loop),
             encoding=None,
-            term_type=self.TERM_TYPE
+            term_type=self.TERM_TYPE,
+            subsystem=subsystem,
+            command=exec_command
         )
         self._chan = chan
         return cmd_stream

@@ -17,6 +17,8 @@ from .base_service import ServiceObj
 from .command_session import SSHCommandSession
 from .import utils
 from .options import Option
+from .ssh_netconf import SSHNetconf
+from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionType
 
 
 class VendorConfig:
@@ -114,9 +116,14 @@ class DeviceVendor(ServiceObj):
         Users can override session type here, by specifying session_type in
         options. This needs to be implemented for vendors supporting multiple
         session types
-
-        For now we will just return the default session_type
         '''
+        session_type = options.get('session_type', None)
+
+        if session_type == SessionType.SSH:
+            return SSHCommandSession
+        elif session_type == SessionType.SSH_NETCONF:
+            return SSHNetconf
+
         return self.session_type
 
     def update_config(self, vendor_config):

@@ -35,6 +35,66 @@ const string CONS_AUTO = 'auto'
 const string FAILURE_STATUS = 'failure'
 const string SUCCESS_STATUS = 'success'
 
+enum SessionType {
+  SSH = 1,
+  SSH_NETCONF = 2,
+}
+
+struct SessionData {
+  // see section 6.5 in RFC: https://tools.ietf.org/html/rfc4254
+  // One of the following needs to be specified.
+
+  // We will prefer subsystem over exec_command if both are specified.
+  // This uses the SSH subsystem command to start the netconf session
+  //
+  // session_data = fcr_ttypes.SessionData(subsystem='xmlagent')
+  //
+  // dev = Device(hostname='rtr-name',
+  //              session_type=fcr_ttypes.SessionType.SSH_NETCONF,
+  //              session_data=session_data)
+  //
+  // cmd = '''<?xml version="1.0"?>
+  // <nf:rpc xmlns:nf="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nxos="http://www.cisco.com/nxos:1.0" message-id="110">
+  // <nxos:exec-command>
+  // <nxos:cmd>show interface brief</nxos:cmd>
+  // </nxos:exec-command>
+  // </nf:rpc>'''
+  //
+  // with get_client(FcrClient) as client:
+  //     res = client.run(cmd, dev)
+  //
+  1: optional string subsystem,
+
+  // This command is executed on the remote system to start a session
+  //
+  // session_data = fcr_ttypes.SessionData(exec_command='netconf format')
+  //
+  // dev = Device(hostname='rtr-name',
+  //              session_type=fcr_ttypes.SessionType.SSH_NETCONF,
+  //              session_data=session_data)
+  //
+  // cmd = '''<?xml version="1.0" ?>
+  // <rpc message-id="8566" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  // <get>
+  // <filter type="subtree">
+  // <optics-oper xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-controller-optics-oper">
+  // <optics-ports>
+  // <optics-port>
+  // <name>Ots-Och0/2/0/0/1</name>
+  // <optics-info />
+  // </optics-port>
+  // </optics-ports>
+  // </optics-oper>
+  // </filter>
+  // </get>
+  // </rpc>'''
+  //
+  // with get_client(FcrClient) as client:
+  //     res = client.run(cmd, dev)
+
+  2: optional string exec_command,
+}
+
 struct Device {
   1: required string hostname,
 
@@ -61,6 +121,17 @@ struct Device {
    * used instead of doing a lookup.
    */
   16: optional string ip_address,
+
+  /*
+   * Session Type to use for this device. This overrides the default session
+   * type for the device.
+   */
+  17: optional SessionType session_type,
+
+  /*
+   * The optional session data that is needed to initialize the session.
+   */
+  18: optional SessionData session_data,
 }
 
 struct CommandResult {
