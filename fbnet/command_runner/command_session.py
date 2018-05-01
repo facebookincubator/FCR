@@ -19,6 +19,7 @@ from collections import namedtuple
 import abc
 
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
+from fbnet.command_runner_asyncio.CommandRunner import ttypes
 
 from .base_service import ServiceObj
 
@@ -90,6 +91,9 @@ class CommandSession(ServiceObj):
                 klass=self.__class__.__name__, dev=self._devinfo))
 
         return LogAdapter(logger, {"session": self})
+
+    def build_result(self, output, status, command):
+        return ttypes.CommandResult(output=output, status=status, command=command)
 
     def __repr__(self):
         return "%s [%s] [%s]" % (self.__class__.__name__,

@@ -24,7 +24,7 @@ class SSHNetconf(SSHCommandSession):
         # Wait for the hello message from the peer. We will save this message
         # and include this with first reply.
         resp = await self.wait_prompt(self.PROMPT)
-        self.server_hello = resp.data
+        self.server_hello = resp.data.strip()
         # Send our hello message to the server
         self._send_command(self.HELLO_MESSAGE)
 
@@ -39,17 +39,14 @@ class SSHNetconf(SSHCommandSession):
         return await self.wait_prompt(self.PROMPT)
 
     def _format_output(self, cmd, resp):
-        output = resp.data
-        # Not sure if this is needed. But it may be useful for some client to
-        # know the server capabilities (mostly for interactive sessions)
+        return resp.data.strip()
+
+    def build_result(self, output, status, command):
+        result = super().build_result(output, status, command)
         if self.server_hello:
-            output = (
-                self.server_hello +
-                b'\n' + self.DELIM + b'\n' +
-                output
-            )
-            self.server_hello = None  # Clear it out so we don't send it again
-        return output
+            result.capabilities = self.server_hello
+            self.server_hello = None
+        return result
 
     async def run_command(self, cmd, timeout=None, prompt_re=None):
         try:
@@ -81,4 +78,4 @@ class SSHNetconf(SSHCommandSession):
                     'for netconf session'
                 )
 
-        return await super()._connect(subsystem=subsystem, command=command)
+        return await super()._connect(subsystem=subsystem, exec_command=command)

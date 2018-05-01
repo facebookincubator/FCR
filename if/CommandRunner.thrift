@@ -141,6 +141,12 @@ struct CommandResult {
   // what has received so far
   2: required string status,
   3: required string command,
+
+  // Capabilities for the session.
+  // This used to return the initial hello message from the peer.
+  // The hello message specifies the server capabilities that clients can
+  // use to verify support for data models.
+  4: optional string capabilities,
 }
 
 struct Session {

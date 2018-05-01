@@ -327,8 +327,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     async def _run_command(self, session, command, timeout, prompt_re=None):
         output = await session.run_command(
             command.encode('utf8'), timeout=timeout, prompt_re=prompt_re)
-        return ttypes.CommandResult(
-            output=output.decode('utf8', errors='ignore'),
+        return session.build_result(
+            output=output,
             status=session.exit_status or constants.SUCCESS_STATUS,
             command=command)
 
