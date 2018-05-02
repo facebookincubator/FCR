@@ -143,6 +143,9 @@ class DeviceVendor(ServiceObj):
         if self._config.shell_prompts:
             prompts += self._config.shell_prompts
 
+        if self._config.user_prompts:
+            prompts += self._config.user_prompts
+
         return self._build_prompt_re(prompts, trailer)
 
     @classmethod
