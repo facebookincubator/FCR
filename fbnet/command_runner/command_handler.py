@@ -367,13 +367,14 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         except Exception as e:
             if not isinstance(e, ttypes.SessionException):
-                e = ttypes.SessionException(message='%r' % e)
+                se = ttypes.SessionException(message='%r' % e)
             if return_exceptions:
                 return [ttypes.CommandResult(output='',
                                              status='%r' % e,
                                              command=command)]
             else:
-                raise e from e
+                # raise from the original place so we have full stacktrace
+                raise se
 
     def _chunked_dict(self, data, chunk_size):
         '''split the dict into smaller dicts'''
