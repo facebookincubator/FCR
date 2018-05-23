@@ -23,18 +23,27 @@ from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionType
 
 class VendorConfig:
 
-    def __init__(self, defaults):
+    def __init__(self, defaults, session_names):
         self._cfg = {}
-        self._defaults = defaults
+        self._session_names = session_names
+        self.update(defaults)
 
     def __getattr__(self, attr):
-        if attr in self._cfg:
-            return self._cfg.get(attr)
-        return self._defaults.get(attr)
+        return self._cfg.get(attr)
 
     def update(self, cfg):
         for prop, val in cfg.items():
             self._cfg[prop] = utils.canonicalize(val)
+
+        if "supported_sessions" in cfg:
+            # Refresh supported_sessions only if it's updated
+            self._cfg["supported_sessions"] = {
+                self._session_names[s] for s in self._cfg["supported_sessions"]
+            }
+        if "session_type" in cfg:
+            self._cfg["session_type"] = self._session_names[self._cfg["session_type"]]
+            # Default session type should be supported
+            self._cfg["supported_sessions"].add(self._cfg["session_type"])
 
 
 class DeviceVendor(ServiceObj):
@@ -45,20 +54,27 @@ class DeviceVendor(ServiceObj):
         "cmd_timeout_sec": 30,
         "clear_command": b"\x15",
         "session_type": b"ssh",
+        "supported_sessions": {b"ssh", b"netconf"},
         "autocomplete": True,
     }
 
     _PROMPTS_RE = re.compile(
         b"|".join([b"(%s)" % p for p in _DEFAULTS["prompt_regex"]]), re.M)
 
+    _SESSION_NAMES = {
+        b"ssh": SessionType.SSH,
+        b"netconf": SessionType.SSH_NETCONF,
+    }
+
     _SESSION_TYPES = {
-        b"ssh": SSHCommandSession,
+        SessionType.SSH: SSHCommandSession,
+        SessionType.SSH_NETCONF: SSHNetconf,
     }
 
     def __init__(self, vendor_name, service):
         super().__init__(service, "DeviceVendor")
         self._vendor_name = vendor_name
-        self._config = VendorConfig(self._DEFAULTS)
+        self._config = VendorConfig(self._DEFAULTS, self._SESSION_NAMES)
         self._prompt_re = self._PROMPTS_RE
 
     def __repr__(self):
@@ -71,9 +87,11 @@ class DeviceVendor(ServiceObj):
         return "DeviceVendor(%s) %s" % (self.vendor_name, props)
 
     @classmethod
-    def register_counters(cls, counters):
+    def register_counters(cls, stats_mgr):
         for session_type in cls._SESSION_TYPES.values():
-            session_type.register_counters(counters)
+            session_type.register_counters(stats_mgr)
+        stats_mgr.register_counter("device_vendor.all_sessions")
+        stats_mgr.register_counter("device_vendor.unsupported_session")
 
     def get_prompt_re(self, trailer=None):
         """
@@ -117,14 +135,20 @@ class DeviceVendor(ServiceObj):
         options. This needs to be implemented for vendors supporting multiple
         session types
         '''
+        self.inc_counter("device_vendor.all_sessions")
         session_type = options.get('session_type', None)
 
-        if session_type == SessionType.SSH:
-            return SSHCommandSession
-        elif session_type == SessionType.SSH_NETCONF:
-            return SSHNetconf
-
-        return self.session_type
+        if session_type in self._config.supported_sessions:
+            return self._SESSION_TYPES.get(session_type, self.session_type)
+        else:
+            if session_type is not None:
+                self.logger.warning(
+                    "Device vendor {} does not support session {}".format(
+                        self._vendor_name, session_type
+                    )
+                )
+                self.inc_counter("device_vendor.unsupported_session")
+            return self.session_type
 
     def update_config(self, vendor_config):
         self._config.update(vendor_config)

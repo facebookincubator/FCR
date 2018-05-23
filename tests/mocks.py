@@ -29,6 +29,7 @@ mock_vendors = """
     "vendor1": {
       "vendor_name": "vendor1",
       "session_type": "mock",
+      "supported_sessions": ["mock"],
       "cli_setup": ["en", "term len 0"],
       "prompt_regex": ["[$#]"],
       "shell_prompts": ["\\\\$"]
@@ -36,6 +37,7 @@ mock_vendors = """
     "vendor2": {
       "vendor_name": "vendor2",
       "session_type": "mock",
+      "supported_sessions": ["mock"],
       "cli_setup": ["en", "command timeout"],
       "prompt_regex": ["[$#]"],
       "shell_prompts": ["\\\\$"]
@@ -43,6 +45,8 @@ mock_vendors = """
   }
 }
 """
+
+MOCK_SESSION_TYPE = 9999
 
 log = logging.getLogger()
 
@@ -97,6 +101,10 @@ class MockService(FcrServiceBase):
         super().__init__('MockService', args=[], loop=loop)
 
         self.mock_options = mock_options
+        DeviceVendor._SESSION_NAMES[b"mock"] = MOCK_SESSION_TYPE
+        DeviceVendor._SESSION_TYPES[MOCK_SESSION_TYPE] = \
+            MockCommandSession.Factory(self.mock_options)
+
         self.vendors = MockDeviceVendors(self)
         self.device_db = MockDeviceDB(self)
         self.setUp()
@@ -105,10 +113,6 @@ class MockService(FcrServiceBase):
         return self._loop.run_until_complete(*coro)
 
     def setUp(self):
-
-        DeviceVendor._SESSION_TYPES[b"mock"] = \
-            MockCommandSession.Factory(self.mock_options)
-
         self._run_loop(self.device_db.wait_for_data())
 
     def tearDown(self):

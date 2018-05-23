@@ -3,6 +3,7 @@
     "vendor1": {
       "vendor_name": "vendor1",
       "session_type": "mock",
+      "supported_sessions": ["mock"],
       "cli_setup": [
         "en",
         "term len 0"
@@ -17,6 +18,7 @@
     "vendor2": {
       "vendor_name": "vendor2",
       "session_type": "mock",
+      "supported_sessions": ["mock"],
       "cli_setup": [
         "en",
         "command timeout"
