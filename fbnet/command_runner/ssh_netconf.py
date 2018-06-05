@@ -12,12 +12,12 @@ class SSHNetconf(SSHCommandSession):
     DELIM = b']]>]]>'
     PROMPT = re.compile(DELIM)
 
-    HELLO_MESSAGE = b'''<?xml version="1.0"?>
-<nc:hello xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
-  <nc:capabilities>
-  <nc:capability>urn:ietf:params:xml:ns:netconf:base:1.0</nc:capability>
-  </nc:capabilities>
-</nc:hello>
+    HELLO_MESSAGE = b'''<?xml version="1.0" encoding="UTF-8" ?>
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <capabilities>
+    <capability>urn:ietf:params:netconf:base:1.0</capability>
+  </capabilities>
+</hello>
 '''
 
     async def _setup_connection(self):
