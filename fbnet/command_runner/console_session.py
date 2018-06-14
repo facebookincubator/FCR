@@ -34,12 +34,17 @@ class ConsoleCommandSession(SSHCommandSession):
 
     Currently we only support SSH connection to the console server
     '''
+    _INTERACT_PROMPTS = {
+        b'Y': b'Do you acknowledge\? \(Y/N\)\?',
+    }
     _CONSOLE_PROMPTS = {
         # For login we need to ignore output like:
         #  Last login: Mon May  8 13:53:17 on ttyS0
         b'login': b'.*((?<!Last ).ogin|.sername):',
         b'passwd': b'\n.*assword:',
         b'prompt': b'\n.*[#>]',
+        b'interact_prompts': b'Do you acknowledge\? \(Y/N\)\?'
+
     }
 
     # Certain prompts that we get during the login attemts that we will like to
@@ -132,6 +137,11 @@ class ConsoleCommandSession(SSHCommandSession):
                 self.send(self._password)
                 return await self._try_login()
 
+            elif res.groupdict.get('interact_prompts'):
+                # send Y to get past the post login prompt
+                self._interact_prompts_action(res.groupdict.get('interact_prompts'))
+                return await self._try_login()
+
             elif res.groupdict.get('prompt'):
                 # Finally we matched a prompt. we are done
                 return self._send_newline()
@@ -155,6 +165,15 @@ class ConsoleCommandSession(SSHCommandSession):
 
     def _send_newline(self, end=b"\n"):
         self.send(b'\r', end)
+
+    def _interact_prompts_action(self, prompt_match):
+        interact_prompts = [b'(?P<%s>%s)' % (group, regex)
+                   for group, regex in self._INTERACT_PROMPTS.items()]
+        interact_prompts_re = b'|'.join(interact_prompts)
+        interact_prompt_match = re.match(
+            interact_prompts_re, prompt_match)
+        for action in interact_prompt_match.groupdict():
+            self.send(action)
 
     async def _setup_connection(self):
         if self._opts.get("raw_session"):
