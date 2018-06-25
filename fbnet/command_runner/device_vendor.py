@@ -56,6 +56,7 @@ class DeviceVendor(ServiceObj):
         "session_type": b"ssh",
         "supported_sessions": {b"ssh", b"netconf"},
         "autocomplete": True,
+        "port": 22,
     }
 
     _PROMPTS_RE = re.compile(
@@ -103,6 +104,9 @@ class DeviceVendor(ServiceObj):
         if not trailer:
             return self._prompt_re
         return self._get_prompt_re(trailer)
+
+    def get_port(self):
+        return self._config.port
 
     @property
     def vendor_name(self):

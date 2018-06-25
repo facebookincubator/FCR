@@ -59,6 +59,12 @@ class CommandSession(ServiceObj):
         super().__init__(service)
 
         self._opts = options
+
+        device = self._opts.get('device')
+        self._extra_options = (
+            device and device.session_data and device.session_data.extra_options
+        ) or {}
+
         self._hostname = devinfo.hostname
 
         self._extra_info = {}
@@ -620,7 +626,10 @@ class SSHCommandSession(CliCommandSession):
 
     async def dest_info(self):
         ip = self._devinfo.get_ip(self._opts)
-        return (ip, 22, self._username, self._password)
+        port = int(
+            self._extra_options.get("port") or self._devinfo.vendor_data.get_port()
+        )
+        return (ip, port, self._username, self._password)
 
     async def _connect(self, subsystem=None, exec_command=None):
         '''
