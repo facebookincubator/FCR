@@ -9,22 +9,21 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
-from .testutil import AsyncTestCase, async_test
 import asyncio
+import logging
+
 import mock
+from fbnet.command_runner.command_session import CommandSession
 
 from .mock_session import MockCommandSession
 from .mocks import MockService
+from .testutil import AsyncTestCase, async_test
 
-from fbnet.command_runner.command_session import CommandSession
-
-import logging
 
 log = logging.getLogger()
 
 
 class CommandSessionTest(AsyncTestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -35,18 +34,20 @@ class CommandSessionTest(AsyncTestCase):
         self.devinfo = self._run_loop(self.mocks.device_db.get(test_device))[0]
 
         self.options = {
-            'client_ip': "10.10.10.10",
-            'client_port': 1010,
-            'open_timeout': 10,
+            "client_ip": "10.10.10.10",
+            "client_port": 1010,
+            "open_timeout": 10,
         }
         handler = mock.Mock()
-        self.session = MockCommandSession(self.mock_options, handler,
-                                          self.devinfo, self.options,
-                                          loop=self._loop)
+        self.session = MockCommandSession(
+            self.mock_options, handler, self.devinfo, self.options, loop=self._loop
+        )
         self.session_id = self.session.id
-        self.key = (self.session.id,
-                    self.options["client_ip"],
-                    self.options["client_port"])
+        self.key = (
+            self.session.id,
+            self.options["client_ip"],
+            self.options["client_port"],
+        )
 
     def tearDown(self):
         try:
@@ -59,16 +60,17 @@ class CommandSessionTest(AsyncTestCase):
         super().tearDown()
 
     def mock_device(self, name, console=None, command_prompts=None):
-        return mock.Mock(hostname=name, console=console,
-                         command_prompts=command_prompts)
+        return mock.Mock(
+            hostname=name, console=console, command_prompts=command_prompts
+        )
 
     def _get_session(self):
         """
         helper method the get session from cache
         """
-        return CommandSession.get(self.session_id,
-                                  self.options["client_ip"],
-                                  self.options["client_port"])
+        return CommandSession.get(
+            self.session_id, self.options["client_ip"], self.options["client_port"]
+        )
 
     def test_create(self):
         self.assertFalse(self.session._connected)
@@ -118,13 +120,13 @@ class CommandSessionTest(AsyncTestCase):
         device = self.mock_device("test-dev-1")
         devinfo = await self.mocks.device_db.get(device)
 
-        self.options['open_timeout'] = 2
-        self.mock_options['prompt_delay'] = 0
+        self.options["open_timeout"] = 2
+        self.mock_options["prompt_delay"] = 0
 
         handler = mock.Mock()
-        session = MockCommandSession(self.mock_options, handler,
-                                     devinfo, self.options,
-                                     loop=self._loop)
+        session = MockCommandSession(
+            self.mock_options, handler, devinfo, self.options, loop=self._loop
+        )
         # Session is initially not connected
         self.assertFalse(session._connected)
 
@@ -136,13 +138,13 @@ class CommandSessionTest(AsyncTestCase):
         device = self.mock_device("test-dev-1")
         devinfo = await self.mocks.device_db.get(device)
 
-        self.options['open_timeout'] = 2
-        self.mock_options['prompt_delay'] = 3
+        self.options["open_timeout"] = 2
+        self.mock_options["prompt_delay"] = 3
 
         handler = mock.Mock()
-        session = MockCommandSession(self.mock_options, handler,
-                                     devinfo, self.options,
-                                     loop=self._loop)
+        session = MockCommandSession(
+            self.mock_options, handler, devinfo, self.options, loop=self._loop
+        )
         # Session is initially not connected
         self.assertFalse(session._connected)
 
@@ -155,15 +157,15 @@ class CommandSessionTest(AsyncTestCase):
         device = self.mock_device("test-dev-1")
         devinfo = await self.mocks.device_db.get(device)
 
-        self.options['open_timeout'] = 2
+        self.options["open_timeout"] = 2
 
         # force a delay in setup commands
-        self.mock_options['command_delay'] = 3
+        self.mock_options["command_delay"] = 3
 
         handler = mock.Mock()
-        session = MockCommandSession(self.mock_options, handler,
-                                     devinfo, self.options,
-                                     loop=self._loop)
+        session = MockCommandSession(
+            self.mock_options, handler, devinfo, self.options, loop=self._loop
+        )
         # Session is initially not connected
         self.assertFalse(session._connected)
 
@@ -208,5 +210,7 @@ class CommandSessionTest(AsyncTestCase):
             await self.session.run_command(b"command timeout\n", 1)
 
         self.assertEqual(rexc.exception.args[0], "Command Response Timeout")
-        self.assertEqual(rexc.exception.args[1],
-                         b"command timeout\nMock response for command timeout")
+        self.assertEqual(
+            rexc.exception.args[1],
+            b"command timeout\nMock response for command timeout",
+        )

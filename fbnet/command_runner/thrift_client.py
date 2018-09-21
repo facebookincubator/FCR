@@ -12,19 +12,21 @@
 import asyncio
 
 from thrift.server.TAsyncioServer import ThriftClientProtocolFactory
+
 from .base_service import ServiceObj
 
 
 class AsyncioThriftClient(ServiceObj):
-    '''
+    """
     util class to get asyncio client for different services using asyncio
     get_hosts
-    '''
+    """
 
     _TIMEOUT = 60  # By default timeout after 60s
 
-    def __init__(self, client_class, host, port,
-                 service=None, timeout=None, open_timeout=None):
+    def __init__(
+        self, client_class, host, port, service=None, timeout=None, open_timeout=None
+    ):
         super().__init__(service)
 
         self._client_class = client_class
@@ -38,14 +40,14 @@ class AsyncioThriftClient(ServiceObj):
         self._client = None
 
         # Set the timeout for thrift calls
-        self._timeouts = {'': timeout or self._TIMEOUT}
+        self._timeouts = {"": timeout or self._TIMEOUT}
 
         if self.service:
-            self._register_counter('connected')
-            self._register_counter('lookup.failed')
+            self._register_counter("connected")
+            self._register_counter("lookup.failed")
 
     def _format_counter(self, counter):
-        return 'thrift_client.{}.{}.{}'.format(self._host, self._port, counter)
+        return "thrift_client.{}.{}.{}".format(self._host, self._port, counter)
 
     def _inc_counter(self, counter):
         if self.service:
@@ -64,11 +66,13 @@ class AsyncioThriftClient(ServiceObj):
 
         conn_fut = self.loop.create_connection(
             ThriftClientProtocolFactory(self._client_class, timeouts=self._timeouts),
-            host=host, port=port)
-        (transport, protocol) = await asyncio.wait_for(conn_fut,
-                                                       self._open_timeout,
-                                                       loop=self.loop)
-        self._inc_counter('connected')
+            host=host,
+            port=port,
+        )
+        (transport, protocol) = await asyncio.wait_for(
+            conn_fut, self._open_timeout, loop=self.loop
+        )
+        self._inc_counter("connected")
         self._protocol = protocol
         self._transport = transport
 

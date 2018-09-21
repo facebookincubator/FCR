@@ -9,11 +9,10 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
+from fbnet.command_runner_asyncio.CommandRunner.Command import Processor
 from thrift.server.TAsyncioServer import ThriftServerProtocolFactory
 from thrift.server.TServer import TServerEventHandler
 from thrift.Thrift import TProcessorEventHandler
-
-from fbnet.command_runner_asyncio.CommandRunner.Command import Processor
 
 from .base_service import ServiceTask
 from .command_handler import CommandHandler
@@ -26,8 +25,8 @@ class CommandServer(ServiceTask):
     """
 
     PORT = Option(
-        "-p", "--port", help="TCP port for FCR service",
-        type=int, default=5000)
+        "-p", "--port", help="TCP port for FCR service", type=int, default=5000
+    )
 
     def __init__(self, service, loop=None):
         super().__init__(service, "CommandServer")
@@ -49,12 +48,11 @@ class CommandServer(ServiceTask):
         processor.setEventHandler(event_handler)
 
         pfactory = ThriftServerProtocolFactory(
-            processor, self._create_server_event_handler(), loop=self.loop)
+            processor, self._create_server_event_handler(), loop=self.loop
+        )
 
         self._server = await self.loop.create_server(
-            pfactory,
-            port=self.PORT,
-            backlog=self._backlog
+            pfactory, port=self.PORT, backlog=self._backlog
         )
 
         self.logger.info("server started: %d ", self.PORT)

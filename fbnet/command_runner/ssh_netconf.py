@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import re
 import asyncio
+import re
 
 from fbnet.command_runner.command_session import SSHCommandSession
 
 
 class SSHNetconf(SSHCommandSession):
     TERM_TYPE = None
-    DELIM = b']]>]]>'
+    DELIM = b"]]>]]>"
     PROMPT = re.compile(DELIM)
 
-    HELLO_MESSAGE = b'''<?xml version="1.0" encoding="UTF-8" ?>
+    HELLO_MESSAGE = b"""<?xml version="1.0" encoding="UTF-8" ?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
     <capability>urn:ietf:params:netconf:base:1.0</capability>
   </capabilities>
 </hello>
-'''
+"""
 
     async def _setup_connection(self):
         # Wait for the hello message from the peer. We will save this message
@@ -30,7 +30,7 @@ class SSHNetconf(SSHCommandSession):
 
     def _send_command(self, cmd):
         # Send a command followed by a delimiter
-        self._stream_writer.write(b'\n' + cmd + self.DELIM + b'\n')
+        self._stream_writer.write(b"\n" + cmd + self.DELIM + b"\n")
 
     async def _wait_response(self, cmd, prompt_re):
         """
@@ -55,7 +55,8 @@ class SSHNetconf(SSHCommandSession):
             resp = await asyncio.wait_for(
                 self._wait_response(None, self.PROMPT),
                 timeout or self._devinfo.vendor_data.cmd_timeout_sec,
-                loop=self._loop)
+                loop=self._loop,
+            )
             return self._format_output(cmd, resp)
         except asyncio.TimeoutError:
             self.logger.error("Timeout waiting for command response")
@@ -65,7 +66,7 @@ class SSHNetconf(SSHCommandSession):
     async def _connect(self):
         command = None
         subsystem = None
-        device = self._opts.get('device')
+        device = self._opts.get("device")
 
         # One of subsystem/command needs to be specified. If subsystem is specified
         # we will ignore the commmand
@@ -74,8 +75,8 @@ class SSHNetconf(SSHCommandSession):
             command = device.session_data.exec_command
             if not command:
                 raise RuntimeError(
-                    'either subsystem or exce_command must be specified '
-                    'for netconf session'
+                    "either subsystem or exce_command must be specified "
+                    "for netconf session"
                 )
 
         return await super()._connect(subsystem=subsystem, exec_command=command)

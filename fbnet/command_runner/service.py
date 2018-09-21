@@ -10,43 +10,54 @@
 #
 
 import asyncio
-import signal
 import logging
+import signal
 from concurrent.futures import ThreadPoolExecutor
 
-
 from fbnet.command_runner_asyncio.CommandRunner.Command import Client as FcrClient
-from .thrift_client import AsyncioThriftClient
-from .command_session import CommandSession
-from .command_server import CommandServer
+
 from .base_service import ServiceObjMeta, ServiceTask
+from .command_server import CommandServer
+from .command_session import CommandSession
 from .options import Option
+from .thrift_client import AsyncioThriftClient
 
 
 class FcrServiceBase:
-    '''
+    """
     Main Application object.
 
     This manages application resources and provides a common orchestraion point
     for the application modules.
-    '''
+    """
 
     ASYNCIO_DEBUG = Option(
-        '--asyncio_debug', help='turn on debug for asyncio',
-        action="store_true", default=False)
+        "--asyncio_debug",
+        help="turn on debug for asyncio",
+        action="store_true",
+        default=False,
+    )
 
     LOG_LEVEL = Option(
-        '--log_level', help='logging level',
-        choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info')
+        "--log_level",
+        help="logging level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+    )
 
     MAX_DEFAULT_EXECUTOR_THREADS = Option(
-        "--max_default_executor_threads", help="Max number of worker threads",
-        type=int, default=4)
+        "--max_default_executor_threads",
+        help="Max number of worker threads",
+        type=int,
+        default=4,
+    )
 
     EXIT_MAX_WAIT = Option(
-        "--exit_max_wait", help="Max time (seconds) to wait for session to terminate",
-        type=int, default=300)
+        "--exit_max_wait",
+        help="Max time (seconds) to wait for session to terminate",
+        type=int,
+        default=300,
+    )
 
     def __init__(self, app_name, args=None, loop=None):
         self._app_name = app_name
@@ -100,15 +111,14 @@ class FcrServiceBase:
             for task in pending_tasks:
                 task.cancel()
             self._loop.run_until_complete(
-                asyncio.gather(*pending_tasks, return_exceptions=True))
+                asyncio.gather(*pending_tasks, return_exceptions=True)
+            )
             self._loop.close()
 
     async def _clean_shutdown(self):
         try:
-            coro = CommandSession.wait_sessions('Shutdown', service=self)
-            await asyncio.wait_for(coro,
-                                   timeout=self.EXIT_MAX_WAIT,
-                                   loop=self.loop)
+            coro = CommandSession.wait_sessions("Shutdown", service=self)
+            await asyncio.wait_for(coro, timeout=self.EXIT_MAX_WAIT, loop=self.loop)
 
         except asyncio.TimeoutError:
             self.logger.error("Timeout waiting for sessions, shutting down anyway")
@@ -117,9 +127,9 @@ class FcrServiceBase:
             self.terminate()
 
     def terminate(self):
-        '''
+        """
         Terminate the application. We cancel all the tasks that are currently active
-        '''
+        """
         self.logger.info("Terminating")
 
         pending_tasks = asyncio.Task.all_tasks(loop=self.loop)
@@ -129,7 +139,7 @@ class FcrServiceBase:
         self.loop.stop()
 
     def shutdown(self):
-        '''initiate a clean shutdown'''
+        """initiate a clean shutdown"""
         if not self._shutting_down:
             self._shutting_down = True
             for name, task in ServiceTask.all_tasks():
@@ -145,30 +155,35 @@ class FcrServiceBase:
         level = getattr(logging, self.LOG_LEVEL.upper(), None)
 
         if not isinstance(level, int):
-            raise ValueError('Invalid log level: %s' % self.LOG_LEVEL)
+            raise ValueError("Invalid log level: %s" % self.LOG_LEVEL)
 
         logging.basicConfig(level=level)
 
     def decrypt(self, data):
-        '''helper method to decrypt data.
+        """helper method to decrypt data.
 
         The default implementation doesn't do anything. Override this method to
         implement security according to your needs
-        '''
+        """
         return data
 
     def get_fcr_client(self, timeout=None):
-        '''
+        """
         Get a FCR client for your service.
 
         This client is used to distribute requests for bulk calls
-        '''
+        """
         return AsyncioThriftClient(
-            FcrClient, 'localhost', CommandServer.PORT,
-            service=self, timeout=timeout, loop=self.loop)
+            FcrClient,
+            "localhost",
+            CommandServer.PORT,
+            service=self,
+            timeout=timeout,
+            loop=self.loop,
+        )
 
     def check_ip(self, ipaddr):
-        '''
+        """
         Check if ip address is usable.
 
         You will likely need to override this function to implement the ip
@@ -177,16 +192,15 @@ class FcrServiceBase:
         filter out non-reachable addresses.
 
         The default implementation assumes that everything is reachable
-        '''
+        """
         return True
 
     def add_stats_counter(self, counter, stats_types):
         # Currently this only support simple counter, stats parameter are
         # ignored
-        self.logger.info(
-            "stats counter not supported: %s %r", counter, stats_types)
+        self.logger.info("stats counter not supported: %s %r", counter, stats_types)
         self.counters.resetCounter(counter)
 
     def get_http_proxy_url(self, host):
-        '''build a url for http proxy'''
+        """build a url for http proxy"""
         raise NotImplementedError("Proxy support not implemented")

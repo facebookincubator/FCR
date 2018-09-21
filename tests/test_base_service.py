@@ -10,13 +10,14 @@
 #
 
 import asyncio
+
 import mock
-from fbnet.command_runner.base_service import ServiceTask, PeriodicServiceTask
+from fbnet.command_runner.base_service import PeriodicServiceTask, ServiceTask
+
 from .testutil import AsyncTestCase
 
 
 class TestService(AsyncTestCase):
-
     def setUp(self):
         super().setUp()
         self._mock_service = mock.Mock(loop=self._loop)
@@ -26,7 +27,6 @@ class TestService(AsyncTestCase):
             ServiceTask("RunTest", service=self._mock_service)
 
     def test_run(self):
-
         class DummyServiceTask(ServiceTask):
             _run_called = False
             _cleanup_called = False
@@ -44,7 +44,6 @@ class TestService(AsyncTestCase):
         self.assertTrue(service._cleanup_called)
 
     def test_cancel(self):
-
         class DummyServiceTask(ServiceTask):
             _run_called = False
             _run_complete = False
@@ -67,6 +66,7 @@ class TestService(AsyncTestCase):
             asyncio.sleep(1)
             for svc in services:
                 svc.cancel()
+
         asyncio.ensure_future(cancel_services(), loop=self._loop)
 
         self.wait_for_tasks()
@@ -77,7 +77,6 @@ class TestService(AsyncTestCase):
             self.assertTrue(svc._cleanup_called)
 
     def test_exception(self):
-
         class DummyServiceTask(ServiceTask):
             _run_called = False
             _run_complete = False
@@ -103,7 +102,6 @@ class TestService(AsyncTestCase):
 
 
 class TestPeriodicService(AsyncTestCase):
-
     def setUp(self):
         super().setUp()
         self._mock_service = mock.Mock(loop=self._loop)
@@ -113,7 +111,6 @@ class TestPeriodicService(AsyncTestCase):
             PeriodicServiceTask(self._mock_service, "RunTest", 1)
 
     def test_run(self):
-
         class DummyServiceTask(PeriodicServiceTask):
             _run_called = 0
             _cleanup_called = False
@@ -122,9 +119,9 @@ class TestPeriodicService(AsyncTestCase):
                 self._cleanup_called = True
 
             async def run(self):
-                assert(self._run_called < 5)
+                assert self._run_called < 5
                 self._run_called += 1
-                if (self._run_called == 5):
+                if self._run_called == 5:
                     self.cancel()
 
         service = DummyServiceTask(self._mock_service, "RunTest", 0.1)
@@ -135,7 +132,6 @@ class TestPeriodicService(AsyncTestCase):
         self.assertTrue(service._cleanup_called)
 
     def test_exception(self):
-
         class DummyServiceTask(PeriodicServiceTask):
             _run_called = 0
             _cleanup_called = False
@@ -144,9 +140,9 @@ class TestPeriodicService(AsyncTestCase):
                 self._cleanup_called = True
 
             async def run(self):
-                assert(self._run_called < 3)
+                assert self._run_called < 3
                 self._run_called += 1
-                if (self._run_called == 3):
+                if self._run_called == 3:
                     raise RuntimeError(self._run_called)
 
         service = DummyServiceTask(self._mock_service, "RunTest", 0.1)

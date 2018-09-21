@@ -9,16 +9,15 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
-from .testutil import AsyncTestCase, async_test
-from mock import Mock
-
 import asyncio
 
+from mock import Mock
+
 from .mocks import MockService
+from .testutil import AsyncTestCase, async_test
 
 
 class DeviceInfoTest(AsyncTestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -39,14 +38,15 @@ class DeviceInfoTest(AsyncTestCase):
 
         self.test_device = Mock()
         self.test_device.hostname = "test-dev-1"
-        self.test_devinfo = self._run_loop(
-            self.mocks.device_db.get(self.test_device))[0]
+        self.test_devinfo = self._run_loop(self.mocks.device_db.get(self.test_device))[
+            0
+        ]
 
     def _get_pingable(self, dev):
-        if dev['name'] in self.pingable_addrs:
-            addrtype = self.pingable_addrs.get(dev['name'])
-            return dev[addrtype + '.prefix']
-        return dev['ip']
+        if dev["name"] in self.pingable_addrs:
+            addrtype = self.pingable_addrs.get(dev["name"])
+            return dev[addrtype + ".prefix"]
+        return dev["ip"]
 
     async def _get_device(self, name):
         device = Mock(hostname=name)
@@ -58,10 +58,8 @@ class DeviceInfoTest(AsyncTestCase):
 
     async def _setup_session(self):
         return await self.test_devinfo.setup_session(
-            Mock(),
-            self.test_device,
-            self.session_options,
-            self._loop)
+            Mock(), self.test_device, self.session_options, self._loop
+        )
 
     @async_test
     async def test_setup_session(self):
@@ -99,7 +97,7 @@ class DeviceInfoTest(AsyncTestCase):
         # make run_command throw an error
         self.mock_options["run_error"] = True
         # inject some test commands into session setup
-        self.test_devinfo._session_setup = ['term len 0']
+        self.test_devinfo._session_setup = ["term len 0"]
 
         with self.assertRaises(IOError):
             await self._setup_session()

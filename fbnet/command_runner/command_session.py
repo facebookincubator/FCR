@@ -9,27 +9,26 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
+import abc
 import asyncio
 import logging
 import re
 import time
-import asyncssh
 from collections import namedtuple
 
-import abc
-
-from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
+import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
+from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
 
 from .base_service import ServiceObj
 
-log = logging.getLogger('fcr.CommandSession')
+
+log = logging.getLogger("fcr.CommandSession")
 
 ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "match"])
 
 
 class LogAdapter(logging.LoggerAdapter):
-
     def process(self, msg, kwargs):
         return "%s: %s" % (self.extra["session"].id, msg), kwargs
 
@@ -60,7 +59,7 @@ class CommandSession(ServiceObj):
 
         self._opts = options
 
-        device = self._opts.get('device')
+        device = self._opts.get("device")
         self._extra_options = (
             device and device.session_data and device.session_data.extra_options
         ) or {}
@@ -89,12 +88,14 @@ class CommandSession(ServiceObj):
         return self.objname
 
     def get_peer_info(self):
-        return self._extra_info['peer']
+        return self._extra_info["peer"]
 
     def create_logger(self):
         logger = logging.getLogger(
             "fcr.{klass}.{dev.vendor_name}.{dev.hostname}".format(
-                klass=self.__class__.__name__, dev=self._devinfo))
+                klass=self.__class__.__name__, dev=self._devinfo
+            )
+        )
 
         return LogAdapter(logger, {"session": self})
 
@@ -102,16 +103,18 @@ class CommandSession(ServiceObj):
         return ttypes.CommandResult(output=output, status=status, command=command)
 
     def __repr__(self):
-        return "%s [%s] [%s]" % (self.__class__.__name__,
-                                 self._devinfo.hostname,
-                                 self.id)
+        return "%s [%s] [%s]" % (
+            self.__class__.__name__,
+            self._devinfo.hostname,
+            self.id,
+        )
 
     @classmethod
     def register_counters(cls, counters):
-        counters.register_counter('%s.setup' % cls.__name__)
-        counters.register_counter('%s.connected' % cls.__name__)
-        counters.register_counter('%s.failed' % cls.__name__)
-        counters.register_counter('%s.closed' % cls.__name__)
+        counters.register_counter("%s.setup" % cls.__name__)
+        counters.register_counter("%s.connected" % cls.__name__)
+        counters.register_counter("%s.failed" % cls.__name__)
+        counters.register_counter("%s.closed" % cls.__name__)
 
     @classmethod
     def get_session_count(cls):
@@ -143,10 +146,11 @@ class CommandSession(ServiceObj):
             raise self._build_session_exc(exc_val) from exc_val
 
     def _build_session_exc(self, exc):
-        msg = 'Failed (session: %s, peer: %s): %r' % (
+        msg = "Failed (session: %s, peer: %s): %r" % (
             self.get_session_name(),
             self.get_peer_info(),
-            exc)
+            exc,
+        )
         return SessionException(message=msg)
 
     @classmethod
@@ -171,7 +175,7 @@ class CommandSession(ServiceObj):
 
     @property
     def open_timeout(self):
-        return self._opts.get('open_timeout')
+        return self._opts.get("open_timeout")
 
     @property
     def exit_status(self):
@@ -181,9 +185,10 @@ class CommandSession(ServiceObj):
         await self.connect()
 
     async def setup(self):
-        self.inc_counter('%s.setup' % self.objname)
-        await asyncio.wait_for(self._create_connection(), self.open_timeout,
-                               loop=self._loop)
+        self.inc_counter("%s.setup" % self.objname)
+        await asyncio.wait_for(
+            self._create_connection(), self.open_timeout, loop=self._loop
+        )
         return self
 
     async def connect(self):
@@ -192,11 +197,11 @@ class CommandSession(ServiceObj):
         """
         try:
             self._cmd_stream = await self._connect()
-            self.inc_counter('%s.connected' % self.objname)
+            self.inc_counter("%s.connected" % self.objname)
             self.logger.info("Connected: %s", self._extra_info)
         except Exception as e:
             self.logger.error("Connect Failed %r", e)
-            self.inc_counter('%s.failed' % self.objname)
+            self.inc_counter("%s.failed" % self.objname)
             raise e
 
     async def close(self):
@@ -208,7 +213,7 @@ class CommandSession(ServiceObj):
             self.logger.debug("Closing session")
             del self._ALL_SESSIONS[self.key]
         finally:
-            self.inc_counter('%s.closed' % self.objname)
+            self.inc_counter("%s.closed" % self.objname)
             await self._close()
             if self._cmd_stream is not None:
                 self._cmd_stream.close()
@@ -287,14 +292,19 @@ class CommandStreamReader(asyncio.StreamReader):
         start_ts = time.time()
 
         while res is None:
-            self.logger.debug("match failed in: %d: %d: %s",
-                              len(self._buffer), self._limit, self._buffer[-100:])
+            self.logger.debug(
+                "match failed in: %d: %d: %s",
+                len(self._buffer),
+                self._limit,
+                self._buffer[-100:],
+            )
             self._session.inc_counter("streamreader.wait_for_retry")
 
             if len(self._buffer) > self._limit:
                 self._session.inc_counter("streamreader.overrun")
-                raise RuntimeError("Reader buffer overrun: %d: %d" %
-                                   (len(self._buffer), self._limit))
+                raise RuntimeError(
+                    "Reader buffer overrun: %d: %d" % (len(self._buffer), self._limit)
+                )
 
             now = time.time()
 
@@ -303,9 +313,9 @@ class CommandStreamReader(asyncio.StreamReader):
                 try:
                     while True:
                         fut = self._wait_for_data("CommandStreamReader.wait_for")
-                        await asyncio.wait_for(fut,
-                                               timeout=self.COMMAND_DATA_TIMEOUT,
-                                               loop=self._loop)
+                        await asyncio.wait_for(
+                            fut, timeout=self.COMMAND_DATA_TIMEOUT, loop=self._loop
+                        )
                 except asyncio.TimeoutError:
                     # Now try to match the prompt
                     pass
@@ -362,7 +372,7 @@ class CommandStreamReader(asyncio.StreamReader):
             if self._eof:
                 # We are at the EOF. Read the whole buffer and send it back
                 data = await self.read(len(self._buffer))
-                matched = b''
+                matched = b""
                 match = None
                 groupdict = None
             else:
@@ -382,14 +392,14 @@ class CommandStreamReader(asyncio.StreamReader):
 class CommandStream(asyncio.StreamReaderProtocol):
 
     # TODO: make this tweakable from configerator
-    _BUFFER_LIMIT = 100 * (2**20)  # 100M
+    _BUFFER_LIMIT = 100 * (2 ** 20)  # 100M
 
     def __init__(self, session, loop):
-        super().__init__(CommandStreamReader(session,
-                                             limit=self._BUFFER_LIMIT,
-                                             loop=loop),
-                         client_connected_cb=self._on_connect,
-                         loop=loop)
+        super().__init__(
+            CommandStreamReader(session, limit=self._BUFFER_LIMIT, loop=loop),
+            client_connected_cb=self._on_connect,
+            loop=loop,
+        )
         self._session = session
         self._loop = loop
 
@@ -422,9 +432,9 @@ class CommandStream(asyncio.StreamReaderProtocol):
 
 
 class CliCommandSession(CommandSession):
-    '''
+    """
     A command session for CLI commands. Does prompt processing on the command stream.
-    '''
+    """
 
     def __init__(self, service, devinfo, options, loop):
         super().__init__(service, devinfo, options, loop)
@@ -459,7 +469,8 @@ class CliCommandSession(CommandSession):
         Wait for a prompt
         """
         return await self._stream_reader.readuntil_re(
-            prompt_re or self._devinfo.prompt_re, -self._MAX_PROMPT_SIZE)
+            prompt_re or self._devinfo.prompt_re, -self._MAX_PROMPT_SIZE
+        )
 
     async def _wait_response(self, cmd, prompt_re):
         """
@@ -474,14 +485,14 @@ class CliCommandSession(CommandSession):
         # List of chars that will be removed
         #        ' *\x08+': space* followed by backspace characters
         #          '\x07' : BEL(bell) char
-        output = re.sub(b'.\x08|\x07', b'', output)
+        output = re.sub(b".\x08|\x07", b"", output)
 
         #
         # We need to apply following transforms
         #   '\r+\n' -> '\n'
         #   '\n\r+' -> '\n'
         #   '\r' -> '\n'     standalone \r
-        output = re.sub(b'(\r+\n)|(\n\r+)|\r', b'\n', output)
+        output = re.sub(b"(\r+\n)|(\n\r+)|\r", b"\n", output)
 
         return output.strip()
 
@@ -509,17 +520,16 @@ class CliCommandSession(CommandSession):
         #    b'^\s*show\s+version\s*$'
         # We also need to escape the words to handle characters like '|'
         cmd_words_esc = (re.escape(w) for w in cmd_words)
-        cmd_re = b'^\s*' + b'\s+'.join(cmd_words_esc) + b'([ \t]*\n)*'
+        cmd_re = b"^\s*" + b"\s+".join(cmd_words_esc) + b"([ \t]*\n)*"
 
         # Now replace the 'command string' in the output with a sanitized
         # version (redundant spaces removed)
         # '  show  version  '  ==>  'show version'
-        cmd_output = re.sub(cmd_re, b' '.join(cmd_words) + b'\n',
-                            cmd_output, 1, re.M)
+        cmd_output = re.sub(cmd_re, b" ".join(cmd_words) + b"\n", cmd_output, 1, re.M)
 
         # Now we need to prepend the prompt to the command output. The prompt is
         # the matched part in the 'resp'
-        output = resp.matched.strip() + b' ' + cmd_output
+        output = resp.matched.strip() + b" " + cmd_output
 
         return output
 
@@ -528,9 +538,9 @@ class CliCommandSession(CommandSession):
         Run a command and return response to user
         """
         if not self._connected:
-            raise RuntimeError("Not Connected",
-                               "status: %r" % self.exit_status,
-                               self.key)
+            raise RuntimeError(
+                "Not Connected", "status: %r" % self.exit_status, self.key
+            )
 
         # Ideally there should be no data on the stream. We will in any case
         # drain any stale data. This is mostly for debugging and making sure
@@ -544,9 +554,10 @@ class CliCommandSession(CommandSession):
         commands = cmd.splitlines()
         for command in commands:
             cmdinfo = self._devinfo.get_command_info(
-                command, self._opts.get('command_prompts'))
+                command, self._opts.get("command_prompts")
+            )
 
-            self.logger.info('RUN: %r', cmdinfo.cmd)
+            self.logger.info("RUN: %r", cmdinfo.cmd)
 
             # Send any precmd data (e.g. \x15 to clear the commandline)
             if cmdinfo.precmd:
@@ -560,14 +571,15 @@ class CliCommandSession(CommandSession):
                 resp = await asyncio.wait_for(
                     self._wait_response(command, prompt),
                     timeout or self._devinfo.vendor_data.cmd_timeout_sec,
-                    loop=self._loop)
+                    loop=self._loop,
+                )
                 output.append(self._format_output(command, resp))
             except asyncio.TimeoutError:
                 self.logger.error("Timeout waiting for command response")
                 data = await self._stream_reader.drain()
                 raise RuntimeError("Command Response Timeout", data[-200:])
 
-        return b'\n'.join(output).rstrip()
+        return b"\n".join(output).rstrip()
 
     def _session_connected(self, stream_reader, stream_writer):
         """
@@ -589,13 +601,13 @@ class CliCommandSession(CommandSession):
 
 
 class SSHCommandClient(asyncssh.SSHClient):
-    '''
+    """
     The connection objects are leaked if the session timeout while the
     authentication is in progres. The fix ideally needs to be implemented in
     asyncssh. For now we are adding a workaround in FCR. We will save the
     connection object when we get a connection_made callback. This will be used
     to close the connection when we close the session.
-    '''
+    """
 
     def __init__(self, session):
         super().__init__()
@@ -616,9 +628,9 @@ class SSHCommandSession(CliCommandSession):
         self._chan = None
 
     def connection_made(self, conn):
-        s = conn.get_extra_info('socket')
-        self._extra_info['fd'] = s.fileno()
-        self._extra_info['sockname'] = conn.get_extra_info('sockname')
+        s = conn.get_extra_info("socket")
+        self._extra_info["fd"] = s.fileno()
+        self._extra_info["sockname"] = conn.get_extra_info("sockname")
         self._conn = conn
 
     def _client_factory(self):
@@ -632,7 +644,7 @@ class SSHCommandSession(CliCommandSession):
         return (ip, port, self._username, self._password)
 
     async def _connect(self, subsystem=None, exec_command=None):
-        '''
+        """
         Some session types require us to run a command to start a session. The
         SSH protocol defines three ways to start a session.
         1. shell: this starts a regular user shell on the remote system. This is
@@ -648,14 +660,15 @@ class SSHCommandSession(CliCommandSession):
                       predefined systems
 
         see sec 6.5 https://tools.ietf.org/html/rfc4254 for more details
-        '''
+        """
         host, port, user, passwd = await self.dest_info()
-        self._extra_info['peer'] = (host, port)
+        self._extra_info["peer"] = (host, port)
 
         # TODO: We need to resolve the console hostnames to ip addresses.
         # Ignoring consoles for now.
-        if (not getattr(self, '_console', False) and
-           self._devinfo.connect_using_proxy(host)):
+        if not getattr(self, "_console", False) and self._devinfo.connect_using_proxy(
+            host
+        ):
             host = self.service.get_http_proxy_url(host)
 
         self.logger.info("Connecting to: %s: %d", host, port)
@@ -669,7 +682,7 @@ class SSHCommandSession(CliCommandSession):
             username=user,
             password=passwd,
             client_keys=None,
-            known_hosts=None
+            known_hosts=None,
         )
 
         chan, cmd_stream = await self._conn.create_session(
@@ -677,7 +690,7 @@ class SSHCommandSession(CliCommandSession):
             encoding=None,
             term_type=self.TERM_TYPE,
             subsystem=subsystem,
-            command=exec_command
+            command=exec_command,
         )
         self._chan = chan
         return cmd_stream

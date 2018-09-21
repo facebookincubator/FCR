@@ -10,12 +10,11 @@
 #
 
 import docker
-
-from fbnet.command_runner.service import FcrServiceBase
 from fbnet.command_runner.command_server import CommandServer
 from fbnet.command_runner.device_db import BaseDeviceDB
-from fbnet.command_runner.device_vendor import DeviceVendors
 from fbnet.command_runner.device_info import DeviceInfo, DeviceIP
+from fbnet.command_runner.device_vendor import DeviceVendors
+from fbnet.command_runner.service import FcrServiceBase
 
 
 class DeviceDB(BaseDeviceDB):
@@ -23,7 +22,7 @@ class DeviceDB(BaseDeviceDB):
     docker_client = docker.from_env()
 
     async def _fetch_device_data(self, name_filter=None):
-        self.logger.info('fetch_device_data: %s', name_filter)
+        self.logger.info("fetch_device_data: %s", name_filter)
 
         containers = await self._run_in_executor(self.list_containers)
 
@@ -34,23 +33,23 @@ class DeviceDB(BaseDeviceDB):
         return cls.docker_client.containers.list()
 
     def create_device(self, container):
-        vendor = 'docker'
-        ip = container.attrs['NetworkSettings']['IPAddress']
-        addr = DeviceIP('addr', ip, False)
+        vendor = "docker"
+        ip = container.attrs["NetworkSettings"]["IPAddress"]
+        addr = DeviceIP("addr", ip, False)
         return DeviceInfo(
             self.service,
             container.name,
-            'netbot',
-            'bot1234',
+            "netbot",
+            "bot1234",
             [addr],
             addr,
             self.service.vendors.get(vendor),
-            'Demo',
-            'Ubuntu')
+            "Demo",
+            "Ubuntu",
+        )
 
 
 class FCRService(FcrServiceBase):
-
     def __init__(self):
         super().__init__("FCR")
 

@@ -9,20 +9,20 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
-import os
 import json
+import os
 import re
 
+from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionType
+
+from . import utils
 from .base_service import ServiceObj
 from .command_session import SSHCommandSession
-from .import utils
 from .options import Option
 from .ssh_netconf import SSHNetconf
-from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionType
 
 
 class VendorConfig:
-
     def __init__(self, defaults, session_names):
         self._cfg = {}
         self._session_names = session_names
@@ -60,12 +60,10 @@ class DeviceVendor(ServiceObj):
     }
 
     _PROMPTS_RE = re.compile(
-        b"|".join([b"(%s)" % p for p in _DEFAULTS["prompt_regex"]]), re.M)
+        b"|".join([b"(%s)" % p for p in _DEFAULTS["prompt_regex"]]), re.M
+    )
 
-    _SESSION_NAMES = {
-        b"ssh": SessionType.SSH,
-        b"netconf": SessionType.SSH_NETCONF,
-    }
+    _SESSION_NAMES = {b"ssh": SessionType.SSH, b"netconf": SessionType.SSH_NETCONF}
 
     _SESSION_TYPES = {
         SessionType.SSH: SSHCommandSession,
@@ -83,7 +81,7 @@ class DeviceVendor(ServiceObj):
             "cli_setup": self._config.cli_setup,
             "prompt_regex": self._config.prompt_regex,
             "cmd_timeout_sec": self._config.cmd_timeout_sec,
-            "autocomplete": self._config.autocomplete
+            "autocomplete": self._config.autocomplete,
         }
         return "DeviceVendor(%s) %s" % (self.vendor_name, props)
 
@@ -133,14 +131,14 @@ class DeviceVendor(ServiceObj):
         return self._config.autocomplete
 
     def select_session_type(self, options):
-        '''
+        """
         Select session type for given set of options.
         Users can override session type here, by specifying session_type in
         options. This needs to be implemented for vendors supporting multiple
         session types
-        '''
+        """
         self.inc_counter("device_vendor.all_sessions")
-        session_type = options.get('session_type', None)
+        session_type = options.get("session_type", None)
 
         if session_type in self._config.supported_sessions:
             return self._SESSION_TYPES.get(session_type, self.session_type)
@@ -159,7 +157,7 @@ class DeviceVendor(ServiceObj):
         self._update_prompts_re()
 
     def set_user_prompts(self, prompts):
-        self._config.update({'user_prompts': prompts})
+        self._config.update({"user_prompts": prompts})
         self._update_prompts_re()
 
     def _update_prompts_re(self):
@@ -186,18 +184,24 @@ class DeviceVendor(ServiceObj):
         # reduces the probability of this matching some random text in the
         # output. Not that we are matching at end of the text, not at the end of
         # each line in text (re.M is not specified)
-        return re.compile(b"(?<=[\n\r])(?P<prompt>" +
-                          b"|".join(all_prompts) + b")\s*" +
-                          trailer + b"$", re.M)
+        return re.compile(
+            b"(?<=[\n\r])(?P<prompt>"
+            + b"|".join(all_prompts)
+            + b")\s*"
+            + trailer
+            + b"$",
+            re.M,
+        )
 
 
 class DeviceVendors(ServiceObj):
 
     # User specified device vendor information
     device_vendors = Option(
-        '--device_vendors',
+        "--device_vendors",
         help="A JSON file containing vendor information",
-        default=None)
+        default=None,
+    )
 
     def __init__(self, service, name=None):
         super().__init__(service, name)
@@ -215,7 +219,7 @@ class DeviceVendors(ServiceObj):
 
     def _update_user_prompts(self, path, cfg):
         if cfg is not None:
-            for vendor, prompts in cfg['prompt_regexs'].items():
+            for vendor, prompts in cfg["prompt_regexs"].items():
                 self.get(vendor).set_user_prompts(prompts)
 
     def _update_device_vendors(self, path, cfg):
@@ -229,19 +233,19 @@ class DeviceVendors(ServiceObj):
         return self._update_device_vendors(path, cfg)
 
     def _load_device_vendors(self):
-        '''
+        """
         Load device vendors specified on command line
-        '''
+        """
         if self.device_vendors and os.path.exists(self.device_vendors):
             self.logger.info("loading local file")
-            with open(self.device_vendors, 'rb') as fh:
+            with open(self.device_vendors, "rb") as fh:
                 jsonb = fh.read()
-            return self.load_vendors(self.device_vendors, jsonb.decode('utf-8'))
+            return self.load_vendors(self.device_vendors, jsonb.decode("utf-8"))
 
     def _load_vendors_data(self):
-        '''
+        """
         Load vendors information
-        '''
+        """
         self._load_device_vendors()
 
     def _createVendor(self, name):

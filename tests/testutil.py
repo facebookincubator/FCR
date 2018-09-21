@@ -15,7 +15,6 @@ import unittest
 
 
 class FcrTestEventLoop(asyncio.SelectorEventLoop):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._counter_mgr = None
@@ -29,7 +28,6 @@ class FcrTestEventLoop(asyncio.SelectorEventLoop):
 
 
 def async_test(func):
-
     @functools.wraps(func)
     def _wrapper(self, *args, **kwargs):
         self._loop.run_until_complete(func(self, *args, **kwargs))
@@ -38,7 +36,6 @@ def async_test(func):
 
 
 class AsyncTestCase(unittest.TestCase):
-
     def setUp(self):
         self._loop = FcrTestEventLoop()
         asyncio.set_event_loop(None)
@@ -64,6 +61,5 @@ class AsyncTestCase(unittest.TestCase):
         """
         Run a set of coroutines in a loop
         """
-        finished, _ = self._loop.run_until_complete(
-            asyncio.wait(args, loop=self._loop))
+        finished, _ = self._loop.run_until_complete(asyncio.wait(args, loop=self._loop))
         return [task.result() for task in finished]

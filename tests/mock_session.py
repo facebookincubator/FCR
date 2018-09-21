@@ -10,6 +10,7 @@
 #
 
 import asyncio
+
 from fbnet.command_runner import command_session
 
 
@@ -44,10 +45,10 @@ Test for user prompts
         self._recv_data(self._prompt, self.prompt_delay())
 
     def prompt_delay(self):
-        return self._options.get('prompt_delay', 0)
+        return self._options.get("prompt_delay", 0)
 
     def command_delay(self):
-        return self._options.get('command_delay', 0)
+        return self._options.get("command_delay", 0)
 
     def _gen_cmd_response(self, cmd):
         return self._COMMAND_OUTPUTS[cmd]
@@ -70,7 +71,6 @@ Test for user prompts
 
 
 class MockSessionFactory:
-
     def __init__(self, mock_options, session_class):
         self._mock_options = mock_options
         self._session_class = session_class
@@ -104,12 +104,11 @@ class MockCommandSession(command_session.CliCommandSession):
         # Declare the session as connected
         self._cmd_stream = command_session.CommandStream(self, loop=self._loop)
         self._transport = MockCommandTransport(
-            self._mock_options,
-            lambda: self._cmd_stream,
-            loop=self._loop)
+            self._mock_options, lambda: self._cmd_stream, loop=self._loop
+        )
 
     async def _connect(self):
-        self._extra_info['peer'] = ('test-ip', 22)
+        self._extra_info["peer"] = ("test-ip", 22)
         if self._mock_options.get("connect_drop", False):
             return
         delay = self._mock_options.get("connect_delay", 0)

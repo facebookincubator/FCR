@@ -15,7 +15,8 @@ from collections import namedtuple
 from .base_service import ServiceObj
 from .console_session import ConsoleCommandSession
 
-CommandInfo = namedtuple('CommandInfo', 'cmd precmd prompt_re')
+
+CommandInfo = namedtuple("CommandInfo", "cmd precmd prompt_re")
 DeviceIP = namedtuple("DeviceIP", ["name", "addr", "mgmt_ip"])
 
 
@@ -24,9 +25,20 @@ class DeviceInfo(ServiceObj):
     An abstraction to represent the network devices.
     """
 
-    def __init__(self, service, hostname, username, password, pref_ips, ip,
-                 vendor_data, role, ch_model, alias=None):
-        super().__init__(service, 'DeviceInfo')
+    def __init__(
+        self,
+        service,
+        hostname,
+        username,
+        password,
+        pref_ips,
+        ip,
+        vendor_data,
+        role,
+        ch_model,
+        alias=None,
+    ):
+        super().__init__(service, "DeviceInfo")
         self._hostname = hostname
         self._username = username  # Default username for device
         self._password = password  # Default password for device
@@ -94,7 +106,7 @@ class DeviceInfo(ServiceObj):
         if ip_address:
             return ip_address
 
-        use_mgmt_ip = options.get('mgmt_ip')
+        use_mgmt_ip = options.get("mgmt_ip")
         if use_mgmt_ip:
             self.inc_counter("device_info.mgmt_ip")
         for ip in self._pref_ips:
@@ -143,13 +155,13 @@ class DeviceInfo(ServiceObj):
         return self._vendor_data.get_prompt_re(trailer)
 
     def _is_question(self, cmd):
-        return cmd.endswith(b'?')
+        return cmd.endswith(b"?")
 
     def _autocomplete(self):
         return self.vendor_data.autocomplete
 
     def get_command_info(self, cmd, command_prompts=None):
-        '''
+        """
         get command information.
 
         * command string to send
@@ -157,7 +169,7 @@ class DeviceInfo(ServiceObj):
           current command line
         * expected prompts: this is the prompt expected after the end of
           command output.
-        '''
+        """
 
         cmd = cmd.strip()
 
@@ -169,16 +181,16 @@ class DeviceInfo(ServiceObj):
             prompt_re = command_prompts.get(cmd)
             if prompt_re:
                 prompt_rex = re.compile(b"(?P<prompt>%s)" % prompt_re)
-                cmd += b'\n'
+                cmd += b"\n"
 
         if not prompt_rex:
             if self._is_question(cmd) and self._autocomplete():
                 # We expect the command to be echoed back after prompt
                 trailer = cmd[:-1].strip()  # remove the last char ('?')
-                trailer = b'(?P<command>%s)[\b\s]*' % re.escape(trailer)
+                trailer = b"(?P<command>%s)[\b\s]*" % re.escape(trailer)
             else:
                 # Normal command
-                cmd = cmd + b'\n'  # Add newline
+                cmd = cmd + b"\n"  # Add newline
 
             prompt_rex = self.get_prompt_re(trailer)
 
@@ -188,7 +200,7 @@ class DeviceInfo(ServiceObj):
         return CommandInfo(cmd, precmd, prompt_rex)
 
     def _get_session_type(self, options):
-        if options['console']:
+        if options["console"]:
             return ConsoleCommandSession
         return self._vendor_data.select_session_type(options)
 

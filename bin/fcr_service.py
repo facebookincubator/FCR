@@ -9,17 +9,16 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
-from fbnet.command_runner.service import FcrServiceBase
 from fbnet.command_runner.command_server import CommandServer
 from fbnet.command_runner.device_db import BaseDeviceDB
-from fbnet.command_runner.device_vendor import DeviceVendors
 from fbnet.command_runner.device_info import DeviceInfo, DeviceIP
+from fbnet.command_runner.device_vendor import DeviceVendors
+from fbnet.command_runner.service import FcrServiceBase
 
 
 class DeviceDB(BaseDeviceDB):
-
     def create_device(self, name):
-        vendor = 'Default'
+        vendor = "Default"
         addr = DeviceIP(name, name, False)
         return DeviceInfo(
             self.service,
@@ -29,12 +28,12 @@ class DeviceDB(BaseDeviceDB):
             [addr],
             addr,
             self.service.vendors.get(vendor),
-            'GEN',
-            'Generic'
+            "GEN",
+            "Generic",
         )
 
     async def _fetch_device_data(self, name_filter=None):
-        self.logger.info('fetch_device_data: %s', name_filter)
+        self.logger.info("fetch_device_data: %s", name_filter)
         if name_filter:
             self.logger.info("Getting device")
             return [self.create_device(name_filter)]
@@ -47,7 +46,6 @@ class Vendors(DeviceVendors):
 
 
 class FCRService(FcrServiceBase):
-
     def __init__(self):
 
         super().__init__("FCR")

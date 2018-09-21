@@ -11,22 +11,20 @@
 
 
 import argparse
-
 from argparse import HelpFormatter
 from operator import attrgetter
 
 
 class SortingHelpFormatter(HelpFormatter):
-
     def add_arguments(self, actions):
-        actions = sorted(actions, key=attrgetter('option_strings'))
+        actions = sorted(actions, key=attrgetter("option_strings"))
         super(SortingHelpFormatter, self).add_arguments(actions)
 
 
 class Option:
-    '''
+    """
     A simple wrapper around argparse.
-    '''
+    """
 
     config = None
     parser = argparse.ArgumentParser(formatter_class=SortingHelpFormatter)
@@ -43,5 +41,5 @@ class Option:
         return getattr(Option.config, self._dest)
 
     def __set__(self, instance, value):
-        '''Options are immutable and can't be set'''
+        """Options are immutable and can't be set"""
         raise AttributeError()

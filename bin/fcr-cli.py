@@ -9,33 +9,32 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
+import argparse
 import asyncio
 import cmd
 import getpass
-import argparse
-from termcolor import cprint
 
 from fbnet.command_runner.thrift_client import AsyncioThriftClient
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
-from fbnet.command_runner_asyncio.CommandRunner.Command \
-    import Client as FcrClient
+from fbnet.command_runner_asyncio.CommandRunner.Command import Client as FcrClient
+from termcolor import cprint
 
-'''
+
+"""
 A simple CLI to run commands using FCR service
 
-'''
+"""
 
 
 class Fcr:
-
     def __init__(self, options, loop=None):
         self._loop = loop or asyncio.get_event_loop()
         self._options = options
 
     async def open_client(self):
         self._client = await AsyncioThriftClient(
-            FcrClient, self._options['fcr_host'],
-            self._options['fcr_port'])
+            FcrClient, self._options["fcr_host"], self._options["fcr_port"]
+        )
 
     async def run(self, cmd, device, *args, **kwargs):
         return await self._client.run(cmd, device, *args, **kwargs)
@@ -54,9 +53,9 @@ class Fcr:
 
 
 class DeviceCli(cmd.Cmd, Fcr):
-    _INTRO = '''
+    _INTRO = """
     Opening session to {s.num_devices} devices
-'''
+"""
 
     def __init__(self, devices, options, loop):
         cmd.Cmd.__init__(self)
@@ -64,8 +63,7 @@ class DeviceCli(cmd.Cmd, Fcr):
 
         self._options = options
         self._devices = [self._create_device(d) for d in devices]
-        self.prompt = '{s.user}@fcr [d={s.num_devices}] $ '.format(
-            s=self)
+        self.prompt = "{s.user}@fcr [d={s.num_devices}] $ ".format(s=self)
 
         self.intro = self._INTRO.format(s=self)
         self.opened = False
@@ -80,19 +78,19 @@ class DeviceCli(cmd.Cmd, Fcr):
 
     @property
     def fcr_host(self):
-        return self._options['fcr_host']
+        return self._options["fcr_host"]
 
     @property
     def fcr_port(self):
-        return self._options['fcr_port']
+        return self._options["fcr_port"]
 
     @property
     def user(self):
-        return self._options['user']
+        return self._options["user"]
 
     @property
     def passwd(self):
-        return self._options['passwd']
+        return self._options["passwd"]
 
     def do_EOF(self, line):
         return self.do_exit()
@@ -106,14 +104,14 @@ class DeviceCli(cmd.Cmd, Fcr):
         self._format_results(results)
 
     def completenames(self, text, line, begidx, endidx):
-        res = self._run_first('compgen -abc {}'.format(text))
+        res = self._run_first("compgen -abc {}".format(text))
         comps = res.output.splitlines()[1:]
         return comps
 
     def completedefault(self, text, line, begidx, endidx):
         word = line.split()[-1]
 
-        cmd = 'compgen -d -S /  {0}; compgen -f {0}'
+        cmd = "compgen -d -S /  {0}; compgen -f {0}"
         res = self._run_first(cmd.format(word))
         comps = res.output.splitlines()[1:]
 
@@ -121,19 +119,18 @@ class DeviceCli(cmd.Cmd, Fcr):
         comps = {c[pfxlen:] for c in comps}
 
         # We get duplicate entries for files and directories.
-        comps = [c for c in comps if c and c + '/' not in comps]
+        comps = [c for c in comps if c and c + "/" not in comps]
 
         return comps
 
     def _create_device(self, name):
-        return ttypes.Device(
-            hostname=name, username=self.user, password=self.passwd)
+        return ttypes.Device(hostname=name, username=self.user, password=self.passwd)
 
     def _format_output(self, devname, command_result):
-        head = ' {0} '.format(devname)
-        cprint('{0:-^60}'.format(head), 'red', attrs=['bold'])
+        head = " {0} ".format(devname)
+        cprint("{0:-^60}".format(head), "red", attrs=["bold"])
         print(command_result.output)
-        print('\n')
+        print("\n")
 
     def _format_results(self, results):
         print()
@@ -148,11 +145,10 @@ class DeviceCli(cmd.Cmd, Fcr):
         self._close()
 
     def _run_coroutines(self, coros):
-        '''
+        """
         Run coroutines in parallel
-        '''
-        return self._loop.run_until_complete(
-            asyncio.gather(*coros, loop=self._loop))
+        """
+        return self._loop.run_until_complete(asyncio.gather(*coros, loop=self._loop))
 
     def _open(self):
         self._run_event_loop(self.open_client)
@@ -168,40 +164,35 @@ class DeviceCli(cmd.Cmd, Fcr):
     def _run(self, cmd, **kwargs):
         coros = [self.run_session(s, cmd, **kwargs) for s in self._sessions]
         results = self._run_coroutines(coros)
-        return {
-            dev.hostname: res
-            for dev, res in zip(self._devices, results)}
+        return {dev.hostname: res for dev, res in zip(self._devices, results)}
 
     def _run_first(self, cmd, **kwargs):
         return self._run_event_loop(self.run_session, self._sessions[0], cmd, **kwargs)
 
 
 class FCR(cmd.Cmd):
-
     def __init__(self, devices):
         super().__init__()
 
-        self.prompt = 'FCR $ '
+        self.prompt = "FCR $ "
 
         self._loop = asyncio.get_event_loop()
 
         self._options = {
-            'fcr_host': 'localhost',
-            'fcr_port': 5000,
-            'user': 'netbot',
-            'passwd': 'bot1234'  # Super Secure password :)
+            "fcr_host": "localhost",
+            "fcr_port": 5000,
+            "user": "netbot",
+            "passwd": "bot1234",  # Super Secure password :)
         }
-        self._devices = devices or [
-            'dev-001'
-        ]
+        self._devices = devices or ["dev-001"]
 
     def do_cred(self, line):
         user = getpass.getuser()
-        user = input('Username [%s]: ' % user) or user
-        passwd = getpass.getpass('%s password: ' % user)
+        user = input("Username [%s]: " % user) or user
+        passwd = getpass.getpass("%s password: " % user)
 
-        self._option['user'] = user
-        self._option['passwd'] = passwd
+        self._option["user"] = user
+        self._option["passwd"] = passwd
 
     def do_devices(self, line):
         if line:
@@ -225,7 +216,7 @@ class FCR(cmd.Cmd):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('devices', nargs='+', help='list of devices')
+    parser.add_argument("devices", nargs="+", help="list of devices")
     args = parser.parse_args()
     fcr = FCR(args.devices)
     try:

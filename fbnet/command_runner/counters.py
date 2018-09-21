@@ -10,22 +10,22 @@
 #
 
 
-import os
 import gc
-import threading
-import psutil
+import os
 import re
-
+import threading
 from collections import defaultdict
 
-from . base_service import ServiceObj
-from . command_session import CommandSession
+import psutil
+
+from .base_service import ServiceObj
+from .command_session import CommandSession
 
 
 class Counters(ServiceObj):
-    '''
+    """
     A bare minimum counters implementation
-    '''
+    """
 
     _proc = psutil.Process(os.getpid())
 
@@ -40,8 +40,9 @@ class Counters(ServiceObj):
         stats_mgr.register_counter("gc.garbage", lambda: len(gc.garbage))
         stats_mgr.register_counter("active_threads", threading.activeCount)
 
-        stats_mgr.register_counter("cpu_usage_permille",
-                                         lambda: round(cls._getCpuUsage() * 10))
+        stats_mgr.register_counter(
+            "cpu_usage_permille", lambda: round(cls._getCpuUsage() * 10)
+        )
 
     @classmethod
     def _getCpuUsage(cls):
@@ -72,7 +73,4 @@ class Counters(ServiceObj):
 
     def getRegexCounters(self, regex):
         rex = re.compile(regex)
-        return {
-            k: v
-            for k, v in self.getCounters().items() if rex.match(k)
-        }
+        return {k: v for k, v in self.getCounters().items() if rex.match(k)}

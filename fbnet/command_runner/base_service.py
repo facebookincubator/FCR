@@ -9,9 +9,9 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
-import logging
-import asyncio
 import abc
+import asyncio
+import logging
 from enum import Enum
 
 
@@ -25,10 +25,10 @@ class State(Enum):
 
 
 class ServiceObjMeta(abc.ABCMeta):
-    '''
+    """
     A meta class for handing commmon initializations
 
-    '''
+    """
 
     _ALL_OBJTYPES = []
 
@@ -44,12 +44,12 @@ class ServiceObjMeta(abc.ABCMeta):
 
 
 class ServiceObj(metaclass=ServiceObjMeta):
-    '''
+    """
     Common base-class for all application objects.
 
     * takes care of common initilization to provide a consistent view across objects
 
-    '''
+    """
 
     def __init__(self, service, name=None):
         self._service = service
@@ -74,7 +74,7 @@ class ServiceObj(metaclass=ServiceObjMeta):
         return self._logger
 
     def create_logger(self):
-        return logging.getLogger('fcr.' + self.objname)
+        return logging.getLogger("fcr." + self.objname)
 
     def inc_counter(self, counter):
         if self.service and self.service.stats_mgr:
@@ -134,10 +134,7 @@ class ServiceTask(ServiceObj):
         yield from self.wait().__await__()
 
     async def _run_in_executor(self, method, *args):
-        return await self.loop.run_in_executor(
-            self._executor,
-            method,
-            *args)
+        return await self.loop.run_in_executor(self._executor, method, *args)
 
     async def wait(self):
         await self._update_event.acquire()
@@ -201,6 +198,7 @@ class PeriodicServiceTask(ServiceTask):
 
     It will call the run method, at specified intervals
     """
+
     PERIOD = 5 * 60
 
     def __init__(self, service, name=None, period=None, executor=None):

@@ -14,27 +14,30 @@ from .options import Option
 
 
 class BaseDeviceDB(PeriodicServiceTask):
-    '''
+    """
     Interface to device database.
 
     Adapt this to get devices from your backend system.
-    '''
+    """
 
     DEVICE_DB_UPDATE_INTERVAL = Option(
-        '--device_db_update_interval',
+        "--device_db_update_interval",
         help="device db update interval (in seconds)",
         type=int,
-        default=30 * 60)
+        default=30 * 60,
+    )
 
     DEVICE_NAME_FILTER = Option(
-        '--device_name_filter',
-        help='A regex to restrict the database to matching device names')
+        "--device_name_filter",
+        help="A regex to restrict the database to matching device names",
+    )
 
     def __init__(self, service, name=None, period=None):
         super().__init__(
             service,
             name or self.__class__.__name__,
-            period=period or self.DEVICE_DB_UPDATE_INTERVAL)
+            period=period or self.DEVICE_DB_UPDATE_INTERVAL,
+        )
 
         self._data_valid = False
         self._devices = {}
@@ -58,27 +61,27 @@ class BaseDeviceDB(PeriodicServiceTask):
                 self._devices[d.alias] = d
 
     async def _fetch_device_data(self, name_filter=None, hostname=None):
-        '''
+        """
         Fetch device data
 
         Override this get the device information from your backend systems
-        '''
+        """
         raise NotImplementedError("Please implement this get host information")
 
     async def wait_for_data(self):
-        '''Wait for the data to be fetched'''
+        """Wait for the data to be fetched"""
         while not self._data_valid:
             self.logger.info("Waiting for data")
             await self.wait()
         self.logger.info("Device data valid")
 
     async def get(self, device, autofetch=True):
-        '''
+        """
         Get device information for a given device.
 
         * First we lookup in our local cache
         * If not found then we will try to fetch the specific device from backend
-        '''
+        """
         if device.hostname not in self._devices and autofetch:
             # Try to fetch the device info
             await self._fetch_devices(hostname=device.hostname)

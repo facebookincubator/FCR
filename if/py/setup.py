@@ -13,23 +13,17 @@ from setuptools import setup
 
 
 setup(
-    name='fcr-thrift',
-    version='0.1.0a0',
-    packages=[
-        'fbnet.command_runner_asyncio.CommandRunner',
-    ],
+    name="fcr-thrift",
+    version="0.1.0a0",
+    packages=["fbnet.command_runner_asyncio.CommandRunner"],
     package_dir={
-        'fbnet.command_runner_asyncio.CommandRunner':
-            'gen-py/fbnet/command_runner_asyncio/CommandRunner',
+        "fbnet.command_runner_asyncio.CommandRunner": "gen-py/fbnet/command_runner_asyncio/CommandRunner"
     },
     include_package_data=True,
     package_data={},
     entry_points={},
-
     test_suite="tests",
-
-    license='BSD+',
-    description='FCR thrift interface',
-
-    install_requires=[]
+    license="BSD+",
+    description="FCR thrift interface",
+    install_requires=[],
 )

@@ -10,26 +10,27 @@
 #
 
 import time
+
 from fb303_asyncio.fb303 import FacebookService
 from fb303_asyncio.fb303.ttypes import fb_status
 
 
 class FacebookBase(FacebookService.Iface):
-    '''
+    """
     A bare minimum implementation of FB303
-    '''
+    """
 
     def __init__(self, name):
         self.name = name
         self.alive = int(time.time())
 
-    def getName(self, ):
+    def getName(self,):
         return self.name
 
-    def getVersion(self, ):
-        return ''
+    def getVersion(self,):
+        return ""
 
-    def getStatus(self, ):
+    def getStatus(self,):
         return fb_status.ALIVE
 
     def getCounters(self):
