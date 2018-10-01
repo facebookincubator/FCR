@@ -442,7 +442,10 @@ class TestCommandHandler(AsyncTestCase):
                 result.output, "$ show version\nMock response for show version"
             )
         elif result.command == "command timeout\n":
-            status_fmt = "Failed (session: MockCommandSession, peer: " "('test-ip' 22)): RuntimeError('{0}', b'{2}\\nMock response for {2}')"
+            status_fmt = (
+                "Failed (session: MockCommandSession, peer: "
+                "('test-ip' 22)): RuntimeError('{0}', b'{2}\\nMock response for {2}')"
+            )
             self.assertEqual(
                 result.status,
                 status_fmt.format("Command Response Timeout", "command timeout"),
