@@ -33,14 +33,12 @@ class AsyncioThriftClient(ServiceObj):
         self._host = host
         self._port = port
         self._connected = False
+        self._timeout = timeout
         self._open_timeout = open_timeout
 
         self._protocol = None
         self._transport = None
         self._client = None
-
-        # Set the timeout for thrift calls
-        self._timeouts = {"": timeout or self._TIMEOUT}
 
         if self.service:
             self._register_counter("connected")
@@ -61,11 +59,16 @@ class AsyncioThriftClient(ServiceObj):
     async def _lookup_service(self):
         return self._host, self._port
 
+    async def _get_timeouts(self):
+        """ Set the timeout for thrift calls """
+        return {"": self._timeout or self._TIMEOUT}
+
     async def open(self):
         host, port = await self._lookup_service()
+        timeouts = await self._get_timeouts()
 
         conn_fut = self.loop.create_connection(
-            ThriftClientProtocolFactory(self._client_class, timeouts=self._timeouts),
+            ThriftClientProtocolFactory(self._client_class, timeouts=timeouts),
             host=host,
             port=port,
         )
