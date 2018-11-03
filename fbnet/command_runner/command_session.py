@@ -23,6 +23,9 @@ from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
 from .base_service import ServiceObj
 
 
+# Register additional key exchange algorithms
+asyncssh.public_key.register_public_key_alg(b"rsa-sha2-256", asyncssh.rsa._RSAKey)
+
 log = logging.getLogger("fcr.CommandSession")
 
 ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "match"])
