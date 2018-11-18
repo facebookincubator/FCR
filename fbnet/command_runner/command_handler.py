@@ -400,8 +400,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             )
             return result
 
-    def _lookup_device(self, device):
-        return self.service.device_db.get(device)
+    async def _lookup_device(self, device):
+        return await self.service.device_db.get(device)
 
     def _get_fcr_client(self, timeout):
         return self.service.get_fcr_client(timeout=timeout)
