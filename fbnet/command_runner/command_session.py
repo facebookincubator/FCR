@@ -488,14 +488,14 @@ class CliCommandSession(CommandSession):
         # List of chars that will be removed
         #        ' *\x08+': space* followed by backspace characters
         #          '\x07' : BEL(bell) char
-        output = re.sub(b".\x08|\x07", b"", output)
+        output = re.sub(br".\x08|\x07", b"", output)
 
         #
         # We need to apply following transforms
         #   '\r+\n' -> '\n'
         #   '\n\r+' -> '\n'
         #   '\r' -> '\n'     standalone \r
-        output = re.sub(b"(\r+\n)|(\n\r+)|\r", b"\n", output)
+        output = re.sub(br"(\r+\n)|(\n\r+)|\r", b"\n", output)
 
         return output.strip()
 
@@ -523,7 +523,7 @@ class CliCommandSession(CommandSession):
         #    b'^\s*show\s+version\s*$'
         # We also need to escape the words to handle characters like '|'
         cmd_words_esc = (re.escape(w) for w in cmd_words)
-        cmd_re = b"^\s*" + b"\s+".join(cmd_words_esc) + b"([ \t]*\n)*"
+        cmd_re = br"^\s*" + br"\s+".join(cmd_words_esc) + br"([ \t]*\n)*"
 
         # Now replace the 'command string' in the output with a sanitized
         # version (redundant spaces removed)
@@ -664,15 +664,15 @@ class SSHCommandSession(CliCommandSession):
 
         see sec 6.5 https://tools.ietf.org/html/rfc4254 for more details
         """
-        host, port, user, passwd = await self.dest_info()
-        self._extra_info["peer"] = (host, port)
+        ip, port, user, passwd = await self.dest_info()
+        self._extra_info["peer"] = (ip, port)
 
-        # TODO: We need to resolve the console hostnames to ip addresses.
-        # Ignoring consoles for now.
-        if not getattr(self, "_console", False) and self._devinfo.connect_using_proxy(
-            host
-        ):
-            host = self.service.get_http_proxy_url(host)
+        if self._devinfo.proxy_required(ip):
+            host = self.service.get_http_proxy_url(ip)
+        elif self._devinfo.nat_required(ip):
+            host = await self._devinfo.translate_address(ip)
+        else:
+            host = ip
 
         self.logger.info("Connecting to: %s: %d", host, port)
 

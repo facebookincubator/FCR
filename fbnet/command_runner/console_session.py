@@ -35,19 +35,19 @@ class ConsoleCommandSession(SSHCommandSession):
     Currently we only support SSH connection to the console server
     """
 
-    _INTERACT_PROMPTS = {b"Y": b"Do you acknowledge\? \(Y/N\)\?"}
+    _INTERACT_PROMPTS = {b"Y": rb"Do you acknowledge\? \(Y/N\)\?"}
     _CONSOLE_PROMPTS = {
         # For login we need to ignore output like:
         #  Last login: Mon May  8 13:53:17 on ttyS0
         b"login": b".*((?<!Last ).ogin|.sername):",
         b"passwd": b"\n.*assword:",
         b"prompt": b"\n.*[#>]",
-        b"interact_prompts": b"Do you acknowledge\? \(Y/N\)\?",
+        b"interact_prompts": rb"Do you acknowledge\? \(Y/N\)\?",
     }
 
     # Certain prompts that we get during the login attemts that we will like to
     # ignore
-    _CONSOLE_INGORE = {b" to cli \]", b"who is on this device.\]\r\n"}
+    _CONSOLE_INGORE = {rb" to cli \]", rb"who is on this device.\]\r\n"}
 
     _CONSOLE_PROMPT_RE = None
     _CONSOLE_EXPECT_DELAY = 5
@@ -63,7 +63,7 @@ class ConsoleCommandSession(SSHCommandSession):
         ignore_prompts = b"|".join((b"(%s)" % p for p in ignore))
         prompts.append(b"(?P<ignore>%s)" % ignore_prompts)
         prompt_re = b"|".join(prompts)
-        cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + b"\s*$")
+        cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + rb"\s*$")
 
     @classmethod
     def get_prompt_re(cls):

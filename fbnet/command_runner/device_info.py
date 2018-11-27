@@ -89,8 +89,20 @@ class DeviceInfo(ServiceObj):
         _SessionType = self._get_session_type(options)
         return _SessionType(service, self, options, loop=loop)
 
-    def connect_using_proxy(self):
+    @classmethod
+    def proxy_required(cls, ip):
         return False
+
+    @classmethod
+    def nat_required(cls, ip):
+        return False
+
+    @classmethod
+    async def translate_address(cls, ip):
+        """
+        Return a translated address (i.e. via NAT). Currently does nothing.
+        """
+        return ip
 
     def __repr__(self):
         return "Device[{0!r}]".format(self._hostname)
@@ -187,7 +199,7 @@ class DeviceInfo(ServiceObj):
             if self._is_question(cmd) and self._autocomplete():
                 # We expect the command to be echoed back after prompt
                 trailer = cmd[:-1].strip()  # remove the last char ('?')
-                trailer = b"(?P<command>%s)[\b\s]*" % re.escape(trailer)
+                trailer = rb"(?P<command>%s)[\b\s]*" % re.escape(trailer)
             else:
                 # Normal command
                 cmd = cmd + b"\n"  # Add newline

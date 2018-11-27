@@ -50,7 +50,7 @@ class DeviceVendor(ServiceObj):
 
     _DEFAULTS = {
         "cli_setup": [b"term len 0", b"term width 511"],
-        "prompt_regex": [b"[\w.]+[>#$]"],
+        "prompt_regex": [rb"[\w.]+[>#$]"],
         "cmd_timeout_sec": 30,
         "clear_command": b"\x15",
         "session_type": b"ssh",
@@ -187,7 +187,7 @@ class DeviceVendor(ServiceObj):
         return re.compile(
             b"(?<=[\n\r])(?P<prompt>"
             + b"|".join(all_prompts)
-            + b")\s*"
+            + rb")\s*"
             + trailer
             + b"$",
             re.M,
