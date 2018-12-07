@@ -49,7 +49,7 @@ class FcrServiceBase:
         "--max_default_executor_threads",
         help="Max number of worker threads",
         type=int,
-        default=4,
+        default=10,
     )
 
     EXIT_MAX_WAIT = Option(
