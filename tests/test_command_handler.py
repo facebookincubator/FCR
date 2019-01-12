@@ -20,6 +20,7 @@ from .testutil import AsyncTestCase, async_test
 
 client_ip = "127.0.0.1"
 client_port = 5000
+uuid = ""
 
 
 class TestCommandHandler(AsyncTestCase):
@@ -41,7 +42,7 @@ class TestCommandHandler(AsyncTestCase):
     async def test_run_success(self):
         device = self.mock_device("test-dev-1")
         result = await self.cmd_handler.run(
-            "show version\n", device, 5, 5, client_ip, client_port
+            "show version\n", device, 5, 5, client_ip, client_port, uuid
         )
 
         self.assertEqual(result.status, "success")
@@ -55,11 +56,11 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.run(
-                "show version\n", device, 5, 5, client_ip, client_port
+                "show version\n", device, 5, 5, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message, "KeyError('Device not found', 'test-dev-100')"
+        self.assertIn(
+            "KeyError('Device not found', 'test-dev-100')", exc.exception.message
         )
 
     @async_test
@@ -70,13 +71,13 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.run(
-                "show version\n", device, 0, 0, client_ip, client_port
+                "show version\n", device, 0, 0, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
             "TimeoutError()",
+            exc.exception.message,
         )
 
     @async_test
@@ -85,13 +86,13 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.run(
-                "command timeout\n", device, 0, 0, client_ip, client_port
+                "command timeout\n", device, 0, 0, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
             "TimeoutError()",
+            exc.exception.message,
         )
 
     @async_test
@@ -99,7 +100,7 @@ class TestCommandHandler(AsyncTestCase):
         command_prompts = {"user prompt test": "<<<User Magic Prompt>>>"}
         device = self.mock_device("test-dev-1", command_prompts=command_prompts)
         result = await self.cmd_handler.run(
-            "show version\n", device, 5, 5, client_ip, client_port
+            "show version\n", device, 5, 5, client_ip, client_port, uuid
         )
 
         self.assertEqual(result.status, "success")
@@ -108,7 +109,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
         result = await self.cmd_handler.run(
-            "user prompt test\n", device, 5, 5, client_ip, client_port
+            "user prompt test\n", device, 5, 5, client_ip, client_port, uuid
         )
 
         self.assertEqual(result.status, "success")
@@ -122,7 +123,7 @@ class TestCommandHandler(AsyncTestCase):
         command_prompts = {"user prompt test": "<<<XX User Magic Prompt>>>"}
         device = self.mock_device("test-dev-1", command_prompts=command_prompts)
         result = await self.cmd_handler.run(
-            "show version\n", device, 5, 5, client_ip, client_port
+            "show version\n", device, 5, 5, client_ip, client_port, uuid
         )
 
         self.assertEqual(result.status, "success")
@@ -132,14 +133,14 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             result = await self.cmd_handler.run(
-                "user prompt test\n", device, 1, 1, client_ip, client_port
+                "user prompt test\n", device, 1, 1, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
             "RuntimeError('Command Response Timeout', "
             "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>')",
+            exc.exception.message,
         )
 
     @async_test
@@ -147,7 +148,7 @@ class TestCommandHandler(AsyncTestCase):
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
-            device, 5, 5, client_ip, client_port
+            device, 5, 5, client_ip, client_port, uuid
         )
 
         self.assertIsNotNone(session)
@@ -160,12 +161,12 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.open_session(
-                device, 0.01, 0.01, client_ip, client_port
+                device, 0.01, 0.01, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "open_session failed: KeyError('Device not found', 'test-dev-10')",
+            exc.exception.message,
         )
 
     @async_test
@@ -176,21 +177,21 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.open_session(
-                device, 0.01, 0.01, client_ip, client_port
+                device, 0.01, 0.01, client_ip, client_port, uuid
             )
 
-        self.assertEqual(exc.exception.message, "open_session failed: TimeoutError()")
+        self.assertIn("open_session failed: TimeoutError()", exc.exception.message)
 
     @async_test
     async def test_run_session(self):
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
-            device, 5, 5, client_ip, client_port
+            device, 5, 5, client_ip, client_port, uuid
         )
 
         result = await self.cmd_handler.run_session(
-            session, "show version\n", 5, client_ip, client_port
+            session, "show version\n", 5, client_ip, client_port, uuid
         )
 
         self.assertEqual(result.status, "success")
@@ -204,13 +205,13 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.run_session(
-                session, "show version\n", 5, client_ip, client_port
+                session, "show version\n", 5, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "run_session failed: KeyError('Session not found', "
             + "(1234, '127.0.0.1', 5000))",
+            exc.exception.message,
         )
 
     @async_test
@@ -218,21 +219,21 @@ class TestCommandHandler(AsyncTestCase):
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
-            device, 5, 5, client_ip, client_port
+            device, 5, 5, client_ip, client_port, uuid
         )
 
         with self.assertRaises(ttypes.SessionException) as exc:
             await self.cmd_handler.run_session(
-                session, "command timeout\n", 1, client_ip, client_port
+                session, "command timeout\n", 1, client_ip, client_port, uuid
             )
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "run_session failed: RuntimeError('%s', b'%s')"
             % (
                 "Command Response Timeout",
                 "command timeout\\nMock response for command timeout",
             ),
+            exc.exception.message,
         )
 
     @async_test
@@ -240,22 +241,22 @@ class TestCommandHandler(AsyncTestCase):
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
-            device, 5, 5, client_ip, client_port
+            device, 5, 5, client_ip, client_port, uuid
         )
 
-        await self.cmd_handler.close_session(session, client_ip, client_port)
+        await self.cmd_handler.close_session(session, client_ip, client_port, uuid)
 
     @async_test
     async def test_close_session_invalid(self):
         session = Mock(id=1234)
 
         with self.assertRaises(ttypes.SessionException) as exc:
-            await self.cmd_handler.close_session(session, client_ip, client_port)
+            await self.cmd_handler.close_session(session, client_ip, client_port, uuid)
 
-        self.assertEqual(
-            exc.exception.message,
+        self.assertIn(
             "close_session failed: KeyError('Session not found', "
             + "(1234, '127.0.0.1', 5000))",
+            exc.exception.message,
         )
 
     @async_test
@@ -264,7 +265,7 @@ class TestCommandHandler(AsyncTestCase):
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port
+            commands, 1, 1, client_ip, client_port, uuid
         )
 
         for host in devices:
@@ -277,16 +278,15 @@ class TestCommandHandler(AsyncTestCase):
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port
+            commands, 1, 1, client_ip, client_port, uuid
         )
 
         for host in devices:
             if host == "test-dev-0":
                 result = all_results[host][0]
-                self.assertEqual(
+                self.assertIn(
+                    "KeyError('%s', '%s')" % ("Device not found", "test-dev-0"),
                     result.status,
-                    'SessionException(\n    message="'
-                    "KeyError('%s', '%s')\")" % ("Device not found", "test-dev-0"),
                 )
                 continue
             for result in all_results[host]:
@@ -303,16 +303,15 @@ class TestCommandHandler(AsyncTestCase):
         commands[onehost] = ["command timeout\n"]
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port
+            commands, 1, 1, client_ip, client_port, uuid
         )
 
         for host in devices:
             if host == "test-dev-0":
                 result = all_results[host][0]
-                self.assertEqual(
+                self.assertIn(
+                    "KeyError('%s', '%s')" % ("Device not found", "test-dev-0"),
                     result.status,
-                    'SessionException(\n    message="'
-                    "KeyError('%s', '%s')\")" % ("Device not found", "test-dev-0"),
                 )
                 continue
             for result in all_results[host]:
@@ -330,24 +329,22 @@ class TestCommandHandler(AsyncTestCase):
         self.mock_options["connect_drop"] = True
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port
+            commands, 1, 1, client_ip, client_port, uuid
         )
 
         for host in devices:
             if host == "test-dev-0":
                 result = all_results[host][0]
-                self.assertEqual(
+                self.assertIn(
+                    "KeyError('%s', '%s')" % ("Device not found", "test-dev-0"),
                     result.status,
-                    'SessionException(\n    message="'
-                    "KeyError('%s', '%s')\")" % ("Device not found", "test-dev-0"),
                 )
                 continue
             for result in all_results[host]:
-                self.assertEqual(
+                self.assertIn(
+                    "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+                    "TimeoutError()",
                     result.status,
-                    'SessionException(\n    message="Failed (session: '
-                    "MockCommandSession, peer: ('test-ip', 22)): "
-                    'TimeoutError()")',
                 )
 
     @async_test
@@ -360,13 +357,13 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.InstanceOverloaded) as exc:
             await self.cmd_handler.bulk_run_local(
-                commands, 1, 1, client_ip, client_port
+                commands, 1, 1, client_ip, client_port, uuid
             )
 
-        self.assertEqual(exc.exception.message, "Too many session open: 4")
+        self.assertIn("Too many session open: 4", exc.exception.message)
 
     @async_test
-    async def test_bluk_run_load_balance(self):
+    async def test_bulk_run_load_balance(self):
         Option.config.lb_threshold = 2
         device_names = {"test-dev-%d" % i for i in range(0, 10)}
 
@@ -381,7 +378,7 @@ class TestCommandHandler(AsyncTestCase):
         self.cmd_handler._bulk_run_remote = _bulk_run_remote
 
         all_results = await self.cmd_handler.bulk_run(
-            commands, 10, 10, client_ip, client_port
+            commands, 10, 10, client_ip, client_port, uuid
         )
 
         self.assertEqual(len(command_chunks), 5, "Commands are run in chunks")
@@ -397,7 +394,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
     @async_test
-    async def test_bluk_run_below_threshold(self):
+    async def test_bulk_run_below_threshold(self):
         Option.config.lb_threshold = 20
         device_names = {"test-dev-%d" % i for i in range(0, 10)}
 
@@ -418,7 +415,7 @@ class TestCommandHandler(AsyncTestCase):
         self.cmd_handler.bulk_run_local = _bulk_run_local
 
         all_results = await self.cmd_handler.bulk_run(
-            commands, 10, 10, client_ip, client_port
+            commands, 10, 10, client_ip, client_port, uuid
         )
 
         self.assertEqual(len(command_chunks), 0, "Commands are not run in chunks")

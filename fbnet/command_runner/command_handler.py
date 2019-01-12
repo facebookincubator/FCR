@@ -10,9 +10,13 @@
 #
 
 import asyncio
+import inspect
 import random
 import re
+import sys
+from functools import wraps
 from itertools import islice
+from uuid import uuid4
 
 from fb303_asyncio.FacebookBase import FacebookBase
 from fbnet.command_runner_asyncio.CommandRunner import constants, ttypes
@@ -21,6 +25,29 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
 from .command_session import CommandSession
 from .counters import Counters
 from .options import Option
+
+
+def _append_debug_info_to_exception(fn):
+    @wraps(fn)
+    async def wrapper(self, *args, **kwargs):
+        try:
+            return await fn(self, *args, **kwargs)
+        except Exception as ex:
+            # Exclude the first item, 'self', from inspect.getfullargspec(fn).args
+            kwargs.update(zip(inspect.getfullargspec(fn).args[1:], args))
+            uuid = kwargs.get("uuid", "unknown")
+            # Exception defined in command runner thrift spec has attribute 'message'
+            if hasattr(ex, "message"):
+                ex.message = self.add_debug_info_to_error_message(  # noqa
+                    error_msg=ex.message, uuid=uuid  # noqa
+                )
+                raise ex
+            else:
+                raise type(ex)(
+                    self.add_debug_info_to_error_message(error_msg=str(ex), uuid=uuid)
+                ).with_traceback(sys.exc_info()[2])
+
+    return wrapper
 
 
 class CommandHandler(Counters, FacebookBase, FcrIface):
@@ -110,10 +137,20 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             ret[key] = value() if callable(value) else value
         return ret
 
-    async def run(self, command, device, timeout, open_timeout, client_ip, client_port):
+    def _generate_new_uuid(self, old_uuid):
+        """ Generate a new uuid from the existing one """
+        return old_uuid or uuid4().hex[:8]
 
+    def add_debug_info_to_error_message(self, error_msg, uuid):
+        return f"{error_msg} (DebugInfo: thrift_uuid={uuid})"
+
+    @_append_debug_info_to_exception
+    async def run(
+        self, command, device, timeout, open_timeout, client_ip, client_port, uuid
+    ):
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         result = await self._run_commands(
-            [command], device, timeout, open_timeout, client_ip, client_port
+            [command], device, timeout, open_timeout, client_ip, client_port, uuid
         )
         return result[0]
 
@@ -131,17 +168,18 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             for dev, cmds in device_to_commands.items()
         }
 
+    @_append_debug_info_to_exception
     async def bulk_run(
-        self, device_to_commands, timeout, open_timeout, client_ip, client_port
+        self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
-
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         if (len(device_to_commands) < self.LB_THRESHOLD) and (
             self._bulk_session_count < self.BULK_SESSION_LIMIT
         ):
             # Run these command locally.
             self.incrementCounter("bulk_run.local")
             return await self.bulk_run_local(
-                device_to_commands, timeout, open_timeout, client_ip, client_port
+                device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
             )
 
         async def _remote_task(chunk):
@@ -151,7 +189,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             while True:
                 try:
                     return await self._bulk_run_remote(
-                        chunk, timeout, open_timeout, client_ip, client_port
+                        chunk, timeout, open_timeout, client_ip, client_port, uuid
                     )
                 except ttypes.InstanceOverloaded as ioe:
                     # Instance we ran the call on was overloaded. We can retry
@@ -182,14 +220,14 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         return all_results
 
     async def bulk_run_local(
-        self, device_to_commands, timeout, open_timeout, client_ip, client_port
+        self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
-
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         devices = sorted(device_to_commands.keys(), key=lambda d: d.hostname)
 
         session_count = self._bulk_session_count
         if session_count + len(device_to_commands) > self.BULK_SESSION_LIMIT:
-            self.logger.error("To many session open: %d", session_count)
+            self.logger.error("Too many session open: %d", session_count)
             raise ttypes.InstanceOverloaded(
                 message="Too many session open: %d" % session_count
             )
@@ -208,6 +246,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 open_timeout,
                 client_ip,
                 client_port,
+                uuid,
                 return_exceptions=True,
             )
 
@@ -227,25 +266,33 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             self._get_result_key(dev): res for dev, res in zip(devices, cmd_results)
         }
 
+    @_append_debug_info_to_exception
     async def open_session(
-        self, device, open_timeout, idle_timeout, client_ip, client_port
+        self, device, open_timeout, idle_timeout, client_ip, client_port, uuid
     ):
-
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._open_session(
             device,
             open_timeout,
             idle_timeout,
             client_ip,
             client_port,
+            uuid,
             raw_session=False,
         )
 
-    async def run_session(self, tsession, command, timeout, client_ip, client_port):
+    @_append_debug_info_to_exception
+    async def run_session(
+        self, tsession, command, timeout, client_ip, client_port, uuid
+    ):
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._run_session(
-            tsession, command, timeout, client_ip, client_port
+            tsession, command, timeout, client_ip, client_port, uuid
         )
 
-    async def close_session(self, tsession, client_ip, client_port):
+    @_append_debug_info_to_exception
+    async def close_session(self, tsession, client_ip, client_port, uuid):
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         try:
             session = CommandSession.get(tsession.id, client_ip, client_port)
             await session.close()
@@ -254,27 +301,39 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 message="close_session failed: %r" % (e)
             ) from e
 
+    @_append_debug_info_to_exception
     async def open_raw_session(
-        self, device, open_timeout, idle_timeout, client_ip, client_port
+        self, device, open_timeout, idle_timeout, client_ip, client_port, uuid
     ):
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._open_session(
-            device, open_timeout, idle_timeout, client_ip, client_port, raw_session=True
+            device,
+            open_timeout,
+            idle_timeout,
+            client_ip,
+            client_port,
+            uuid,
+            raw_session=True,
         )
 
+    @_append_debug_info_to_exception
     async def run_raw_session(
-        self, tsession, command, timeout, prompt_regex, client_ip, client_port
+        self, tsession, command, timeout, prompt_regex, client_ip, client_port, uuid
     ):
+        uuid = self._generate_new_uuid(old_uuid=uuid)
         if not prompt_regex:
             raise ttypes.SessionException(message="prompt_regex not specified")
 
         prompt_re = re.compile(prompt_regex.encode("utf8"), re.M)
 
         return await self._run_session(
-            tsession, command, timeout, client_ip, client_port, prompt_re
+            tsession, command, timeout, client_ip, client_port, uuid, prompt_re
         )
 
-    async def close_raw_session(self, tsession, client_ip, client_port):
-        return await self.close_session(tsession, client_ip, client_port)
+    @_append_debug_info_to_exception
+    async def close_raw_session(self, tsession, client_ip, client_port, uuid):
+        uuid = self._generate_new_uuid(old_uuid=uuid)
+        return await self.close_session(tsession, client_ip, client_port, uuid)
 
     async def _open_session(
         self,
@@ -283,6 +342,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         idle_timeout,
         client_ip,
         client_port,
+        uuid,
         raw_session=False,
     ):
         options = self._get_options(
@@ -307,11 +367,11 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raise ttypes.SessionException(message="open_session failed: %r" % e) from e
 
     async def _run_session(
-        self, tsession, command, timeout, client_ip, client_port, prompt_re=None
+        self, tsession, command, timeout, client_ip, client_port, uuid, prompt_re=None
     ):
         try:
             session = CommandSession.get(tsession.id, client_ip, client_port)
-            return await self._run_command(session, command, timeout, prompt_re)
+            return await self._run_command(session, command, timeout, uuid, prompt_re)
         except Exception as e:
             raise ttypes.SessionException(message="run_session failed: %r" % (e)) from e
 
@@ -320,7 +380,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         # may be required e.g. using shortnames, adding console info, etc
         return device.hostname
 
-    async def _run_command(self, session, command, timeout, prompt_re=None):
+    async def _run_command(self, session, command, timeout, uuid, prompt_re=None):
+        self.logger.info(f"[request_id={uuid}]: Run command with session {session.id}")
         output = await session.run_command(
             command.encode("utf8"), timeout=timeout, prompt_re=prompt_re
         )
@@ -338,6 +399,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         open_timeout,
         client_ip,
         client_port,
+        uuid,
         return_exceptions=False,
     ):
 
@@ -361,7 +423,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
                 results = []
                 for command in commands:
-                    result = await self._run_command(session, command, timeout)
+                    result = await self._run_command(session, command, timeout, uuid)
                     results.append(result)
 
                 return results
@@ -370,6 +432,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             if not isinstance(e, ttypes.SessionException):
                 e = ttypes.SessionException(message="%r" % e)
             if return_exceptions:
+                e.message = self.add_debug_info_to_error_message(  # noqa
+                    error_msg=e.message, uuid=uuid  # noqa
+                )
                 return [
                     ttypes.CommandResult(output="", status="%r" % e, command=command)
                 ]
@@ -384,7 +449,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             yield dict(islice(items, chunk_size))
 
     async def _bulk_run_remote(
-        self, device_to_commands, timeout, open_timeout, client_ip, client_port
+        self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
 
         # Determine a timeout for remote call.
@@ -396,7 +461,12 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         async with self._get_fcr_client(timeout=call_timeout) as client:
             result = await client.bulk_run_local(
-                device_to_commands, remote_timeout, open_timeout, client_ip, client_port
+                device_to_commands,
+                remote_timeout,
+                open_timeout,
+                client_ip,
+                client_port,
+                uuid,
             )
             return result
 

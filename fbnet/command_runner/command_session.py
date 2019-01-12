@@ -33,7 +33,7 @@ ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "ma
 
 class LogAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
-        return "%s: %s" % (self.extra["session"].id, msg), kwargs
+        return "[session_id=%s]: %s" % (self.extra["session"].id, msg), kwargs
 
 
 class CommandSession(ServiceObj):

@@ -183,6 +183,7 @@ service Command extends fb303.FacebookService {
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se, 2: UnsupportedDeviceException ude)
 
   /* Run a list of commands on a list of devices.
@@ -211,6 +212,7 @@ service Command extends fb303.FacebookService {
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   )
 
    /*
@@ -230,6 +232,7 @@ service Command extends fb303.FacebookService {
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
    ) throws (1: InstanceOverloaded ioe)
 
   /*
@@ -280,6 +283,7 @@ wr mem'''
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se)
 
   /* Run a command within a session. The command could potentially modify
@@ -307,6 +311,7 @@ conf t
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se)
 
   /* Close the session. Each open_session call should be accompanied with a
@@ -322,6 +327,7 @@ conf t
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se)
 
   // open_raw_session() should be used when user want to bypass session setup
@@ -344,6 +350,7 @@ conf t
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se)
 
 
@@ -372,6 +379,7 @@ conf t
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se)
 
   /* Close the session. Each open_raw_session call should be accompanied with a
@@ -387,5 +395,6 @@ conf t
      */
     10: string client_ip = ""
     11: string client_port = ""
+    12: string uuid = ""
   ) throws (1: SessionException se)
 }
