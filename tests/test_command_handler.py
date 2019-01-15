@@ -75,7 +75,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertIn(
-            "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+            "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
             "TimeoutError()",
             exc.exception.message,
         )
@@ -90,7 +90,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertIn(
-            "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+            "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
             "TimeoutError()",
             exc.exception.message,
         )
@@ -137,7 +137,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertIn(
-            "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+            "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
             "RuntimeError('Command Response Timeout', "
             "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>')",
             exc.exception.message,
@@ -342,7 +342,7 @@ class TestCommandHandler(AsyncTestCase):
                 continue
             for result in all_results[host]:
                 self.assertIn(
-                    "Failed (session: MockCommandSession, peer: ('test-ip', 22)): "
+                    "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
                     "TimeoutError()",
                     result.status,
                 )
@@ -441,7 +441,7 @@ class TestCommandHandler(AsyncTestCase):
         elif result.command == "command timeout\n":
             status_fmt = (
                 "Failed (session: MockCommandSession, peer: "
-                "('test-ip' 22)): RuntimeError('{0}', b'{2}\\nMock response for {2}')"
+                "(test-ip 22)): RuntimeError('{0}', b'{2}\\nMock response for {2}')"
             )
             self.assertEqual(
                 result.status,

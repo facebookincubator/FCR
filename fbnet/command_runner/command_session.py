@@ -15,6 +15,7 @@ import logging
 import re
 import time
 from collections import namedtuple
+from typing import Dict, NamedTuple, Optional, Union
 
 import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
@@ -29,6 +30,14 @@ asyncssh.public_key.register_public_key_alg(b"rsa-sha2-256", asyncssh.rsa._RSAKe
 log = logging.getLogger("fcr.CommandSession")
 
 ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "match"])
+
+
+class PeerInfo(NamedTuple):
+    ip: Optional[str] = None
+    port: Optional[Union[int, str]] = None
+
+    def __str__(self) -> str:
+        return f"({self.ip}, {self.port})"
 
 
 class LogAdapter(logging.LoggerAdapter):
@@ -47,7 +56,7 @@ class CommandSession(ServiceObj):
     associated with the session.
     """
 
-    _ALL_SESSIONS = {}
+    _ALL_SESSIONS: Dict = {}
 
     # the prompt is at the end of input. So rather then searching in the entire
     # buffer, we will only look in the trailing data
@@ -91,7 +100,7 @@ class CommandSession(ServiceObj):
         return self.objname
 
     def get_peer_info(self):
-        return self._extra_info["peer"]
+        return self._extra_info.get("peer")
 
     def create_logger(self):
         logger = logging.getLogger(
@@ -169,6 +178,14 @@ class CommandSession(ServiceObj):
         return self._hostname
 
     @property
+    def username(self):
+        return self._username
+
+    @property
+    def devinfo(self):
+        return self._devinfo
+
+    @property
     def id(self):
         return id(self)
 
@@ -179,6 +196,10 @@ class CommandSession(ServiceObj):
     @property
     def open_timeout(self):
         return self._opts.get("open_timeout")
+
+    @property
+    def use_mgmt_ip(self):
+        return self._opts.get("mgmt_ip")
 
     @property
     def exit_status(self):
@@ -665,7 +686,7 @@ class SSHCommandSession(CliCommandSession):
         see sec 6.5 https://tools.ietf.org/html/rfc4254 for more details
         """
         ip, port, user, passwd = await self.dest_info()
-        self._extra_info["peer"] = (ip, port)
+        self._extra_info["peer"] = PeerInfo(ip, port)
 
         if self._devinfo.proxy_required(ip):
             host = self.service.get_http_proxy_url(ip)

@@ -86,7 +86,7 @@ class DeviceInfo(ServiceObj):
             # do something with session
 
         """
-        _SessionType = self._get_session_type(options)
+        _SessionType = self.get_session_type(options)
         return _SessionType(service, self, options, loop=loop)
 
     @classmethod
@@ -211,7 +211,7 @@ class DeviceInfo(ServiceObj):
 
         return CommandInfo(cmd, precmd, prompt_rex)
 
-    def _get_session_type(self, options):
+    def get_session_type(self, options):
         if options["console"]:
             return ConsoleCommandSession
         return self._vendor_data.select_session_type(options)

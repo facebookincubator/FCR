@@ -412,7 +412,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 c.encode(): p.encode() for c, p in device.command_prompts.items()
             }
 
-        command = ""
+        command = commands[0]
+        devinfo = None
+        session = None
 
         try:
             devinfo = await self._lookup_device(device)
@@ -429,6 +431,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 return results
 
         except Exception as e:
+            self._record_error(e, command, uuid, options, devinfo, session)
             if not isinstance(e, ttypes.SessionException):
                 e = ttypes.SessionException(message="%r" % e)
             if return_exceptions:
@@ -518,3 +521,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
     def _decrypt(self, data):
         return data
+
+    def _record_error(self, error, command, uuid, options, devinfo, session):
+        """
+        Subclass can override this method to export the interested error messages
+        to proper data store
+        """
+        pass
