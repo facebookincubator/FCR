@@ -117,12 +117,12 @@ class MockCommandSession(command_session.CliCommandSession):
     async def _close(self):
         self.close_called = True
 
-    async def run_command(self, *args, **kwargs):
+    async def _run_command(self, *args, **kwargs):
         run_error = self._mock_options.get("run_error", False)
         if run_error:
             raise IOError("Run Error")
         else:
-            return await super().run_command(*args, **kwargs)
+            return await super()._run_command(*args, **kwargs)
 
     @classmethod
     def Factory(cls, mock_options):

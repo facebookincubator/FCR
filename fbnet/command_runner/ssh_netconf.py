@@ -54,7 +54,7 @@ class SSHNetconf(SSHCommandSession):
             self.server_hello = None
         return result
 
-    async def run_command(self, cmd, timeout=None, prompt_re=None):
+    async def _run_command(self, cmd, timeout=None, prompt_re=None):
         try:
             self._send_command(cmd)
             # Wait for response with timeout

@@ -55,6 +55,12 @@ class Counters(ServiceObj):
         if name not in self.counters:
             self.counters[name] = value
 
+    def add_stats_counter(self, name, stats_types):
+        # Currently this only support simple counter, stats parameter are
+        # ignored
+        self.logger.info("stats counter not supported: %s %r", name, stats_types)
+        self.resetCounter(name)
+
     def incrementCounter(self, name):
         self.counters[name] += 1
 

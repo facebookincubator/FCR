@@ -77,6 +77,8 @@ class FcrServiceBase:
         self._loop.add_signal_handler(signal.SIGINT, self.shutdown)
         self._loop.add_signal_handler(signal.SIGTERM, self.shutdown)
 
+        self._tasks = {}
+
         self.logger = logging.getLogger(self._app_name)
 
     def register_stats_mgr(self, stats_mgr):
@@ -102,6 +104,9 @@ class FcrServiceBase:
     @property
     def loop(self):
         return self._loop
+
+    def add_task(self, key, task):
+        self._tasks[key] = task
 
     def start(self):
         try:
@@ -194,12 +199,6 @@ class FcrServiceBase:
         The default implementation assumes that everything is reachable
         """
         return True
-
-    def add_stats_counter(self, counter, stats_types):
-        # Currently this only support simple counter, stats parameter are
-        # ignored
-        self.logger.info("stats counter not supported: %s %r", counter, stats_types)
-        self.counters.resetCounter(counter)
 
     def get_http_proxy_url(self, host):
         """build a url for http proxy"""

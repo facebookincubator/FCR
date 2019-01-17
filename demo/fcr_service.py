@@ -11,6 +11,7 @@
 
 import docker
 from fbnet.command_runner.command_server import CommandServer
+from fbnet.command_runner.command_session import SessionReaperTask
 from fbnet.command_runner.device_db import BaseDeviceDB
 from fbnet.command_runner.device_info import DeviceInfo, DeviceIP
 from fbnet.command_runner.device_vendor import DeviceVendors
@@ -56,6 +57,7 @@ class FCRService(FcrServiceBase):
         self.vendors = DeviceVendors(self)
         self.device_db = DeviceDB(self)
         self.service = CommandServer(self)
+        self.add_task("session_reaper_task", SessionReaperTask(service=self))
 
 
 def main():

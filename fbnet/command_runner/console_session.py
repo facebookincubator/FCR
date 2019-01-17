@@ -191,11 +191,11 @@ class ConsoleCommandSession(SSHCommandSession):
 
         return ConsoleInfo("CON", self.hostname, con_srv, con_port)
 
-    async def run_command(self, cmd, timeout=None, prompt_re=None):
+    async def _run_command(self, cmd, timeout=None, prompt_re=None):
         if self._opts.get("raw_session"):
             await self._stream_reader.drain()
             self.send(cmd)
             resp = await self.wait_prompt(prompt_re)
             return resp.data + resp.matched
         else:
-            return await super().run_command(cmd, timeout, prompt_re)
+            return await super()._run_command(cmd, timeout, prompt_re)

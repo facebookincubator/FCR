@@ -15,13 +15,15 @@ import logging
 import re
 import time
 from collections import namedtuple
-from typing import Dict, NamedTuple, Optional, Union
+from functools import wraps
+from typing import Dict, Hashable, NamedTuple, Optional, Union
 
 import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
 
-from .base_service import ServiceObj
+from .base_service import PeriodicServiceTask, ServiceObj
+from .options import Option
 
 
 # Register additional key exchange algorithms
@@ -45,6 +47,111 @@ class LogAdapter(logging.LoggerAdapter):
         return "[session_id=%s]: %s" % (self.extra["session"].id, msg), kwargs
 
 
+class SessionReaperTask(PeriodicServiceTask):
+    SESSION_REAP_PERIOD_S = Option(
+        "--session_reap_period",
+        help="Interval (in seconds) to cleanup stale or long-idle sessions "
+        "(default: %(default)s)",
+        type=int,
+        default=60,
+    )
+
+    MAX_SESSION_IDLE_TIMEOUT_S = Option(
+        "--max_session_idle_timeout",
+        help="Maximal accepted value (in seconds) for session idle timeout "
+        "(default: %(default)s)",
+        type=int,
+        default=30 * 60,
+    )
+
+    MAX_SESSION_LAST_ACCESS_TIMEOUT_S = Option(
+        "--max_session_last_access_timeout",
+        help="Max time a session can live since last access" "(default: %(default)s)",
+        type=int,
+        default=60 * 60,
+    )
+
+    COUNTER_KEY_REAPED_ALL = "session_reaper.reaped.all"
+
+    def __init__(
+        self, service: ServiceObj, sessions: Dict[Hashable, "CommandSession"] = None
+    ) -> None:
+        super().__init__(
+            service, name=self.__class__.__name__, period=self.SESSION_REAP_PERIOD_S
+        )
+        self._sessions = sessions or CommandSession._ALL_SESSIONS
+
+    @classmethod
+    def register_counters(cls, counter_mgr):
+        counter_mgr.add_stats_counter(cls.COUNTER_KEY_REAPED_ALL, ["count"])
+
+    def _bump_counters_for_reaped_session(self, session: "CommandSession") -> None:
+        self.inc_counter(self.COUNTER_KEY_REAPED_ALL)
+
+    async def run(self) -> None:
+        """
+        A session is accessed when a command begins executing, and is accessed
+        again at the end of execution when it is released. A session is freed if
+        1) it's idle for 'idle_timeout' sec after the last command execution;
+        OR 2) it exceeds the max session time out since last accessed (this could
+        happend when a command get stuck). This would prevent the thrift service
+        from holding up open/stale connections to network devices.
+        """
+        try:
+            self.logger.info(
+                f"Session reaper woke up: curr_time={time.time()}, "
+                f"session_count={len(self._sessions)}"
+            )
+            for key in list(self._sessions.keys()):
+                if key not in self._sessions:
+                    # Since this is an async method, it's possible that the session
+                    # is closed before being reaped
+                    continue
+                session = self._sessions[key]
+                curr_time = time.time()
+                time_since_last_access = curr_time - session.last_access_time
+                idle_timeout = min(
+                    session.idle_timeout, self.MAX_SESSION_IDLE_TIMEOUT_S
+                )
+                if time_since_last_access > self.MAX_SESSION_LAST_ACCESS_TIMEOUT_S or (
+                    not session.in_use and time_since_last_access > idle_timeout
+                ):
+                    self.logger.info(
+                        f"Reap session {key}, "
+                        f"last_access_time={session.last_access_time}, "
+                        f"curr_time={curr_time}"
+                    )
+                    await session.close()
+                    if key in self._sessions:
+                        del self._sessions[key]
+                    self._bump_counters_for_reaped_session(session)
+            self.logger.info(
+                f"Session reaper finished: session_count={len(self._sessions)}"
+            )
+        except Exception as ex:
+            self.logger.exception(f"Error when reaping session {ex!r}")
+
+
+def _update_last_access_time_and_in_use(fn):
+    """
+    This is a decorator to update the last access time of the session before and
+    after calling the wrapped function
+    NOTE: This is for internal use only within CommandSession
+    """
+
+    @wraps(fn)
+    async def wrapper(self, *args, **kwargs):
+        self._in_use_count += 1
+        self._last_access_time = time.time()
+        try:
+            return await fn(self, *args, **kwargs)
+        finally:
+            self._in_use_count -= 1
+            self._last_access_time = time.time()
+
+    return wrapper
+
+
 class CommandSession(ServiceObj):
     """
     A session for running commands on devices. Before running a command a
@@ -56,7 +163,7 @@ class CommandSession(ServiceObj):
     associated with the session.
     """
 
-    _ALL_SESSIONS: Dict = {}
+    _ALL_SESSIONS: Dict[Hashable, "CommandSession"] = {}
 
     # the prompt is at the end of input. So rather then searching in the entire
     # buffer, we will only look in the trailing data
@@ -92,9 +199,11 @@ class CommandSession(ServiceObj):
         self._event = asyncio.Condition(loop=self._loop)
 
         self.logger.info("Created key=%s", self.key)
-
         # Record the session in the cache
         self._ALL_SESSIONS[self.key] = self
+
+        self._last_access_time: float = time.time()
+        self._in_use_count: int = 0
 
     def get_session_name(self):
         return self.objname
@@ -202,12 +311,25 @@ class CommandSession(ServiceObj):
         return self._opts.get("mgmt_ip")
 
     @property
+    def idle_timeout(self):
+        return self._opts.get("idle_timeout")
+
+    @property
+    def last_access_time(self) -> float:
+        return self._last_access_time
+
+    @property
+    def in_use(self) -> bool:
+        return self._in_use_count > 0
+
+    @property
     def exit_status(self):
         return self._exit_status
 
     async def _create_connection(self):
         await self.connect()
 
+    @_update_last_access_time_and_in_use
     async def setup(self):
         self.inc_counter("%s.setup" % self.objname)
         await asyncio.wait_for(
@@ -242,6 +364,10 @@ class CommandSession(ServiceObj):
             if self._cmd_stream is not None:
                 self._cmd_stream.close()
 
+    @_update_last_access_time_and_in_use
+    async def run_command(self, command, *args, **kwargs):
+        return await self._run_command(command, *args, **kwargs)
+
     @abc.abstractmethod
     async def _connect(self):
         """
@@ -251,6 +377,13 @@ class CommandSession(ServiceObj):
 
     @abc.abstractmethod
     async def _close(self):
+        """
+        This needs to be implemented by the actual session classes
+        """
+        pass
+
+    @abc.abstractmethod
+    async def _run_command(self, command, *args, **kwargs):
         """
         This needs to be implemented by the actual session classes
         """
@@ -557,7 +690,7 @@ class CliCommandSession(CommandSession):
 
         return output
 
-    async def run_command(self, cmd, timeout=None, prompt_re=None):
+    async def _run_command(self, cmd, timeout=None, prompt_re=None):
         """
         Run a command and return response to user
         """
