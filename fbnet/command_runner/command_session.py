@@ -195,6 +195,9 @@ class CommandSession(ServiceObj):
         self._client_port = options["client_port"]
         self._loop = loop
 
+        # TODO: remove _cmd_stream from the base class CommandSession (some
+        # session type, e.g., rpc base session, does not need this property)
+        self._cmd_stream = None
         self._connected = False
         self._event = asyncio.Condition(loop=self._loop)
 

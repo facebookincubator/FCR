@@ -106,6 +106,8 @@ class FcrServiceBase:
         return self._loop
 
     def add_task(self, key, task):
+        if key in self._tasks:
+            raise KeyError(f"Duplicated key: {key}")
         self._tasks[key] = task
 
     def start(self):
