@@ -22,8 +22,10 @@ class DeviceDB(BaseDeviceDB):
 
     docker_client = docker.from_env()
 
-    async def _fetch_device_data(self, name_filter=None):
-        self.logger.info("fetch_device_data: %s", name_filter)
+    async def _fetch_device_data(self, name_filter=None, hostname=None):
+        self.logger.info(
+            "fetch_device_data: name_filter=%s, hostname=%s", name_filter, hostname
+        )
 
         containers = await self._run_in_executor(self.list_containers)
 

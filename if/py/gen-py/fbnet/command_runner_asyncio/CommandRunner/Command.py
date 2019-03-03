@@ -44,7 +44,7 @@ else:
 from thrift.util.Decorators import *
 
 class Iface(fb303_asyncio.fb303.FacebookService.Iface):
-  def run(self, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def run(self, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - command
@@ -53,10 +53,11 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def bulk_run(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def bulk_run(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device_to_commands
@@ -64,10 +65,11 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def bulk_run_local(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def bulk_run_local(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device_to_commands
@@ -75,10 +77,11 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def open_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def open_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device
@@ -86,10 +89,11 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - idle_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def run_session(self, session=None, command=None, timeout=300, client_ip="", client_port=""):
+  def run_session(self, session=None, command=None, timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
@@ -97,19 +101,21 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def close_session(self, session=None, client_ip="", client_port=""):
+  def close_session(self, session=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device
@@ -117,10 +123,11 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - idle_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+  def run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
@@ -129,21 +136,23 @@ class Iface(fb303_asyncio.fb303.FacebookService.Iface):
      - prompt_regex
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def close_raw_session(self, session=None, client_ip="", client_port=""):
+  def close_raw_session(self, session=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
 
 class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
-  def run(self, handler_ctx, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def run(self, handler_ctx, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - command
@@ -152,10 +161,11 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def bulk_run(self, handler_ctx, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def bulk_run(self, handler_ctx, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device_to_commands
@@ -163,10 +173,11 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def bulk_run_local(self, handler_ctx, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def bulk_run_local(self, handler_ctx, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device_to_commands
@@ -174,10 +185,11 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def open_session(self, handler_ctx, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def open_session(self, handler_ctx, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device
@@ -185,10 +197,11 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - idle_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def run_session(self, handler_ctx, session=None, command=None, timeout=300, client_ip="", client_port=""):
+  def run_session(self, handler_ctx, session=None, command=None, timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
@@ -196,19 +209,21 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def close_session(self, handler_ctx, session=None, client_ip="", client_port=""):
+  def close_session(self, handler_ctx, session=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def open_raw_session(self, handler_ctx, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def open_raw_session(self, handler_ctx, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device
@@ -216,10 +231,11 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - idle_timeout
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def run_raw_session(self, handler_ctx, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+  def run_raw_session(self, handler_ctx, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
@@ -228,15 +244,17 @@ class ContextIface(fb303_asyncio.fb303.FacebookService.ContextIface):
      - prompt_regex
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
-  def close_raw_session(self, handler_ctx, session=None, client_ip="", client_port=""):
+  def close_raw_session(self, handler_ctx, session=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
      - client_ip
      - client_port
+     - uuid
     """
     pass
 
@@ -252,6 +270,7 @@ class run_args:
    - open_timeout
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -307,6 +326,11 @@ class run_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -348,6 +372,10 @@ class run_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -378,6 +406,10 @@ class run_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -407,6 +439,7 @@ run_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 run_args.thrift_struct_annotations = {
@@ -414,13 +447,14 @@ run_args.thrift_struct_annotations = {
 run_args.thrift_field_annotations = {
 }
 
-def run_args__init__(self, command=None, device=None, timeout=run_args.thrift_spec[3][4], open_timeout=run_args.thrift_spec[4][4], client_ip=run_args.thrift_spec[10][4], client_port=run_args.thrift_spec[11][4],):
+def run_args__init__(self, command=None, device=None, timeout=run_args.thrift_spec[3][4], open_timeout=run_args.thrift_spec[4][4], client_ip=run_args.thrift_spec[10][4], client_port=run_args.thrift_spec[11][4], uuid=run_args.thrift_spec[12][4],):
   self.command = command
   self.device = device
   self.timeout = timeout
   self.open_timeout = open_timeout
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 run_args.__init__ = run_args__init__
 
@@ -431,6 +465,7 @@ def run_args__setstate__(self, state):
   state.setdefault('open_timeout', 30)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 run_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -582,6 +617,7 @@ class bulk_run_args:
    - open_timeout
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -609,39 +645,39 @@ class bulk_run_args:
       if fid == 1:
         if ftype == TType.MAP:
           self.device_to_commands = {}
-          (_ktype12, _vtype13, _size11 ) = iprot.readMapBegin() 
-          if _size11 >= 0:
-            for _i15 in six.moves.range(_size11):
-              _key16 = Device()
-              _key16.read(iprot)
-              _val17 = []
-              (_etype21, _size18) = iprot.readListBegin()
-              if _size18 >= 0:
-                for _i22 in six.moves.range(_size18):
-                  _elem23 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val17.append(_elem23)
+          (_ktype23, _vtype24, _size22 ) = iprot.readMapBegin() 
+          if _size22 >= 0:
+            for _i26 in six.moves.range(_size22):
+              _key27 = Device()
+              _key27.read(iprot)
+              _val28 = []
+              (_etype32, _size29) = iprot.readListBegin()
+              if _size29 >= 0:
+                for _i33 in six.moves.range(_size29):
+                  _elem34 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val28.append(_elem34)
               else: 
                 while iprot.peekList():
-                  _elem24 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val17.append(_elem24)
+                  _elem35 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val28.append(_elem35)
               iprot.readListEnd()
-              self.device_to_commands[_key16] = _val17
+              self.device_to_commands[_key27] = _val28
           else: 
             while iprot.peekMap():
-              _key25 = Device()
-              _key25.read(iprot)
-              _val26 = []
-              (_etype30, _size27) = iprot.readListBegin()
-              if _size27 >= 0:
-                for _i31 in six.moves.range(_size27):
-                  _elem32 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val26.append(_elem32)
+              _key36 = Device()
+              _key36.read(iprot)
+              _val37 = []
+              (_etype41, _size38) = iprot.readListBegin()
+              if _size38 >= 0:
+                for _i42 in six.moves.range(_size38):
+                  _elem43 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val37.append(_elem43)
               else: 
                 while iprot.peekList():
-                  _elem33 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val26.append(_elem33)
+                  _elem44 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val37.append(_elem44)
               iprot.readListEnd()
-              self.device_to_commands[_key25] = _val26
+              self.device_to_commands[_key36] = _val37
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -665,6 +701,11 @@ class bulk_run_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -685,11 +726,11 @@ class bulk_run_args:
     if self.device_to_commands != None:
       oprot.writeFieldBegin('device_to_commands', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRUCT, TType.LIST, len(self.device_to_commands))
-      for kiter34,viter35 in self.device_to_commands.items():
-        kiter34.write(oprot)
-        oprot.writeListBegin(TType.STRING, len(viter35))
-        for iter36 in viter35:
-          oprot.writeString(iter36.encode('utf-8')) if UTF8STRINGS and not isinstance(iter36, bytes) else oprot.writeString(iter36)
+      for kiter45,viter46 in self.device_to_commands.items():
+        kiter45.write(oprot)
+        oprot.writeListBegin(TType.STRING, len(viter46))
+        for iter47 in viter46:
+          oprot.writeString(iter47.encode('utf-8')) if UTF8STRINGS and not isinstance(iter47, bytes) else oprot.writeString(iter47)
         oprot.writeListEnd()
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
@@ -708,6 +749,10 @@ class bulk_run_args:
     if self.client_port != None:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
+      oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -735,6 +780,10 @@ class bulk_run_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -764,6 +813,7 @@ bulk_run_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 bulk_run_args.thrift_struct_annotations = {
@@ -771,12 +821,13 @@ bulk_run_args.thrift_struct_annotations = {
 bulk_run_args.thrift_field_annotations = {
 }
 
-def bulk_run_args__init__(self, device_to_commands=None, timeout=bulk_run_args.thrift_spec[3][4], open_timeout=bulk_run_args.thrift_spec[4][4], client_ip=bulk_run_args.thrift_spec[10][4], client_port=bulk_run_args.thrift_spec[11][4],):
+def bulk_run_args__init__(self, device_to_commands=None, timeout=bulk_run_args.thrift_spec[3][4], open_timeout=bulk_run_args.thrift_spec[4][4], client_ip=bulk_run_args.thrift_spec[10][4], client_port=bulk_run_args.thrift_spec[11][4], uuid=bulk_run_args.thrift_spec[12][4],):
   self.device_to_commands = device_to_commands
   self.timeout = timeout
   self.open_timeout = open_timeout
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 bulk_run_args.__init__ = bulk_run_args__init__
 
@@ -786,6 +837,7 @@ def bulk_run_args__setstate__(self, state):
   state.setdefault('open_timeout', 30)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 bulk_run_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -822,41 +874,41 @@ class bulk_run_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype38, _vtype39, _size37 ) = iprot.readMapBegin() 
-          if _size37 >= 0:
-            for _i41 in six.moves.range(_size37):
-              _key42 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              _val43 = []
-              (_etype47, _size44) = iprot.readListBegin()
-              if _size44 >= 0:
-                for _i48 in six.moves.range(_size44):
-                  _elem49 = CommandResult()
-                  _elem49.read(iprot)
-                  _val43.append(_elem49)
+          (_ktype49, _vtype50, _size48 ) = iprot.readMapBegin() 
+          if _size48 >= 0:
+            for _i52 in six.moves.range(_size48):
+              _key53 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val54 = []
+              (_etype58, _size55) = iprot.readListBegin()
+              if _size55 >= 0:
+                for _i59 in six.moves.range(_size55):
+                  _elem60 = CommandResult()
+                  _elem60.read(iprot)
+                  _val54.append(_elem60)
               else: 
                 while iprot.peekList():
-                  _elem50 = CommandResult()
-                  _elem50.read(iprot)
-                  _val43.append(_elem50)
+                  _elem61 = CommandResult()
+                  _elem61.read(iprot)
+                  _val54.append(_elem61)
               iprot.readListEnd()
-              self.success[_key42] = _val43
+              self.success[_key53] = _val54
           else: 
             while iprot.peekMap():
-              _key51 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              _val52 = []
-              (_etype56, _size53) = iprot.readListBegin()
-              if _size53 >= 0:
-                for _i57 in six.moves.range(_size53):
-                  _elem58 = CommandResult()
-                  _elem58.read(iprot)
-                  _val52.append(_elem58)
+              _key62 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val63 = []
+              (_etype67, _size64) = iprot.readListBegin()
+              if _size64 >= 0:
+                for _i68 in six.moves.range(_size64):
+                  _elem69 = CommandResult()
+                  _elem69.read(iprot)
+                  _val63.append(_elem69)
               else: 
                 while iprot.peekList():
-                  _elem59 = CommandResult()
-                  _elem59.read(iprot)
-                  _val52.append(_elem59)
+                  _elem70 = CommandResult()
+                  _elem70.read(iprot)
+                  _val63.append(_elem70)
               iprot.readListEnd()
-              self.success[_key51] = _val52
+              self.success[_key62] = _val63
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -880,11 +932,11 @@ class bulk_run_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.MAP, 0)
       oprot.writeMapBegin(TType.STRING, TType.LIST, len(self.success))
-      for kiter60,viter61 in self.success.items():
-        oprot.writeString(kiter60.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter60, bytes) else oprot.writeString(kiter60)
-        oprot.writeListBegin(TType.STRUCT, len(viter61))
-        for iter62 in viter61:
-          iter62.write(oprot)
+      for kiter71,viter72 in self.success.items():
+        oprot.writeString(kiter71.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter71, bytes) else oprot.writeString(kiter71)
+        oprot.writeListBegin(TType.STRUCT, len(viter72))
+        for iter73 in viter72:
+          iter73.write(oprot)
         oprot.writeListEnd()
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
@@ -943,6 +995,7 @@ class bulk_run_local_args:
    - open_timeout
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -970,39 +1023,39 @@ class bulk_run_local_args:
       if fid == 1:
         if ftype == TType.MAP:
           self.device_to_commands = {}
-          (_ktype64, _vtype65, _size63 ) = iprot.readMapBegin() 
-          if _size63 >= 0:
-            for _i67 in six.moves.range(_size63):
-              _key68 = Device()
-              _key68.read(iprot)
-              _val69 = []
-              (_etype73, _size70) = iprot.readListBegin()
-              if _size70 >= 0:
-                for _i74 in six.moves.range(_size70):
-                  _elem75 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val69.append(_elem75)
+          (_ktype75, _vtype76, _size74 ) = iprot.readMapBegin() 
+          if _size74 >= 0:
+            for _i78 in six.moves.range(_size74):
+              _key79 = Device()
+              _key79.read(iprot)
+              _val80 = []
+              (_etype84, _size81) = iprot.readListBegin()
+              if _size81 >= 0:
+                for _i85 in six.moves.range(_size81):
+                  _elem86 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val80.append(_elem86)
               else: 
                 while iprot.peekList():
-                  _elem76 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val69.append(_elem76)
+                  _elem87 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val80.append(_elem87)
               iprot.readListEnd()
-              self.device_to_commands[_key68] = _val69
+              self.device_to_commands[_key79] = _val80
           else: 
             while iprot.peekMap():
-              _key77 = Device()
-              _key77.read(iprot)
-              _val78 = []
-              (_etype82, _size79) = iprot.readListBegin()
-              if _size79 >= 0:
-                for _i83 in six.moves.range(_size79):
-                  _elem84 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val78.append(_elem84)
+              _key88 = Device()
+              _key88.read(iprot)
+              _val89 = []
+              (_etype93, _size90) = iprot.readListBegin()
+              if _size90 >= 0:
+                for _i94 in six.moves.range(_size90):
+                  _elem95 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val89.append(_elem95)
               else: 
                 while iprot.peekList():
-                  _elem85 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-                  _val78.append(_elem85)
+                  _elem96 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+                  _val89.append(_elem96)
               iprot.readListEnd()
-              self.device_to_commands[_key77] = _val78
+              self.device_to_commands[_key88] = _val89
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -1026,6 +1079,11 @@ class bulk_run_local_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1046,11 +1104,11 @@ class bulk_run_local_args:
     if self.device_to_commands != None:
       oprot.writeFieldBegin('device_to_commands', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRUCT, TType.LIST, len(self.device_to_commands))
-      for kiter86,viter87 in self.device_to_commands.items():
-        kiter86.write(oprot)
-        oprot.writeListBegin(TType.STRING, len(viter87))
-        for iter88 in viter87:
-          oprot.writeString(iter88.encode('utf-8')) if UTF8STRINGS and not isinstance(iter88, bytes) else oprot.writeString(iter88)
+      for kiter97,viter98 in self.device_to_commands.items():
+        kiter97.write(oprot)
+        oprot.writeListBegin(TType.STRING, len(viter98))
+        for iter99 in viter98:
+          oprot.writeString(iter99.encode('utf-8')) if UTF8STRINGS and not isinstance(iter99, bytes) else oprot.writeString(iter99)
         oprot.writeListEnd()
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
@@ -1069,6 +1127,10 @@ class bulk_run_local_args:
     if self.client_port != None:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
+      oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -1096,6 +1158,10 @@ class bulk_run_local_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -1125,6 +1191,7 @@ bulk_run_local_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 bulk_run_local_args.thrift_struct_annotations = {
@@ -1132,12 +1199,13 @@ bulk_run_local_args.thrift_struct_annotations = {
 bulk_run_local_args.thrift_field_annotations = {
 }
 
-def bulk_run_local_args__init__(self, device_to_commands=None, timeout=bulk_run_local_args.thrift_spec[3][4], open_timeout=bulk_run_local_args.thrift_spec[4][4], client_ip=bulk_run_local_args.thrift_spec[10][4], client_port=bulk_run_local_args.thrift_spec[11][4],):
+def bulk_run_local_args__init__(self, device_to_commands=None, timeout=bulk_run_local_args.thrift_spec[3][4], open_timeout=bulk_run_local_args.thrift_spec[4][4], client_ip=bulk_run_local_args.thrift_spec[10][4], client_port=bulk_run_local_args.thrift_spec[11][4], uuid=bulk_run_local_args.thrift_spec[12][4],):
   self.device_to_commands = device_to_commands
   self.timeout = timeout
   self.open_timeout = open_timeout
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 bulk_run_local_args.__init__ = bulk_run_local_args__init__
 
@@ -1147,6 +1215,7 @@ def bulk_run_local_args__setstate__(self, state):
   state.setdefault('open_timeout', 30)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 bulk_run_local_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -1184,41 +1253,41 @@ class bulk_run_local_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype90, _vtype91, _size89 ) = iprot.readMapBegin() 
-          if _size89 >= 0:
-            for _i93 in six.moves.range(_size89):
-              _key94 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              _val95 = []
-              (_etype99, _size96) = iprot.readListBegin()
-              if _size96 >= 0:
-                for _i100 in six.moves.range(_size96):
-                  _elem101 = CommandResult()
-                  _elem101.read(iprot)
-                  _val95.append(_elem101)
+          (_ktype101, _vtype102, _size100 ) = iprot.readMapBegin() 
+          if _size100 >= 0:
+            for _i104 in six.moves.range(_size100):
+              _key105 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val106 = []
+              (_etype110, _size107) = iprot.readListBegin()
+              if _size107 >= 0:
+                for _i111 in six.moves.range(_size107):
+                  _elem112 = CommandResult()
+                  _elem112.read(iprot)
+                  _val106.append(_elem112)
               else: 
                 while iprot.peekList():
-                  _elem102 = CommandResult()
-                  _elem102.read(iprot)
-                  _val95.append(_elem102)
+                  _elem113 = CommandResult()
+                  _elem113.read(iprot)
+                  _val106.append(_elem113)
               iprot.readListEnd()
-              self.success[_key94] = _val95
+              self.success[_key105] = _val106
           else: 
             while iprot.peekMap():
-              _key103 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              _val104 = []
-              (_etype108, _size105) = iprot.readListBegin()
-              if _size105 >= 0:
-                for _i109 in six.moves.range(_size105):
-                  _elem110 = CommandResult()
-                  _elem110.read(iprot)
-                  _val104.append(_elem110)
+              _key114 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val115 = []
+              (_etype119, _size116) = iprot.readListBegin()
+              if _size116 >= 0:
+                for _i120 in six.moves.range(_size116):
+                  _elem121 = CommandResult()
+                  _elem121.read(iprot)
+                  _val115.append(_elem121)
               else: 
                 while iprot.peekList():
-                  _elem111 = CommandResult()
-                  _elem111.read(iprot)
-                  _val104.append(_elem111)
+                  _elem122 = CommandResult()
+                  _elem122.read(iprot)
+                  _val115.append(_elem122)
               iprot.readListEnd()
-              self.success[_key103] = _val104
+              self.success[_key114] = _val115
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -1248,11 +1317,11 @@ class bulk_run_local_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.MAP, 0)
       oprot.writeMapBegin(TType.STRING, TType.LIST, len(self.success))
-      for kiter112,viter113 in self.success.items():
-        oprot.writeString(kiter112.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter112, bytes) else oprot.writeString(kiter112)
-        oprot.writeListBegin(TType.STRUCT, len(viter113))
-        for iter114 in viter113:
-          iter114.write(oprot)
+      for kiter123,viter124 in self.success.items():
+        oprot.writeString(kiter123.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter123, bytes) else oprot.writeString(kiter123)
+        oprot.writeListBegin(TType.STRUCT, len(viter124))
+        for iter125 in viter124:
+          iter125.write(oprot)
         oprot.writeListEnd()
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
@@ -1322,6 +1391,7 @@ class open_session_args:
    - idle_timeout
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -1372,6 +1442,11 @@ class open_session_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1409,6 +1484,10 @@ class open_session_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1435,6 +1514,10 @@ class open_session_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -1464,6 +1547,7 @@ open_session_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 open_session_args.thrift_struct_annotations = {
@@ -1471,12 +1555,13 @@ open_session_args.thrift_struct_annotations = {
 open_session_args.thrift_field_annotations = {
 }
 
-def open_session_args__init__(self, device=None, open_timeout=open_session_args.thrift_spec[2][4], idle_timeout=open_session_args.thrift_spec[3][4], client_ip=open_session_args.thrift_spec[10][4], client_port=open_session_args.thrift_spec[11][4],):
+def open_session_args__init__(self, device=None, open_timeout=open_session_args.thrift_spec[2][4], idle_timeout=open_session_args.thrift_spec[3][4], client_ip=open_session_args.thrift_spec[10][4], client_port=open_session_args.thrift_spec[11][4], uuid=open_session_args.thrift_spec[12][4],):
   self.device = device
   self.open_timeout = open_timeout
   self.idle_timeout = idle_timeout
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 open_session_args.__init__ = open_session_args__init__
 
@@ -1486,6 +1571,7 @@ def open_session_args__setstate__(self, state):
   state.setdefault('idle_timeout', 300)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 open_session_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -1619,6 +1705,7 @@ class run_session_args:
    - timeout
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -1669,6 +1756,11 @@ class run_session_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1706,6 +1798,10 @@ class run_session_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -1732,6 +1828,10 @@ class run_session_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -1761,6 +1861,7 @@ run_session_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 run_session_args.thrift_struct_annotations = {
@@ -1768,12 +1869,13 @@ run_session_args.thrift_struct_annotations = {
 run_session_args.thrift_field_annotations = {
 }
 
-def run_session_args__init__(self, session=None, command=None, timeout=run_session_args.thrift_spec[3][4], client_ip=run_session_args.thrift_spec[10][4], client_port=run_session_args.thrift_spec[11][4],):
+def run_session_args__init__(self, session=None, command=None, timeout=run_session_args.thrift_spec[3][4], client_ip=run_session_args.thrift_spec[10][4], client_port=run_session_args.thrift_spec[11][4], uuid=run_session_args.thrift_spec[12][4],):
   self.session = session
   self.command = command
   self.timeout = timeout
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 run_session_args.__init__ = run_session_args__init__
 
@@ -1783,6 +1885,7 @@ def run_session_args__setstate__(self, state):
   state.setdefault('timeout', 300)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 run_session_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -1914,6 +2017,7 @@ class close_session_args:
    - session
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -1954,6 +2058,11 @@ class close_session_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1983,6 +2092,10 @@ class close_session_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -2001,6 +2114,10 @@ class close_session_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -2030,6 +2147,7 @@ close_session_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 close_session_args.thrift_struct_annotations = {
@@ -2037,10 +2155,11 @@ close_session_args.thrift_struct_annotations = {
 close_session_args.thrift_field_annotations = {
 }
 
-def close_session_args__init__(self, session=None, client_ip=close_session_args.thrift_spec[10][4], client_port=close_session_args.thrift_spec[11][4],):
+def close_session_args__init__(self, session=None, client_ip=close_session_args.thrift_spec[10][4], client_port=close_session_args.thrift_spec[11][4], uuid=close_session_args.thrift_spec[12][4],):
   self.session = session
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 close_session_args.__init__ = close_session_args__init__
 
@@ -2048,6 +2167,7 @@ def close_session_args__setstate__(self, state):
   state.setdefault('session', None)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 close_session_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -2164,6 +2284,7 @@ class open_raw_session_args:
    - idle_timeout
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -2214,6 +2335,11 @@ class open_raw_session_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -2251,6 +2377,10 @@ class open_raw_session_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -2277,6 +2407,10 @@ class open_raw_session_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -2306,6 +2440,7 @@ open_raw_session_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 open_raw_session_args.thrift_struct_annotations = {
@@ -2313,12 +2448,13 @@ open_raw_session_args.thrift_struct_annotations = {
 open_raw_session_args.thrift_field_annotations = {
 }
 
-def open_raw_session_args__init__(self, device=None, open_timeout=open_raw_session_args.thrift_spec[2][4], idle_timeout=open_raw_session_args.thrift_spec[3][4], client_ip=open_raw_session_args.thrift_spec[10][4], client_port=open_raw_session_args.thrift_spec[11][4],):
+def open_raw_session_args__init__(self, device=None, open_timeout=open_raw_session_args.thrift_spec[2][4], idle_timeout=open_raw_session_args.thrift_spec[3][4], client_ip=open_raw_session_args.thrift_spec[10][4], client_port=open_raw_session_args.thrift_spec[11][4], uuid=open_raw_session_args.thrift_spec[12][4],):
   self.device = device
   self.open_timeout = open_timeout
   self.idle_timeout = idle_timeout
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 open_raw_session_args.__init__ = open_raw_session_args__init__
 
@@ -2328,6 +2464,7 @@ def open_raw_session_args__setstate__(self, state):
   state.setdefault('idle_timeout', 300)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 open_raw_session_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -2462,6 +2599,7 @@ class run_raw_session_args:
    - prompt_regex
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -2517,6 +2655,11 @@ class run_raw_session_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -2558,6 +2701,10 @@ class run_raw_session_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -2588,6 +2735,10 @@ class run_raw_session_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -2617,6 +2768,7 @@ run_raw_session_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 run_raw_session_args.thrift_struct_annotations = {
@@ -2624,13 +2776,14 @@ run_raw_session_args.thrift_struct_annotations = {
 run_raw_session_args.thrift_field_annotations = {
 }
 
-def run_raw_session_args__init__(self, session=None, command=None, timeout=run_raw_session_args.thrift_spec[3][4], prompt_regex=None, client_ip=run_raw_session_args.thrift_spec[10][4], client_port=run_raw_session_args.thrift_spec[11][4],):
+def run_raw_session_args__init__(self, session=None, command=None, timeout=run_raw_session_args.thrift_spec[3][4], prompt_regex=None, client_ip=run_raw_session_args.thrift_spec[10][4], client_port=run_raw_session_args.thrift_spec[11][4], uuid=run_raw_session_args.thrift_spec[12][4],):
   self.session = session
   self.command = command
   self.timeout = timeout
   self.prompt_regex = prompt_regex
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 run_raw_session_args.__init__ = run_raw_session_args__init__
 
@@ -2641,6 +2794,7 @@ def run_raw_session_args__setstate__(self, state):
   state.setdefault('prompt_regex', None)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 run_raw_session_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -2772,6 +2926,7 @@ class close_raw_session_args:
    - session
    - client_ip
    - client_port
+   - uuid
   """
 
   thrift_spec = None
@@ -2812,6 +2967,11 @@ class close_raw_session_args:
           self.client_port = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.uuid = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -2841,6 +3001,10 @@ class close_raw_session_args:
       oprot.writeFieldBegin('client_port', TType.STRING, 11)
       oprot.writeString(self.client_port.encode('utf-8')) if UTF8STRINGS and not isinstance(self.client_port, bytes) else oprot.writeString(self.client_port)
       oprot.writeFieldEnd()
+    if self.uuid != None:
+      oprot.writeFieldBegin('uuid', TType.STRING, 12)
+      oprot.writeString(self.uuid.encode('utf-8')) if UTF8STRINGS and not isinstance(self.uuid, bytes) else oprot.writeString(self.uuid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -2859,6 +3023,10 @@ class close_raw_session_args:
       value = pprint.pformat(self.client_port, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    client_port=%s' % (value))
+    if self.uuid is not None:
+      value = pprint.pformat(self.uuid, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    uuid=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -2888,6 +3056,7 @@ close_raw_session_args.thrift_spec = (
   None, # 9
   (10, TType.STRING, 'client_ip', True, "", 2, ), # 10
   (11, TType.STRING, 'client_port', True, "", 2, ), # 11
+  (12, TType.STRING, 'uuid', True, "", 2, ), # 12
 )
 
 close_raw_session_args.thrift_struct_annotations = {
@@ -2895,10 +3064,11 @@ close_raw_session_args.thrift_struct_annotations = {
 close_raw_session_args.thrift_field_annotations = {
 }
 
-def close_raw_session_args__init__(self, session=None, client_ip=close_raw_session_args.thrift_spec[10][4], client_port=close_raw_session_args.thrift_spec[11][4],):
+def close_raw_session_args__init__(self, session=None, client_ip=close_raw_session_args.thrift_spec[10][4], client_port=close_raw_session_args.thrift_spec[11][4], uuid=close_raw_session_args.thrift_spec[12][4],):
   self.session = session
   self.client_ip = client_ip
   self.client_port = client_port
+  self.uuid = uuid
 
 close_raw_session_args.__init__ = close_raw_session_args__init__
 
@@ -2906,6 +3076,7 @@ def close_raw_session_args__setstate__(self, state):
   state.setdefault('session', None)
   state.setdefault('client_ip', "")
   state.setdefault('client_port', "")
+  state.setdefault('uuid', "")
   self.__dict__ = state
 
 close_raw_session_args.__getstate__ = lambda self: self.__dict__.copy()
@@ -3018,7 +3189,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
   def __init__(self, oprot, loop=None):
     fb303_asyncio.fb303.FacebookService.Client.__init__(self, oprot, loop)
 
-  def run(self, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def run(self, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - command
@@ -3027,13 +3198,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_run(command, device, timeout, open_timeout, client_ip, client_port)
+    self.send_run(command, device, timeout, open_timeout, client_ip, client_port, uuid)
     return fut
 
-  def send_run(self, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def send_run(self, command=None, device=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('run', TMessageType.CALL, self._seqid)
     args = run_args()
     args.command = command
@@ -3042,6 +3214,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.open_timeout = open_timeout
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3076,7 +3249,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "run failed: unknown result"))
     return
 
-  def bulk_run(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def bulk_run(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device_to_commands
@@ -3084,13 +3257,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_bulk_run(device_to_commands, timeout, open_timeout, client_ip, client_port)
+    self.send_bulk_run(device_to_commands, timeout, open_timeout, client_ip, client_port, uuid)
     return fut
 
-  def send_bulk_run(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def send_bulk_run(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('bulk_run', TMessageType.CALL, self._seqid)
     args = bulk_run_args()
     args.device_to_commands = device_to_commands
@@ -3098,6 +3272,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.open_timeout = open_timeout
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3126,7 +3301,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "bulk_run failed: unknown result"))
     return
 
-  def bulk_run_local(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def bulk_run_local(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device_to_commands
@@ -3134,13 +3309,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - open_timeout
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_bulk_run_local(device_to_commands, timeout, open_timeout, client_ip, client_port)
+    self.send_bulk_run_local(device_to_commands, timeout, open_timeout, client_ip, client_port, uuid)
     return fut
 
-  def send_bulk_run_local(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port=""):
+  def send_bulk_run_local(self, device_to_commands=None, timeout=300, open_timeout=30, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('bulk_run_local', TMessageType.CALL, self._seqid)
     args = bulk_run_local_args()
     args.device_to_commands = device_to_commands
@@ -3148,6 +3324,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.open_timeout = open_timeout
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3179,7 +3356,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "bulk_run_local failed: unknown result"))
     return
 
-  def open_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def open_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device
@@ -3187,13 +3364,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - idle_timeout
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_open_session(device, open_timeout, idle_timeout, client_ip, client_port)
+    self.send_open_session(device, open_timeout, idle_timeout, client_ip, client_port, uuid)
     return fut
 
-  def send_open_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def send_open_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('open_session', TMessageType.CALL, self._seqid)
     args = open_session_args()
     args.device = device
@@ -3201,6 +3379,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.idle_timeout = idle_timeout
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3232,7 +3411,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "open_session failed: unknown result"))
     return
 
-  def run_session(self, session=None, command=None, timeout=300, client_ip="", client_port=""):
+  def run_session(self, session=None, command=None, timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
@@ -3240,13 +3419,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - timeout
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_run_session(session, command, timeout, client_ip, client_port)
+    self.send_run_session(session, command, timeout, client_ip, client_port, uuid)
     return fut
 
-  def send_run_session(self, session=None, command=None, timeout=300, client_ip="", client_port=""):
+  def send_run_session(self, session=None, command=None, timeout=300, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('run_session', TMessageType.CALL, self._seqid)
     args = run_session_args()
     args.session = session
@@ -3254,6 +3434,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.timeout = timeout
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3285,24 +3466,26 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "run_session failed: unknown result"))
     return
 
-  def close_session(self, session=None, client_ip="", client_port=""):
+  def close_session(self, session=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_close_session(session, client_ip, client_port)
+    self.send_close_session(session, client_ip, client_port, uuid)
     return fut
 
-  def send_close_session(self, session=None, client_ip="", client_port=""):
+  def send_close_session(self, session=None, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('close_session', TMessageType.CALL, self._seqid)
     args = close_session_args()
     args.session = session
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3331,7 +3514,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_result(None)
     return
 
-  def open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - device
@@ -3339,13 +3522,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - idle_timeout
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_open_raw_session(device, open_timeout, idle_timeout, client_ip, client_port)
+    self.send_open_raw_session(device, open_timeout, idle_timeout, client_ip, client_port, uuid)
     return fut
 
-  def send_open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port=""):
+  def send_open_raw_session(self, device=None, open_timeout=60, idle_timeout=300, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('open_raw_session', TMessageType.CALL, self._seqid)
     args = open_raw_session_args()
     args.device = device
@@ -3353,6 +3537,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.idle_timeout = idle_timeout
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3384,7 +3569,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "open_raw_session failed: unknown result"))
     return
 
-  def run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+  def run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
@@ -3393,13 +3578,14 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
      - prompt_regex
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_run_raw_session(session, command, timeout, prompt_regex, client_ip, client_port)
+    self.send_run_raw_session(session, command, timeout, prompt_regex, client_ip, client_port, uuid)
     return fut
 
-  def send_run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port=""):
+  def send_run_raw_session(self, session=None, command=None, timeout=300, prompt_regex=None, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('run_raw_session', TMessageType.CALL, self._seqid)
     args = run_raw_session_args()
     args.session = session
@@ -3408,6 +3594,7 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     args.prompt_regex = prompt_regex
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3439,24 +3626,26 @@ class Client(fb303_asyncio.fb303.FacebookService.Client, Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "run_raw_session failed: unknown result"))
     return
 
-  def close_raw_session(self, session=None, client_ip="", client_port=""):
+  def close_raw_session(self, session=None, client_ip="", client_port="", uuid=""):
     """
     Parameters:
      - session
      - client_ip
      - client_port
+     - uuid
     """
     self._seqid += 1
     fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_close_raw_session(session, client_ip, client_port)
+    self.send_close_raw_session(session, client_ip, client_port, uuid)
     return fut
 
-  def send_close_raw_session(self, session=None, client_ip="", client_port=""):
+  def send_close_raw_session(self, session=None, client_ip="", client_port="", uuid=""):
     self._oprot.writeMessageBegin('close_raw_session', TMessageType.CALL, self._seqid)
     args = close_raw_session_args()
     args.session = session
     args.client_ip = client_ip
     args.client_port = client_port
+    args.uuid = uuid
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -3523,9 +3712,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_run(self, args, handler_ctx, seqid, oprot, fn_name):
     result = run_result()
     if should_run_on_thread(self._handler.run):
-      fut = self._loop.run_in_executor(None, self._handler.run, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.run, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.run, self._loop, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.run, self._loop, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException, 'ude': UnsupportedDeviceException}, f))
     return fut
 
@@ -3533,9 +3722,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_bulk_run(self, args, handler_ctx, seqid, oprot, fn_name):
     result = bulk_run_result()
     if should_run_on_thread(self._handler.bulk_run):
-      fut = self._loop.run_in_executor(None, self._handler.bulk_run, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.bulk_run, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.bulk_run, self._loop, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.bulk_run, self._loop, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
     return fut
 
@@ -3543,9 +3732,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_bulk_run_local(self, args, handler_ctx, seqid, oprot, fn_name):
     result = bulk_run_local_result()
     if should_run_on_thread(self._handler.bulk_run_local):
-      fut = self._loop.run_in_executor(None, self._handler.bulk_run_local, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.bulk_run_local, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.bulk_run_local, self._loop, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.bulk_run_local, self._loop, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'ioe': InstanceOverloaded}, f))
     return fut
 
@@ -3553,9 +3742,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_open_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = open_session_result()
     if should_run_on_thread(self._handler.open_session):
-      fut = self._loop.run_in_executor(None, self._handler.open_session, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.open_session, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.open_session, self._loop, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.open_session, self._loop, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3563,9 +3752,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_run_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = run_session_result()
     if should_run_on_thread(self._handler.run_session):
-      fut = self._loop.run_in_executor(None, self._handler.run_session, args.session, args.command, args.timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.run_session, args.session, args.command, args.timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.run_session, self._loop, args.session, args.command, args.timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.run_session, self._loop, args.session, args.command, args.timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3573,9 +3762,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_close_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = close_session_result()
     if should_run_on_thread(self._handler.close_session):
-      fut = self._loop.run_in_executor(None, self._handler.close_session, args.session, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.close_session, args.session, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.close_session, self._loop, args.session, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.close_session, self._loop, args.session, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3583,9 +3772,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_open_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = open_raw_session_result()
     if should_run_on_thread(self._handler.open_raw_session):
-      fut = self._loop.run_in_executor(None, self._handler.open_raw_session, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.open_raw_session, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.open_raw_session, self._loop, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.open_raw_session, self._loop, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3593,9 +3782,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_run_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = run_raw_session_result()
     if should_run_on_thread(self._handler.run_raw_session):
-      fut = self._loop.run_in_executor(None, self._handler.run_raw_session, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.run_raw_session, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.run_raw_session, self._loop, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.run_raw_session, self._loop, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3603,9 +3792,9 @@ class Processor(fb303_asyncio.fb303.FacebookService.Processor, Iface, TProcessor
   def process_close_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = close_raw_session_result()
     if should_run_on_thread(self._handler.close_raw_session):
-      fut = self._loop.run_in_executor(None, self._handler.close_raw_session, args.session, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.close_raw_session, args.session, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.close_raw_session, self._loop, args.session, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.close_raw_session, self._loop, args.session, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3648,9 +3837,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_run(self, args, handler_ctx, seqid, oprot, fn_name):
     result = run_result()
     if should_run_on_thread(self._handler.run):
-      fut = self._loop.run_in_executor(None, self._handler.run, handler_ctx, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.run, handler_ctx, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.run, self._loop, handler_ctx, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.run, self._loop, handler_ctx, args.command, args.device, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException, 'ude': UnsupportedDeviceException}, f))
     return fut
 
@@ -3658,9 +3847,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_bulk_run(self, args, handler_ctx, seqid, oprot, fn_name):
     result = bulk_run_result()
     if should_run_on_thread(self._handler.bulk_run):
-      fut = self._loop.run_in_executor(None, self._handler.bulk_run, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.bulk_run, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.bulk_run, self._loop, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.bulk_run, self._loop, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
     return fut
 
@@ -3668,9 +3857,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_bulk_run_local(self, args, handler_ctx, seqid, oprot, fn_name):
     result = bulk_run_local_result()
     if should_run_on_thread(self._handler.bulk_run_local):
-      fut = self._loop.run_in_executor(None, self._handler.bulk_run_local, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.bulk_run_local, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.bulk_run_local, self._loop, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.bulk_run_local, self._loop, handler_ctx, args.device_to_commands, args.timeout, args.open_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'ioe': InstanceOverloaded}, f))
     return fut
 
@@ -3678,9 +3867,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_open_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = open_session_result()
     if should_run_on_thread(self._handler.open_session):
-      fut = self._loop.run_in_executor(None, self._handler.open_session, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.open_session, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.open_session, self._loop, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.open_session, self._loop, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3688,9 +3877,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_run_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = run_session_result()
     if should_run_on_thread(self._handler.run_session):
-      fut = self._loop.run_in_executor(None, self._handler.run_session, handler_ctx, args.session, args.command, args.timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.run_session, handler_ctx, args.session, args.command, args.timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.run_session, self._loop, handler_ctx, args.session, args.command, args.timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.run_session, self._loop, handler_ctx, args.session, args.command, args.timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3698,9 +3887,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_close_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = close_session_result()
     if should_run_on_thread(self._handler.close_session):
-      fut = self._loop.run_in_executor(None, self._handler.close_session, handler_ctx, args.session, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.close_session, handler_ctx, args.session, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.close_session, self._loop, handler_ctx, args.session, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.close_session, self._loop, handler_ctx, args.session, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3708,9 +3897,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_open_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = open_raw_session_result()
     if should_run_on_thread(self._handler.open_raw_session):
-      fut = self._loop.run_in_executor(None, self._handler.open_raw_session, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.open_raw_session, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.open_raw_session, self._loop, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.open_raw_session, self._loop, handler_ctx, args.device, args.open_timeout, args.idle_timeout, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3718,9 +3907,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_run_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = run_raw_session_result()
     if should_run_on_thread(self._handler.run_raw_session):
-      fut = self._loop.run_in_executor(None, self._handler.run_raw_session, handler_ctx, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.run_raw_session, handler_ctx, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.run_raw_session, self._loop, handler_ctx, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.run_raw_session, self._loop, handler_ctx, args.session, args.command, args.timeout, args.prompt_regex, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 
@@ -3728,9 +3917,9 @@ class ContextProcessor(fb303_asyncio.fb303.FacebookService.ContextProcessor, Con
   def process_close_raw_session(self, args, handler_ctx, seqid, oprot, fn_name):
     result = close_raw_session_result()
     if should_run_on_thread(self._handler.close_raw_session):
-      fut = self._loop.run_in_executor(None, self._handler.close_raw_session, handler_ctx, args.session, args.client_ip, args.client_port)
+      fut = self._loop.run_in_executor(None, self._handler.close_raw_session, handler_ctx, args.session, args.client_ip, args.client_port, args.uuid)
     else:
-      fut = call_as_future(self._handler.close_raw_session, self._loop, handler_ctx, args.session, args.client_ip, args.client_port)
+      fut = call_as_future(self._handler.close_raw_session, self._loop, handler_ctx, args.session, args.client_ip, args.client_port, args.uuid)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {'se': SessionException}, f))
     return fut
 

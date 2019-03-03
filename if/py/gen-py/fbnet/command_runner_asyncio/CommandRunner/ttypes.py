@@ -482,6 +482,7 @@ class SessionData:
   Attributes:
    - subsystem
    - exec_command
+   - extra_options
   """
 
   thrift_spec = None
@@ -516,6 +517,23 @@ class SessionData:
           self.exec_command = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.MAP:
+          self.extra_options = {}
+          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin() 
+          if _size0 >= 0:
+            for _i4 in six.moves.range(_size0):
+              _key5 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val6 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              self.extra_options[_key5] = _val6
+          else: 
+            while iprot.peekMap():
+              _key7 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val8 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              self.extra_options[_key7] = _val8
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -541,6 +559,14 @@ class SessionData:
       oprot.writeFieldBegin('exec_command', TType.STRING, 2)
       oprot.writeString(self.exec_command.encode('utf-8')) if UTF8STRINGS and not isinstance(self.exec_command, bytes) else oprot.writeString(self.exec_command)
       oprot.writeFieldEnd()
+    if self.extra_options != None:
+      oprot.writeFieldBegin('extra_options', TType.MAP, 3)
+      oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.extra_options))
+      for kiter9,viter10 in self.extra_options.items():
+        oprot.writeString(kiter9.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter9, bytes) else oprot.writeString(kiter9)
+        oprot.writeString(viter10.encode('utf-8')) if UTF8STRINGS and not isinstance(viter10, bytes) else oprot.writeString(viter10)
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -555,6 +581,10 @@ class SessionData:
       value = pprint.pformat(self.exec_command, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    exec_command=%s' % (value))
+    if self.extra_options is not None:
+      value = pprint.pformat(self.extra_options, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    extra_options=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -634,17 +664,17 @@ class Device:
       elif fid == 15:
         if ftype == TType.MAP:
           self.command_prompts = {}
-          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin() 
-          if _size0 >= 0:
-            for _i4 in six.moves.range(_size0):
-              _key5 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              _val6 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              self.command_prompts[_key5] = _val6
+          (_ktype12, _vtype13, _size11 ) = iprot.readMapBegin() 
+          if _size11 >= 0:
+            for _i15 in six.moves.range(_size11):
+              _key16 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val17 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              self.command_prompts[_key16] = _val17
           else: 
             while iprot.peekMap():
-              _key7 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              _val8 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-              self.command_prompts[_key7] = _val8
+              _key18 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              _val19 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+              self.command_prompts[_key18] = _val19
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -713,9 +743,9 @@ class Device:
     if self.command_prompts != None:
       oprot.writeFieldBegin('command_prompts', TType.MAP, 15)
       oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.command_prompts))
-      for kiter9,viter10 in self.command_prompts.items():
-        oprot.writeString(kiter9.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter9, bytes) else oprot.writeString(kiter9)
-        oprot.writeString(viter10.encode('utf-8')) if UTF8STRINGS and not isinstance(viter10, bytes) else oprot.writeString(viter10)
+      for kiter20,viter21 in self.command_prompts.items():
+        oprot.writeString(kiter20.encode('utf-8')) if UTF8STRINGS and not isinstance(kiter20, bytes) else oprot.writeString(kiter20)
+        oprot.writeString(viter21.encode('utf-8')) if UTF8STRINGS and not isinstance(viter21, bytes) else oprot.writeString(viter21)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     if self.ip_address != None:
@@ -793,6 +823,7 @@ class CommandResult:
    - output
    - status
    - command
+   - capabilities
   """
 
   thrift_spec = None
@@ -830,6 +861,11 @@ class CommandResult:
       elif fid == 3:
         if ftype == TType.STRING:
           self.command = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.capabilities = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
         else:
           iprot.skip(ftype)
       else:
@@ -870,6 +906,10 @@ class CommandResult:
       oprot.writeFieldBegin('command', TType.STRING, 3)
       oprot.writeString(self.command.encode('utf-8')) if UTF8STRINGS and not isinstance(self.command, bytes) else oprot.writeString(self.command)
       oprot.writeFieldEnd()
+    if self.capabilities != None:
+      oprot.writeFieldBegin('capabilities', TType.STRING, 4)
+      oprot.writeString(self.capabilities.encode('utf-8')) if UTF8STRINGS and not isinstance(self.capabilities, bytes) else oprot.writeString(self.capabilities)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -888,6 +928,10 @@ class CommandResult:
       value = pprint.pformat(self.command, indent=0)
       value = padding.join(value.splitlines(True))
       L.append('    command=%s' % (value))
+    if self.capabilities is not None:
+      value = pprint.pformat(self.capabilities, indent=0)
+      value = padding.join(value.splitlines(True))
+      L.append('    capabilities=%s' % (value))
     return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
 
   def __eq__(self, other):
@@ -1139,6 +1183,7 @@ SessionData.thrift_spec = (
   None, # 0
   (1, TType.STRING, 'subsystem', True, None, 1, ), # 1
   (2, TType.STRING, 'exec_command', True, None, 1, ), # 2
+  (3, TType.MAP, 'extra_options', (TType.STRING,True,TType.STRING,True), None, 1, ), # 3
 )
 
 SessionData.thrift_struct_annotations = {
@@ -1146,15 +1191,17 @@ SessionData.thrift_struct_annotations = {
 SessionData.thrift_field_annotations = {
 }
 
-def SessionData__init__(self, subsystem=None, exec_command=None,):
+def SessionData__init__(self, subsystem=None, exec_command=None, extra_options=None,):
   self.subsystem = subsystem
   self.exec_command = exec_command
+  self.extra_options = extra_options
 
 SessionData.__init__ = SessionData__init__
 
 def SessionData__setstate__(self, state):
   state.setdefault('subsystem', None)
   state.setdefault('exec_command', None)
+  state.setdefault('extra_options', None)
   self.__dict__ = state
 
 SessionData.__getstate__ = lambda self: self.__dict__.copy()
@@ -1222,6 +1269,7 @@ CommandResult.thrift_spec = (
   (1, TType.STRING, 'output', True, None, 0, ), # 1
   (2, TType.STRING, 'status', True, None, 0, ), # 2
   (3, TType.STRING, 'command', True, None, 0, ), # 3
+  (4, TType.STRING, 'capabilities', True, None, 1, ), # 4
 )
 
 CommandResult.thrift_struct_annotations = {
@@ -1229,10 +1277,11 @@ CommandResult.thrift_struct_annotations = {
 CommandResult.thrift_field_annotations = {
 }
 
-def CommandResult__init__(self, output=None, status=None, command=None,):
+def CommandResult__init__(self, output=None, status=None, command=None, capabilities=None,):
   self.output = output
   self.status = status
   self.command = command
+  self.capabilities = capabilities
 
 CommandResult.__init__ = CommandResult__init__
 
@@ -1240,6 +1289,7 @@ def CommandResult__setstate__(self, state):
   state.setdefault('output', None)
   state.setdefault('status', None)
   state.setdefault('command', None)
+  state.setdefault('capabilities', None)
   self.__dict__ = state
 
 CommandResult.__getstate__ = lambda self: self.__dict__.copy()

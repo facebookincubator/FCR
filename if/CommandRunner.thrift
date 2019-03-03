@@ -93,6 +93,9 @@ struct SessionData {
   //     res = client.run(cmd, dev)
 
   2: optional string exec_command,
+  // Extra options that supported by the given session type. For example,
+  //  - The following session support extra_options={'port': PORT}: SSH, NETCONF
+  3: optional map<string, string> extra_options,
 }
 
 struct Device {

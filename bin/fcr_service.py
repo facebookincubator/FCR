@@ -33,11 +33,11 @@ class DeviceDB(BaseDeviceDB):
             "Generic",
         )
 
-    async def _fetch_device_data(self, name_filter=None):
-        self.logger.info("fetch_device_data: %s", name_filter)
-        if name_filter:
+    async def _fetch_device_data(self, name_filter=None, hostname=None):
+        self.logger.info("fetch_device_data: %s", hostname)
+        if hostname:
             self.logger.info("Getting device")
-            return [self.create_device(name_filter)]
+            return [self.create_device(hostname)]
         else:
             return []
 
