@@ -93,12 +93,10 @@ class DeviceInfo(ServiceObj):
     def proxy_required(cls, ip):
         return False
 
-    @classmethod
-    def nat_required(cls, ip):
+    async def should_nat(self, ip: str) -> bool:
         return False
 
-    @classmethod
-    async def translate_address(cls, ip):
+    async def translate_address(self, ip: str) -> str:
         """
         Return a translated address (i.e. via NAT). Currently does nothing.
         """

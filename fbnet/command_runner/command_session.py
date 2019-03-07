@@ -826,7 +826,7 @@ class SSHCommandSession(CliCommandSession):
 
         if self._devinfo.proxy_required(ip):
             host = self.service.get_http_proxy_url(ip)
-        elif self._devinfo.nat_required(ip):
+        elif await self._devinfo.should_nat(ip):
             host = await self._devinfo.translate_address(ip)
         else:
             host = ip
