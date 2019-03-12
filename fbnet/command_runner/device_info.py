@@ -93,7 +93,7 @@ class DeviceInfo(ServiceObj):
     def proxy_required(cls, ip):
         return False
 
-    async def should_nat(self, ip: str) -> bool:
+    def should_nat(self, ip: str) -> bool:
         return False
 
     async def translate_address(self, ip: str) -> str:
