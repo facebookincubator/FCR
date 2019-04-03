@@ -318,6 +318,10 @@ class CommandSession(ServiceObj):
         return self._opts.get("idle_timeout")
 
     @property
+    def connected(self) -> bool:
+        return self._connected
+
+    @property
     def last_access_time(self) -> float:
         return self._last_access_time
 
