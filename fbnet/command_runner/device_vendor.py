@@ -119,6 +119,10 @@ class DeviceVendor(ServiceObj):
         return self._config.clear_command
 
     @property
+    def exit_command(self):
+        return self._config.exit_command
+
+    @property
     def cli_setup(self):
         return self._config.cli_setup
 

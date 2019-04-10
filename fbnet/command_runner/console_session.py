@@ -48,6 +48,7 @@ class ConsoleCommandSession(SSHCommandSession):
     # Certain prompts that we get during the login attemts that we will like to
     # ignore
     _CONSOLE_INGORE = {rb" to cli \]", rb"who is on this device.\]\r\n"}
+    _DEFAULT_LOGOUT_COMMAND = b"exit"
 
     _CONSOLE_PROMPT_RE = None
     _CONSOLE_EXPECT_DELAY = 5
@@ -85,8 +86,8 @@ class ConsoleCommandSession(SSHCommandSession):
             return await asyncio.wait_for(
                 self.wait_prompt(regex), timeout, loop=self._loop
             )
-        except asyncio.TimeoutError as e:
-            self.logger.info("Timeout waiting for: %s", regex)
+        except asyncio.TimeoutError:
+            self.logger.exception("Timeout waiting for: %s", regex)
             return None
 
     def send(self, data, end=b"\n"):
@@ -154,6 +155,41 @@ class ConsoleCommandSession(SSHCommandSession):
                 return await self._try_login(username=username, passwd=passwd)
             else:
                 raise RuntimeError("Login failed")
+
+    async def _try_logout(self) -> None:
+        """
+        Run logout command and wait for the login prompt to show up (the login
+        prompt indicates that it successfully logs out and is waiting for the
+        next login). This is to ensure we cleanly diconnect from the device
+        after running the command
+        """
+        if not self._stream_writer:
+            return
+
+        self.logger.info("Logout from device")
+        logout_cmd = (
+            self._devinfo.vendor_data.exit_command or self._DEFAULT_LOGOUT_COMMAND
+        )
+        self._stream_writer.write(logout_cmd + b"\n")
+        # Make sure we logout of the system
+        while True:
+            res = await self.expect(self.get_prompt_re())
+            if res.groupdict.get("ignore"):
+                # If we match anything in the ignore prompts, set a \r\n
+                self._send_newline(end=b"")
+                await asyncio.sleep(0.2)  # Let the console catch up
+            elif res.groupdict.get("login"):
+                self.logger.info("Logout successfully")
+                return
+            else:
+                self.logger.error(
+                    "Get unexpected prompt when logging out: {}".format(res)
+                )
+                return
+
+    async def _close(self) -> None:
+        await self._try_logout()
+        await super()._close()
 
     def _send_clearline(self):
         self.send(b"\x15\r\n")
