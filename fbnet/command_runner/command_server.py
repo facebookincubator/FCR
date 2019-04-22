@@ -34,6 +34,9 @@ class CommandServer(ServiceTask):
         self._server = None
         self._backlog = 100
 
+    def _get_processor_class(self):
+        return Processor
+
     async def run(self):
 
         # Wait for FBNet to finish its run
@@ -44,7 +47,7 @@ class CommandServer(ServiceTask):
 
         self._handler = thrift_handler
 
-        processor = Processor(thrift_handler, loop=self.loop)
+        processor = self._get_processor_class()(self._handler, loop=self.loop)
         processor.setEventHandler(event_handler)
 
         pfactory = ThriftServerProtocolFactory(
