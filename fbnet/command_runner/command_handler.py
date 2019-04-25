@@ -205,6 +205,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                     )
                     await asyncio.sleep(delay)
                     retry_count += 1
+                except Exception as e:
+                    raise ttypes.SessionException(
+                        message="bulk_run_remote failed: %r" % (e)
+                    ) from e
 
         # Split the request into chunks and run them on remote hosts
         tasks = [
