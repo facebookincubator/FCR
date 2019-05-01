@@ -174,7 +174,13 @@ class ConsoleCommandSession(SSHCommandSession):
         # Make sure we logout of the system
         while True:
             res = await self.expect(self.get_prompt_re())
-            if res.groupdict.get("ignore"):
+            if not res:
+                self.logger.warn(
+                    "Console connection timeout. Most likely the connection is "
+                    "already killed by the device."
+                )
+                return
+            elif res.groupdict.get("ignore"):
                 # If we match anything in the ignore prompts, set a \r\n
                 self._send_newline(end=b"")
                 await asyncio.sleep(0.2)  # Let the console catch up
