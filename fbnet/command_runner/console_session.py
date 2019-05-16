@@ -41,7 +41,8 @@ class ConsoleCommandSession(SSHCommandSession):
         #  Last login: Mon May  8 13:53:17 on ttyS0
         b"login": b".*((?<!Last ).ogin|.sername):",
         b"passwd": b"\n.*assword:",
-        b"prompt": b"\n.*[#>]",
+        # Ignore login failure message like P64639613
+        b"prompt": b"\n.*[#>](?!Login incorrect)",
         b"interact_prompts": rb"Do you acknowledge\? \(Y/N\)\?",
     }
 
