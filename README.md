@@ -23,7 +23,7 @@ FCR can be quickly installed using `pip`. Just clone the git repo and install us
 # Clone the git repo.
 git clone --recursive https://github.com/facebookincubator/FCR.git
 
-# Create a virtual environment 
+# Create a virtual environment
 python3 -m venv venv
 . venv/bin/activate
 
@@ -79,7 +79,7 @@ async def run(cmd, device):
         res = await client.run(cmd, device)
         # type of res is `struct CommandResult`
         print(res.output)
-        
+
 loop = asyncio.get_event_loop()
 loop.run_until_complete(run('uname -a\nip -4 add list eth0', device))
 ```
@@ -87,7 +87,7 @@ loop.run_until_complete(run('uname -a\nip -4 add list eth0', device))
     netbot@dev-001:~$ uname -a
     Linux dev-001 4.4.0-79-generic #100-Ubuntu SMP Wed May 17 19:58:14 UTC 2017 x86_64 GNU/Linux
     netbot@dev-001:~$ ip -4 add list eth0
-    161: eth0@if162: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    161: eth0@if162: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
         inet 172.17.0.2/16 scope global eth0
            valid_lft forever preferred_lft forever
 
@@ -113,7 +113,7 @@ async def bulk_run(dev_cmds):
         results = await client.bulk_run(dev_cmds)
         # result is a map<devname, list<CommandResult>>
         return results
-    
+
 loop = asyncio.get_event_loop()
 results = loop.run_until_complete(bulk_run(dev_cmds))
 
@@ -156,21 +156,21 @@ Sometimes you want to keep the connection to the device open across multiple com
 device = fcr_ttypes.Device(hostname='dev-001', username=username, password=password)
 
 async def fcr_session():
-    
+
     async with AsyncioThriftClient(FcrClient, 'localhost', 5000) as client:
         # Open a session to the device
         session = await client.open_session(device)
-        
+
         # Run commands on the open session
         res = await client.run_session(session, 'uname -a')
         print(res.output)
-        
+
         res = await client.run_session(session, 'ip addr show | grep "inet\>"')
         print(res.output)
-        
+
         # Finally Close the session
         await client.close_session(session)
-        
+
 loop = asyncio.get_event_loop()
 results = loop.run_until_complete(fcr_session())
 ```
@@ -241,7 +241,7 @@ This information can be provided to FCR service in json file. This file can be s
         "cli_setup": [ "term len 0" ]
     },
   }
-  
+
 ```
 
 ### Device DB
@@ -268,10 +268,10 @@ json_devdata = '''
 '''
 
 class DeviceDB(BaseDeviceDB):
-    
+
     async def _fetch_device_data(self, name_filter=None):
         '''
-        Fetch data from your backend database. 
+        Fetch data from your backend database.
 
         This sample implementation assumes you have the data in a json format
         '''        
@@ -306,17 +306,17 @@ bin/fcr_service.py --help
                           [--exit_max_wait EXIT_MAX_WAIT]
                           [--device_db_update_interval DEVICE_DB_UPDATE_INTERVAL]
                           [--device_name_filter DEVICE_NAME_FILTER]
-    
+
     A thrift service to run commands on heterogeneous Network devices with configurable parameters.
-    
+
     It hides most of the devices specific details:
-    
+
     * Prompt processing
     * IP Address lookup
     * Session Types
-    
+
     The clients can be implemented in any language supported by thrift
-    
+
     optional arguments:
       --asyncio_debug       turn on debug for asyncio (default: False)
       --device_db_update_interval DEVICE_DB_UPDATE_INTERVAL
@@ -354,4 +354,4 @@ bin/fcr_service.py --help
 
 ## License
 
-FBNet Command Runner is BSD-licensed. We also provide an additional patent grant.
+FBNet Command Runner is MIT-licensed.
