@@ -361,12 +361,14 @@ class CommandSession(ServiceObj):
         """
         try:
             self.logger.debug("Closing session")
-            del self._ALL_SESSIONS[self.key]
+            if self.key in self._ALL_SESSIONS:
+                del self._ALL_SESSIONS[self.key]
         finally:
             self.inc_counter("%s.closed" % self.objname)
             await self._close()
             if self._cmd_stream is not None:
                 self._cmd_stream.close()
+            self._connected = False
 
     @_update_last_access_time_and_in_use
     async def run_command(self, command, *args, **kwargs):
