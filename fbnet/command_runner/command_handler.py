@@ -134,6 +134,11 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             ret[key] = value() if callable(value) else value
         return ret
 
+    @classmethod
+    def _set_bulk_session_count(cls, new_count: int) -> None:
+        """Method to set the class variable _bulk_session_count"""
+        cls._bulk_session_count = new_count
+
     def _generate_new_uuid(self, old_uuid):
         """ Generate a new uuid from the existing one """
         return old_uuid or uuid4().hex[:8]
@@ -233,7 +238,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 message="Too many session open: %d" % session_count
             )
 
-        self._bulk_session_count += len(devices)
+        self._set_bulk_session_count(self._bulk_session_count + len(devices))
 
         async def _run_one_device(device):
             # Instead of running all commands at once, stagger the commands to
@@ -261,7 +266,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 *commands, loop=self.loop, return_exceptions=True
             )
         finally:
-            self._bulk_session_count -= len(devices)
+            self._set_bulk_session_count(self._bulk_session_count - len(devices))
 
         return {
             self._get_result_key(dev): res for dev, res in zip(devices, cmd_results)
