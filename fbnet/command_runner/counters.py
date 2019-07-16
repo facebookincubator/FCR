@@ -60,6 +60,9 @@ class Counters(ServiceObj):
     def incrementCounter(self, name):
         self.counters[name] += 1
 
+    def incrementCounterBy(self, name, amount):
+        self.counters[name] += amount
+
     def getCounter(self, name):
         v = self.counters[name]
         return v() if callable() else v
