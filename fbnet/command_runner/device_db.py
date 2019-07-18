@@ -6,8 +6,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import TYPE_CHECKING, Union
+
 from .base_service import PeriodicServiceTask
 from .options import Option
+
+
+if TYPE_CHECKING:
+    from .device_info import DeviceIP  # noqa: F401
 
 
 class BaseDeviceDB(PeriodicServiceTask):
@@ -89,3 +95,6 @@ class BaseDeviceDB(PeriodicServiceTask):
 
         # still not able to find device, raise an exeception
         raise KeyError("Device not found", device.hostname)
+
+    def is_pingable(self, ip: Union[str, "DeviceIP"]) -> bool:
+        raise NotImplementedError("Please implement this to check if an ip is pingable")
