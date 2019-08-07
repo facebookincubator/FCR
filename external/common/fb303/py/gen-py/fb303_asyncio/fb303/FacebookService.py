@@ -30,7 +30,7 @@ all_structs = []
 UTF8STRINGS = bool(0) or sys.version_info.major >= 3
 
 import thrift
-if six.PY3 and not thrift.trollius:
+if six.PY3:
   import asyncio
   from thrift.util.asyncio import call_as_future
 else:
@@ -76,7 +76,7 @@ class Iface:
   def getCounter(self, key=None):
     """
     Gets the value of a single counter
-    
+
     Parameters:
      - key
     """
@@ -85,7 +85,7 @@ class Iface:
   def setOption(self, key=None, value=None):
     """
     Sets an option
-    
+
     Parameters:
      - key
      - value
@@ -95,7 +95,7 @@ class Iface:
   def getOption(self, key=None):
     """
     Gets an option
-    
+
     Parameters:
      - key
     """
@@ -111,7 +111,7 @@ class Iface:
     """
     Returns a CPU profile over the given time interval (client and server
     must agree on the profile format).
-    
+
     Parameters:
      - profileDurationInSec
     """
@@ -174,7 +174,7 @@ class ContextIface:
   def getCounter(self, handler_ctx, key=None):
     """
     Gets the value of a single counter
-    
+
     Parameters:
      - key
     """
@@ -183,7 +183,7 @@ class ContextIface:
   def setOption(self, handler_ctx, key=None, value=None):
     """
     Sets an option
-    
+
     Parameters:
      - key
      - value
@@ -193,7 +193,7 @@ class ContextIface:
   def getOption(self, handler_ctx, key=None):
     """
     Gets an option
-    
+
     Parameters:
      - key
     """
@@ -209,7 +209,7 @@ class ContextIface:
     """
     Returns a CPU profile over the given time interval (client and server
     must agree on the profile format).
-    
+
     Parameters:
      - profileDurationInSec
     """
@@ -288,7 +288,7 @@ class getName_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -375,7 +375,7 @@ class getName_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -451,7 +451,7 @@ class getVersion_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -538,7 +538,7 @@ class getVersion_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -614,7 +614,7 @@ class getStatus_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -701,7 +701,7 @@ class getStatus_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -777,7 +777,7 @@ class getStatusDetails_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -864,7 +864,7 @@ class getStatusDetails_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -940,7 +940,7 @@ class getCounters_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -989,13 +989,13 @@ class getCounters_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin() 
+          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin()
           if _size0 >= 0:
             for _i4 in six.moves.range(_size0):
               _key5 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               _val6 = iprot.readI64()
               self.success[_key5] = _val6
-          else: 
+          else:
             while iprot.peekMap():
               _key7 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               _val8 = iprot.readI64()
@@ -1043,7 +1043,7 @@ class getCounters_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1136,7 +1136,7 @@ class getCounter_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1230,7 +1230,7 @@ class getCounter_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1336,7 +1336,7 @@ class setOption_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1415,7 +1415,7 @@ class setOption_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1502,7 +1502,7 @@ class getOption_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1596,7 +1596,7 @@ class getOption_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1672,7 +1672,7 @@ class getOptions_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1721,13 +1721,13 @@ class getOptions_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype12, _vtype13, _size11 ) = iprot.readMapBegin() 
+          (_ktype12, _vtype13, _size11 ) = iprot.readMapBegin()
           if _size11 >= 0:
             for _i15 in six.moves.range(_size11):
               _key16 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               _val17 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               self.success[_key16] = _val17
-          else: 
+          else:
             while iprot.peekMap():
               _key18 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               _val19 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
@@ -1775,7 +1775,7 @@ class getOptions_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1868,7 +1868,7 @@ class getCpuProfile_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1962,7 +1962,7 @@ class getCpuProfile_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2038,7 +2038,7 @@ class aliveSince_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2125,7 +2125,7 @@ class aliveSince_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2201,7 +2201,7 @@ class reinitialize_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2271,7 +2271,7 @@ class shutdown_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2483,7 +2483,7 @@ class Client(Iface):
   def getCounter(self, key=None):
     """
     Gets the value of a single counter
-    
+
     Parameters:
      - key
     """
@@ -2523,7 +2523,7 @@ class Client(Iface):
   def setOption(self, key=None, value=None):
     """
     Sets an option
-    
+
     Parameters:
      - key
      - value
@@ -2562,7 +2562,7 @@ class Client(Iface):
   def getOption(self, key=None):
     """
     Gets an option
-    
+
     Parameters:
      - key
     """
@@ -2639,7 +2639,7 @@ class Client(Iface):
     """
     Returns a CPU profile over the given time interval (client and server
     must agree on the profile format).
-    
+
     Parameters:
      - profileDurationInSec
     """

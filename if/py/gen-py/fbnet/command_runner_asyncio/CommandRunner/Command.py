@@ -35,7 +35,7 @@ all_structs = []
 UTF8STRINGS = bool(0) or sys.version_info.major >= 3
 
 import thrift
-if six.PY3 and not thrift.trollius:
+if six.PY3:
   import asyncio
   from thrift.util.asyncio import call_as_future
 else:
@@ -416,7 +416,7 @@ class run_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -572,7 +572,7 @@ class run_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -645,7 +645,7 @@ class bulk_run_args:
       if fid == 1:
         if ftype == TType.MAP:
           self.device_to_commands = {}
-          (_ktype23, _vtype24, _size22 ) = iprot.readMapBegin() 
+          (_ktype23, _vtype24, _size22 ) = iprot.readMapBegin()
           if _size22 >= 0:
             for _i26 in six.moves.range(_size22):
               _key27 = Device()
@@ -656,13 +656,13 @@ class bulk_run_args:
                 for _i33 in six.moves.range(_size29):
                   _elem34 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val28.append(_elem34)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem35 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val28.append(_elem35)
               iprot.readListEnd()
               self.device_to_commands[_key27] = _val28
-          else: 
+          else:
             while iprot.peekMap():
               _key36 = Device()
               _key36.read(iprot)
@@ -672,7 +672,7 @@ class bulk_run_args:
                 for _i42 in six.moves.range(_size38):
                   _elem43 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val37.append(_elem43)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem44 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val37.append(_elem44)
@@ -790,7 +790,7 @@ class bulk_run_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -874,7 +874,7 @@ class bulk_run_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype49, _vtype50, _size48 ) = iprot.readMapBegin() 
+          (_ktype49, _vtype50, _size48 ) = iprot.readMapBegin()
           if _size48 >= 0:
             for _i52 in six.moves.range(_size48):
               _key53 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
@@ -885,14 +885,14 @@ class bulk_run_result:
                   _elem60 = CommandResult()
                   _elem60.read(iprot)
                   _val54.append(_elem60)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem61 = CommandResult()
                   _elem61.read(iprot)
                   _val54.append(_elem61)
               iprot.readListEnd()
               self.success[_key53] = _val54
-          else: 
+          else:
             while iprot.peekMap():
               _key62 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               _val63 = []
@@ -902,7 +902,7 @@ class bulk_run_result:
                   _elem69 = CommandResult()
                   _elem69.read(iprot)
                   _val63.append(_elem69)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem70 = CommandResult()
                   _elem70.read(iprot)
@@ -956,7 +956,7 @@ class bulk_run_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1023,7 +1023,7 @@ class bulk_run_local_args:
       if fid == 1:
         if ftype == TType.MAP:
           self.device_to_commands = {}
-          (_ktype75, _vtype76, _size74 ) = iprot.readMapBegin() 
+          (_ktype75, _vtype76, _size74 ) = iprot.readMapBegin()
           if _size74 >= 0:
             for _i78 in six.moves.range(_size74):
               _key79 = Device()
@@ -1034,13 +1034,13 @@ class bulk_run_local_args:
                 for _i85 in six.moves.range(_size81):
                   _elem86 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val80.append(_elem86)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem87 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val80.append(_elem87)
               iprot.readListEnd()
               self.device_to_commands[_key79] = _val80
-          else: 
+          else:
             while iprot.peekMap():
               _key88 = Device()
               _key88.read(iprot)
@@ -1050,7 +1050,7 @@ class bulk_run_local_args:
                 for _i94 in six.moves.range(_size90):
                   _elem95 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val89.append(_elem95)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem96 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
                   _val89.append(_elem96)
@@ -1168,7 +1168,7 @@ class bulk_run_local_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1253,7 +1253,7 @@ class bulk_run_local_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype101, _vtype102, _size100 ) = iprot.readMapBegin() 
+          (_ktype101, _vtype102, _size100 ) = iprot.readMapBegin()
           if _size100 >= 0:
             for _i104 in six.moves.range(_size100):
               _key105 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
@@ -1264,14 +1264,14 @@ class bulk_run_local_result:
                   _elem112 = CommandResult()
                   _elem112.read(iprot)
                   _val106.append(_elem112)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem113 = CommandResult()
                   _elem113.read(iprot)
                   _val106.append(_elem113)
               iprot.readListEnd()
               self.success[_key105] = _val106
-          else: 
+          else:
             while iprot.peekMap():
               _key114 = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
               _val115 = []
@@ -1281,7 +1281,7 @@ class bulk_run_local_result:
                   _elem121 = CommandResult()
                   _elem121.read(iprot)
                   _val115.append(_elem121)
-              else: 
+              else:
                 while iprot.peekList():
                   _elem122 = CommandResult()
                   _elem122.read(iprot)
@@ -1349,7 +1349,7 @@ class bulk_run_local_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1524,7 +1524,7 @@ class open_session_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1663,7 +1663,7 @@ class open_session_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1838,7 +1838,7 @@ class run_session_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -1977,7 +1977,7 @@ class run_session_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2124,7 +2124,7 @@ class close_session_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2244,7 +2244,7 @@ class close_session_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2417,7 +2417,7 @@ class open_raw_session_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2556,7 +2556,7 @@ class open_raw_session_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2745,7 +2745,7 @@ class run_raw_session_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -2886,7 +2886,7 @@ class run_raw_session_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -3033,7 +3033,7 @@ class close_raw_session_args:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
@@ -3153,7 +3153,7 @@ class close_raw_session_result:
     if not isinstance(other, self.__class__):
       return False
 
-    return self.__dict__ == other.__dict__ 
+    return self.__dict__ == other.__dict__
 
   def __ne__(self, other):
     return not (self == other)
