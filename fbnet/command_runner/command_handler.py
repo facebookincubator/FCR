@@ -528,7 +528,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     def _decrypt(self, data):
         return data
 
-    def _record_error(self, error, command, uuid, options, devinfo, session):
+    def _record_error(self, error, command, uuid, options, devinfo, session, **kwargs):
         """
         Subclass can override this method to export the interested error messages
         to proper data store
