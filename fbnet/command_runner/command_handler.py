@@ -47,6 +47,75 @@ def _append_debug_info_to_exception(fn):
     return wrapper
 
 
+def _check_device(arg):
+    if not arg:
+        raise ttypes.SessionException(
+            message="Required argument (device) cannot be None."
+        )
+
+    if not arg.hostname:
+        raise ttypes.SessionException(message="device.hostname cannot be empty.")
+
+
+def _check_session(arg):
+    if not arg:
+        raise ttypes.SessionException(
+            message="Required argument (session) cannot be None."
+        )
+
+    if not arg.hostname:
+        raise ttypes.SessionException(message="session.hostname cannot be empty.")
+
+    if not arg.id:
+        raise ttypes.SessionException(message="session.id cannot be empty.")
+
+    if not arg.name:
+        raise ttypes.SessionException(message="session.name cannot be empty.")
+
+
+def _required_fields_not_none(fn):  # noqa C901
+    @wraps(fn)
+    async def wrapper(self, *args, **kwargs):
+
+        for i, arg in enumerate(args):
+
+            if arg is None:
+                raise ttypes.SessionException(
+                    message=f"The ({i + 1})th argument cannot be None."
+                )
+
+            if isinstance(arg, ttypes.Device):
+                _check_device(arg)
+
+            if isinstance(arg, ttypes.Session):
+                _check_session(arg)
+
+        for key in kwargs:
+            if key == "command" and not kwargs[key]:
+                raise ttypes.SessionException(
+                    message="Required argument (command) cannot be None."
+                )
+
+            if key == "device":
+                _check_device(kwargs[key])
+
+            if key == "session":
+                _check_session(kwargs[key])
+
+            if key == "device_to_commands" or key == "device_to_configlets":
+                if not kwargs[key]:
+                    raise ttypes.SessionException(
+                        message=f"Required argument ({key}) cannot be None."
+                    )
+
+                for device in kwargs[key]:
+                    _check_device(device)
+
+        return await fn(self, *args, **kwargs)
+
+    return wrapper
+
+
 class CommandHandler(Counters, FacebookBase, FcrIface):
     """
     Command implementation for api defined in thrift for command runner
@@ -146,6 +215,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     def add_debug_info_to_error_message(self, error_msg, uuid):
         return f"{error_msg} (DebugInfo: thrift_uuid={uuid})"
 
+    @_required_fields_not_none
     @_append_debug_info_to_exception
     async def run(
         self, command, device, timeout, open_timeout, client_ip, client_port, uuid
@@ -170,6 +240,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             for dev, cmds in device_to_commands.items()
         }
 
+    @_required_fields_not_none
     @_append_debug_info_to_exception
     async def bulk_run(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
@@ -272,6 +343,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             self._get_result_key(dev): res for dev, res in zip(devices, cmd_results)
         }
 
+    @_required_fields_not_none
     @_append_debug_info_to_exception
     async def open_session(
         self, device, open_timeout, idle_timeout, client_ip, client_port, uuid
@@ -287,20 +359,22 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raw_session=False,
         )
 
+    @_required_fields_not_none
     @_append_debug_info_to_exception
     async def run_session(
-        self, tsession, command, timeout, client_ip, client_port, uuid
+        self, session, command, timeout, client_ip, client_port, uuid
     ):
         uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._run_session(
-            tsession, command, timeout, client_ip, client_port, uuid
+            session, command, timeout, client_ip, client_port, uuid
         )
 
+    @_required_fields_not_none
     @_append_debug_info_to_exception
-    async def close_session(self, tsession, client_ip, client_port, uuid):
+    async def close_session(self, session, client_ip, client_port, uuid):
         uuid = self._generate_new_uuid(old_uuid=uuid)
         try:
-            session = CommandSession.get(tsession.id, client_ip, client_port)
+            session = CommandSession.get(session.id, client_ip, client_port)
             await session.close()
         except Exception as e:
             raise ttypes.SessionException(
