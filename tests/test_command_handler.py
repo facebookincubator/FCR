@@ -73,7 +73,7 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertIn(
             "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
-            "TimeoutError()",
+            "TimeoutError('Timeout during connection setup",
             exc.exception.message,
         )
 
@@ -88,7 +88,7 @@ class TestCommandHandler(AsyncTestCase):
 
         self.assertIn(
             "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
-            "TimeoutError()",
+            "TimeoutError('Timeout during connection setup",
             exc.exception.message,
         )
 
@@ -177,7 +177,10 @@ class TestCommandHandler(AsyncTestCase):
                 device, 0.01, 0.01, client_ip, client_port, uuid
             )
 
-        self.assertIn("open_session failed: TimeoutError()", exc.exception.message)
+        self.assertIn(
+            "open_session failed: TimeoutError('Timeout during connection setup",
+            exc.exception.message,
+        )
 
     @async_test
     async def test_run_session(self):
@@ -339,8 +342,7 @@ class TestCommandHandler(AsyncTestCase):
                 continue
             for result in all_results[host]:
                 self.assertIn(
-                    "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
-                    "TimeoutError()",
+                    "Failed (session: MockCommandSession, peer: (test-ip, 22)): ",
                     result.status,
                 )
 

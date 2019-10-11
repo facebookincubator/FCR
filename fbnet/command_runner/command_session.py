@@ -336,9 +336,19 @@ class CommandSession(ServiceObj):
     @_update_last_access_time_and_in_use
     async def setup(self):
         self.inc_counter("%s.setup" % self.objname)
-        await asyncio.wait_for(
-            self._create_connection(), self.open_timeout, loop=self._loop
-        )
+        try:
+            await asyncio.wait_for(
+                self._create_connection(), self.open_timeout, loop=self._loop
+            )
+        except asyncio.TimeoutError:
+            self.logger.error("Timeout during connection setup")
+            data = []
+            if self._stream_reader:
+                data = await self._stream_reader.drain()
+            raise asyncio.TimeoutError(
+                "Timeout during connection setup. Currently received data "
+                f"(last 200 char): {data[-200:]}"
+            )
         return self
 
     async def connect(self):
