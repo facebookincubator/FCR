@@ -178,12 +178,7 @@ class FcrServiceBase:
         This client is used to distribute requests for bulk calls
         """
         return AsyncioThriftClient(
-            FcrClient,
-            "localhost",
-            CommandServer.PORT,
-            service=self,
-            timeout=timeout,
-            loop=self.loop,
+            FcrClient, "localhost", CommandServer.PORT, service=self, timeout=timeout
         )
 
     def check_ip(self, ipaddr):
