@@ -84,9 +84,15 @@ class ConsoleCommandSession(SSHCommandSession):
             return await asyncio.wait_for(
                 self.wait_prompt(regex), timeout, loop=self._loop
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as ex:
+            data = []
+            if self._stream_reader:
+                data = await self._stream_reader.drain()
             self.logger.exception("Timeout waiting for: %s", regex)
-            return None
+            raise asyncio.TimeoutError(
+                "Timeout during waiting for prompt."
+                f"Currently received data: {data[-200:]}"
+            ) from ex
 
     def send(self, data, end=b"\n"):
         """
@@ -96,53 +102,98 @@ class ConsoleCommandSession(SSHCommandSession):
             data = data.encode("utf8")
         self._stream_writer.write(data + end)
 
-    async def _try_login(self, username=None, passwd=None, kickstart=False):
+    async def _try_login(
+        self,
+        username=None,
+        passwd=None,
+        kickstart=False,
+        username_tried=False,
+        pwd_tried=False,
+    ):
         """
-        A helper function that tries to login into the device
+        A helper function that tries to login into the device.
+
+        kickstart gives the option to send a clear line to the console
+        before entering the username and password to prevent false TimeoutError,
+        since sometimes user needs to hit an Enter before logging in.
+
+        username_tried and pwd_tried are an indicator showing that the
+        FCR has received a login error from the console after sending the
+        username and password to the console, if this triggers, we would
+        raise a PermissionError stating that the console has failed to login,
+        this will also prevent false TimeoutError to happen.
         """
+        res = await self._get_response(
+            username, passwd, kickstart, username_tried, pwd_tried
+        )
+
+        if res.groupdict.get("ignore"):
+            # If we match anything in the ignore prompts, set a \r\n
+            self._send_newline(end=b"")
+            await asyncio.sleep(0.2)  # Let the console catch up
+            # Now again try to login.
+            return await self._try_login(
+                username=username,
+                passwd=passwd,
+                username_tried=username_tried,
+                pwd_tried=pwd_tried,
+            )
+
+        elif res.groupdict.get("login"):
+            if username_tried or pwd_tried:
+                raise PermissionError(
+                    "Login failure, possibly incorrect username or password, "
+                    "or device refuses to login."
+                )
+            # The device is requesting login information
+            # If we don't have a username, then likely we already sent a
+            # username. The consoles are slow, we may have send extra
+            # carriage returns, resulting in multiple login prompts. We will
+            # simply ignore the subsequent login prompts.
+            if username is not None:
+                self.send(self._username)
+            # if we don't have username, we are likely waiting for password
+            return await self._try_login(
+                passwd=passwd, username_tried=True, pwd_tried=pwd_tried
+            )
+
+        elif res.groupdict.get("passwd"):
+            if username_tried or pwd_tried:
+                raise PermissionError(
+                    "Login failure, possibly incorrect username or password, "
+                    "or device refuses to login."
+                )
+            if passwd is None:
+                # passwd information not available
+                # Likely we have alreay sent the password. Bail out instead
+                # of getting stuck in a loop.
+                raise RuntimeError("Failed to login: Password not expected")
+            self.send(self._password)
+            return await self._try_login(username_tried=username_tried, pwd_tried=True)
+
+        elif res.groupdict.get("interact_prompts"):
+            # send Y to get past the post login prompt
+            self._interact_prompts_action(res.groupdict.get("interact_prompts"))
+            return await self._try_login(
+                username_tried=username_tried, pwd_tried=pwd_tried
+            )
+
+        elif res.groupdict.get("prompt"):
+            # Finally we matched a prompt. we are done
+            return self._send_newline()
+
+        else:
+            raise RuntimeError("Matched no group: %s" % (res.groupdict))
+
+    async def _get_response(
+        self, username, passwd, kickstart, username_tried, pwd_tried
+    ):
         # A small delay to avoid having to match extraneous input
         await asyncio.sleep(0.1)
-        res = await self.expect(self.get_prompt_re())
-        if res:
-            if res.groupdict.get("ignore"):
-                # If we match anything in the ignore prompts, set a \r\n
-                self._send_newline(end=b"")
-                await asyncio.sleep(0.2)  # Let the console catch up
-                # Now again try to login.
-                return await self._try_login(username=username, passwd=passwd)
-
-            elif res.groupdict.get("login"):
-                # The device is requesting login information
-                # If we don't have a username, then likely we already sent a
-                # username. The consoles are slow, we may have send extra
-                # carriage returns, resulting in multiple login prompts. We will
-                # simply ignore the subsequent login prompts.
-                if username is not None:
-                    self.send(self._username)
-                # if we don't have username, we are likely waiting for password
-                return await self._try_login(passwd=passwd)
-
-            elif res.groupdict.get("passwd"):
-                if passwd is None:
-                    # passwd information not available
-                    # Likely we have alreay sent the password. Bail out instead
-                    # of getting stuck in a loop.
-                    raise RuntimeError("Failed to login: Password not expected")
-                self.send(self._password)
-                return await self._try_login()
-
-            elif res.groupdict.get("interact_prompts"):
-                # send Y to get past the post login prompt
-                self._interact_prompts_action(res.groupdict.get("interact_prompts"))
-                return await self._try_login()
-
-            elif res.groupdict.get("prompt"):
-                # Finally we matched a prompt. we are done
-                return self._send_newline()
-
-            else:
-                raise RuntimeError("Matched no group: %s" % (res.groupdict))
-        else:
+        try:
+            res = await self.expect(self.get_prompt_re())
+            return res
+        except asyncio.TimeoutError:
             if kickstart and username:
                 # We likey didn't get anything from the console. Try sending a
                 # newline to kickstart the login process
@@ -150,11 +201,16 @@ class ConsoleCommandSession(SSHCommandSession):
 
                 # Clear the current line and send a newline
                 self._send_clearline()
-                return await self._try_login(username=username, passwd=passwd)
+                return await self._try_login(
+                    username=username,
+                    passwd=passwd,
+                    username_tried=username_tried,
+                    pwd_tried=pwd_tried,
+                )
             else:
-                raise RuntimeError("Login failed")
+                raise
 
-    async def _try_logout(self) -> None:
+    async def _try_logout(self, kick_shutdown=False) -> None:
         """
         Run logout command and wait for the login prompt to show up (the login
         prompt indicates that it successfully logs out and is waiting for the
@@ -171,7 +227,15 @@ class ConsoleCommandSession(SSHCommandSession):
         self._stream_writer.write(logout_cmd + b"\n")
         # Make sure we logout of the system
         while True:
-            res = await self.expect(self.get_prompt_re())
+            try:
+                res = await self.expect(self.get_prompt_re())
+            except asyncio.TimeoutError:
+                if kick_shutdown:
+                    self._send_newline()
+                    return await self._try_logout()
+                else:
+                    raise
+
             if not res:
                 self.logger.warn(
                     "Console connection timeout. Most likely the connection is "
@@ -192,7 +256,7 @@ class ConsoleCommandSession(SSHCommandSession):
                 return
 
     async def _close(self) -> None:
-        await self._try_logout()
+        await self._try_logout(kick_shutdown=True)
         await super()._close()
 
     def _send_clearline(self):
