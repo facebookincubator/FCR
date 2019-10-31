@@ -140,7 +140,7 @@ class ConsoleCommandSession(SSHCommandSession):
             )
 
         elif res.groupdict.get("login"):
-            if username_tried or pwd_tried:
+            if username_tried:
                 raise PermissionError(
                     "Login failure, possibly incorrect username or password, "
                     "or device refuses to login."
@@ -158,7 +158,7 @@ class ConsoleCommandSession(SSHCommandSession):
             )
 
         elif res.groupdict.get("passwd"):
-            if username_tried or pwd_tried:
+            if pwd_tried:
                 raise PermissionError(
                     "Login failure, possibly incorrect username or password, "
                     "or device refuses to login."
