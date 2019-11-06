@@ -8,17 +8,39 @@
 
 import asyncio
 import re
-from collections import namedtuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    Dict,
+    NamedTuple,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+    Union,
+)
 
 from .command_session import SSHCommandSession
 
 
-class ConsoleInfo(namedtuple("ConsoleInfo", "contype, host, server, port")):
+if TYPE_CHECKING:
+    from asyncio import AbstractEventLoop
+    from fbnet.command_runner.service import FcrServiceBase
+    from .command_session import ResponseMatch
+
+
+class ConsoleInfo(NamedTuple):
     """
     Information about the console
     """
 
-    def __repr__(self):
+    contype: str
+    host: str
+    server: str
+    port: Union[str, int]
+
+    def __repr__(self) -> str:
         """
         pretty representation of console information
         """
@@ -32,8 +54,8 @@ class ConsoleCommandSession(SSHCommandSession):
     Currently we only support SSH connection to the console server
     """
 
-    _INTERACT_PROMPTS = {b"Y": rb"Do you acknowledge\? \(Y/N\)\?"}
-    _CONSOLE_PROMPTS = {
+    _INTERACT_PROMPTS: Dict[bytes, bytes] = {b"Y": rb"Do you acknowledge\? \(Y/N\)\?"}
+    _CONSOLE_PROMPTS: Dict[bytes, bytes] = {
         # For login we need to ignore output like:
         #  Last login: Mon May  8 13:53:17 on ttyS0
         b"login": b".*((?<!Last ).ogin|.sername):",
@@ -45,71 +67,91 @@ class ConsoleCommandSession(SSHCommandSession):
 
     # Certain prompts that we get during the login attemts that we will like to
     # ignore
-    _CONSOLE_INGORE = {rb" to cli \]", rb"who is on this device.\]\r\n"}
-    _DEFAULT_LOGOUT_COMMAND = b"exit"
+    _CONSOLE_INGORE: Set[bytes] = {rb" to cli \]", rb"who is on this device.\]\r\n"}
+    _DEFAULT_LOGOUT_COMMAND: bytes = b"exit"
 
-    _CONSOLE_PROMPT_RE = None
-    _CONSOLE_EXPECT_DELAY = 5
+    _CONSOLE_PROMPT_RE: Optional[Pattern] = None
+    _CONSOLE_EXPECT_DELAY: int = 5
 
-    def __init__(self, service, devinfo, options, loop):
+    def __init__(
+        self,
+        service: "FcrServiceBase",
+        devinfo: Dict[str, Any],
+        options: Dict[str, str],
+        loop: "AbstractEventLoop",
+    ) -> None:
         super().__init__(service, devinfo, options, loop)
-        self._console = options["console"]
+        self._console: str = options["console"]
 
     @classmethod
-    def _build_prompt_re(cls, prompts, ignore):
-        prompts = [b"(?P<%s>%s)" % (group, regex) for group, regex in prompts.items()]
+    def _build_prompt_re(
+        cls, prompts: Dict[bytes, bytes], ignore: Set[bytes]
+    ) -> Pattern:
+        prompts_re = [
+            b"(?P<%s>%s)" % (group, regex) for group, regex in prompts.items()
+        ]
         # Add a set of prompts that we want to ignore
         ignore_prompts = b"|".join((b"(%s)" % p for p in ignore))
-        prompts.append(b"(?P<ignore>%s)" % ignore_prompts)
-        prompt_re = b"|".join(prompts)
-        cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + rb"\s*$")
+        prompts_re.append(b"(?P<ignore>%s)" % ignore_prompts)
+        prompt_re = b"|".join(prompts_re)
+        return re.compile(prompt_re + rb"\s*$")
 
     @classmethod
-    def get_prompt_re(cls):
+    def get_prompt_re(cls) -> Pattern:
         """
         The first time this is called, we will builds the prompt for the
         console. After that we will return the pre-computed regex
+        Due to this if statement and that cls._build_prompt_re method returns
+        a valid Pattern, we can ensure cls_CONSOLE_PROMPT_RE is not
+        none, therefore we should ignore the pyre warning
         """
         if not cls._CONSOLE_PROMPT_RE:
-            cls._build_prompt_re(cls._CONSOLE_PROMPTS, cls._CONSOLE_INGORE)
-        return cls._CONSOLE_PROMPT_RE
+            cls._CONSOLE_PROMPT_RE = cls._build_prompt_re(
+                cls._CONSOLE_PROMPTS, cls._CONSOLE_INGORE
+            )
+        return cls._CONSOLE_PROMPT_RE  # pyre-ignore
 
-    async def dest_info(self):
+    async def dest_info(self) -> Tuple[str, Union[str, int]]:
         console = await self.get_console_info()
         self.logger.info("%s", str(console))
         return (console.server, console.port)
 
-    async def expect(self, regex, timeout=_CONSOLE_EXPECT_DELAY):
+    async def expect(
+        self, regex: Pattern, timeout: int = _CONSOLE_EXPECT_DELAY
+    ) -> "ResponseMatch":
         try:
             return await asyncio.wait_for(
                 self.wait_prompt(regex), timeout, loop=self._loop
             )
         except asyncio.TimeoutError as ex:
             data = []
+            # This statement ensures that _stream_reader is not none
             if self._stream_reader:
-                data = await self._stream_reader.drain()
+                data = await self._stream_reader.drain()  # pyre-ignore
             self.logger.exception("Timeout waiting for: %s", regex)
             raise asyncio.TimeoutError(
                 "Timeout during waiting for prompt."
                 f"Currently received data: {data[-200:]}"
             ) from ex
 
-    def send(self, data, end=b"\n"):
+    def send(self, data: AnyStr, end: bytes = b"\n") -> None:
         """
         send some data and optionally wait for some data
         """
         if isinstance(data, str):
             data = data.encode("utf8")
-        self._stream_writer.write(data + end)
+        # This check ensure _stream_writer is not none, ignoring the pyre warning
+        if self._stream_writer:
+            self._stream_writer.write(data + end)  # pyre-ignore
 
-    async def _try_login(
+    async def _try_login(  # noqa C901
         self,
-        username=None,
-        passwd=None,
-        kickstart=False,
-        username_tried=False,
-        pwd_tried=False,
-    ):
+        username: Optional[str] = None,
+        passwd: Optional[str] = None,
+        kickstart: bool = False,
+        username_tried: bool = False,
+        pwd_tried: bool = False,
+    ) -> None:
         """
         A helper function that tries to login into the device.
 
@@ -123,9 +165,24 @@ class ConsoleCommandSession(SSHCommandSession):
         raise a PermissionError stating that the console has failed to login,
         this will also prevent false TimeoutError to happen.
         """
-        res = await self._get_response(
-            username, passwd, kickstart, username_tried, pwd_tried
-        )
+        try:
+            res = await self._get_response()
+        except asyncio.TimeoutError:
+            if kickstart and username:
+                # We likely didn't get anything from the console. Try sending a
+                # newline to kickstart the login process
+                self.logger.debug("kickstart console login")
+
+                # Clear the current line and send a newline
+                self._send_clearline()
+                return await self._try_login(
+                    username=username,
+                    passwd=passwd,
+                    username_tried=username_tried,
+                    pwd_tried=pwd_tried,
+                )
+            else:
+                raise
 
         if res.groupdict.get("ignore"):
             # If we match anything in the ignore prompts, set a \r\n
@@ -185,32 +242,13 @@ class ConsoleCommandSession(SSHCommandSession):
         else:
             raise RuntimeError("Matched no group: %s" % (res.groupdict))
 
-    async def _get_response(
-        self, username, passwd, kickstart, username_tried, pwd_tried
-    ):
+    async def _get_response(self) -> "ResponseMatch":
         # A small delay to avoid having to match extraneous input
         await asyncio.sleep(0.1)
-        try:
-            res = await self.expect(self.get_prompt_re())
-            return res
-        except asyncio.TimeoutError:
-            if kickstart and username:
-                # We likey didn't get anything from the console. Try sending a
-                # newline to kickstart the login process
-                self.logger.debug("kickstart console login")
+        res = await self.expect(self.get_prompt_re())
+        return res
 
-                # Clear the current line and send a newline
-                self._send_clearline()
-                return await self._try_login(
-                    username=username,
-                    passwd=passwd,
-                    username_tried=username_tried,
-                    pwd_tried=pwd_tried,
-                )
-            else:
-                raise
-
-    async def _try_logout(self, kick_shutdown=False) -> None:
+    async def _try_logout(self, kick_shutdown: bool = False) -> None:
         """
         Run logout command and wait for the login prompt to show up (the login
         prompt indicates that it successfully logs out and is waiting for the
@@ -224,7 +262,7 @@ class ConsoleCommandSession(SSHCommandSession):
         logout_cmd = (
             self._devinfo.vendor_data.exit_command or self._DEFAULT_LOGOUT_COMMAND
         )
-        self._stream_writer.write(logout_cmd + b"\n")
+        self._stream_writer.write(logout_cmd + b"\n")  # pyre-ignore
         # Make sure we logout of the system
         while True:
             try:
@@ -259,23 +297,27 @@ class ConsoleCommandSession(SSHCommandSession):
         await self._try_logout(kick_shutdown=True)
         await super()._close()
 
-    def _send_clearline(self):
+    def _send_clearline(self) -> None:
         self.send(b"\x15\r\n")
 
-    def _send_newline(self, end=b"\n"):
+    def _send_newline(self, end: bytes = b"\n") -> None:
         self.send(b"\r", end)
 
-    def _interact_prompts_action(self, prompt_match):
+    def _interact_prompts_action(self, prompt_match: AnyStr) -> None:
         interact_prompts = [
             b"(?P<%s>%s)" % (group, regex)
             for group, regex in self._INTERACT_PROMPTS.items()
         ]
         interact_prompts_re = b"|".join(interact_prompts)
-        interact_prompt_match = re.match(interact_prompts_re, prompt_match)
-        for action in interact_prompt_match.groupdict():
+        interact_prompt_match = re.match(
+            interact_prompts_re, prompt_match  # pyre-ignore
+        )
+        # Ignoring the pyre warning since the logic in _try_login ensures we
+        # find a match
+        for action in interact_prompt_match.groupdict():  # pyre-ignore
             self.send(action)
 
-    async def _setup_connection(self):
+    async def _setup_connection(self) -> None:
         if self._opts.get("raw_session"):
             await asyncio.sleep(1)
         else:
@@ -284,7 +326,7 @@ class ConsoleCommandSession(SSHCommandSession):
             # Now send the setup commands
             await super()._setup_connection()
 
-    async def get_console_info(self):
+    async def get_console_info(self) -> ConsoleInfo:
         """
         By default we assume a console is directly specified by the user.
         Depending on your system, you may want to get this information from
@@ -292,12 +334,18 @@ class ConsoleCommandSession(SSHCommandSession):
         according to your needs
         """
         con_srv, con_port = self._console.split(":")
-
         return ConsoleInfo("CON", self.hostname, con_srv, con_port)
 
-    async def _run_command(self, cmd, timeout=None, prompt_re=None):
+    async def _run_command(
+        self,
+        cmd: str,
+        timeout: Optional[int] = None,
+        prompt_re: Optional[Pattern] = None,
+    ) -> Union[str, bytes]:
         if self._opts.get("raw_session"):
-            await self._stream_reader.drain()
+            # This statement ensures _stream_reader is not none
+            if self._stream_reader:
+                await self._stream_reader.drain()  # pyre-ignore
             self.send(cmd)
             resp = await self.wait_prompt(prompt_re)
             return resp.data + resp.matched
