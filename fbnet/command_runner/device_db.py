@@ -45,6 +45,10 @@ class BaseDeviceDB(PeriodicServiceTask):
         self._data_valid = False
         self._devices = {}
 
+    @property
+    def data_valid(self):
+        return self._data_valid
+
     async def run(self):
         """
         Fetch data for devices. This is called periodically.
@@ -53,8 +57,14 @@ class BaseDeviceDB(PeriodicServiceTask):
         your data depends on your local setup. Override this according to your
         setup
         """
-        await self._fetch_devices(name_filter=self.DEVICE_NAME_FILTER)
-        self._data_valid = True
+        try:
+            await self._fetch_devices(name_filter=self.DEVICE_NAME_FILTER)
+        except Exception as ex:
+            self.service.logger.error(
+                f"Failed to fetch device info, error message: {str(ex)}"
+            )
+        else:
+            self._data_valid = True
 
     async def _fetch_devices(self, name_filter=None, hostname=None):
         devices = await self._fetch_device_data(name_filter, hostname)
