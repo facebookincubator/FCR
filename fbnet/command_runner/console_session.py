@@ -128,7 +128,6 @@ class ConsoleCommandSession(SSHCommandSession):
             # This statement ensures that _stream_reader is not none
             if self._stream_reader:
                 data = await self._stream_reader.drain()  # pyre-ignore
-            self.logger.exception("Timeout waiting for: %s", regex)
             raise asyncio.TimeoutError(
                 "Timeout during waiting for prompt."
                 f"Currently received data: {data[-200:]}"
@@ -272,15 +271,13 @@ class ConsoleCommandSession(SSHCommandSession):
                     self._send_newline()
                     return await self._try_logout()
                 else:
-                    raise
-
-            if not res:
-                self.logger.warn(
-                    "Console connection timeout. Most likely the connection is "
-                    "already killed by the device."
-                )
+                    self.logger.exception("Console session timed out while logging out")
+                    return
+            except Exception as ex:
+                self.logger.exception(f"Console session log out failure: {ex}")
                 return
-            elif res.groupdict.get("ignore"):
+
+            if res.groupdict.get("ignore"):
                 # If we match anything in the ignore prompts, set a \r\n
                 self._send_newline(end=b"")
                 await asyncio.sleep(0.2)  # Let the console catch up
