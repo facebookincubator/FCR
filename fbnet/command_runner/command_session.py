@@ -343,7 +343,9 @@ class CommandSession(ServiceObj):
         except asyncio.TimeoutError:
             self.logger.error("Timeout during connection setup")
             data = []
-            if self._stream_reader:
+            # TODO(mzheng): Move the _steam_reader check to subclasses that
+            # define it
+            if hasattr(self, "_stream_reader") and self._stream_reader:
                 data = await self._stream_reader.drain()
             raise asyncio.TimeoutError(
                 "Timeout during connection setup. Currently received data "
