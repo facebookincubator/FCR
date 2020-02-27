@@ -251,7 +251,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         ):
             # Run these command locally.
             self.incrementCounter("bulk_run.local")
-            return await self.bulk_run_local(
+            return await self._bulk_run_local(
                 device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
             )
 
@@ -297,6 +297,13 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         return all_results
 
     async def bulk_run_local(
+        self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
+    ):
+        return await self._bulk_run_local(
+            device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
+        )
+
+    async def _bulk_run_local(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
         uuid = self._generate_new_uuid(old_uuid=uuid)

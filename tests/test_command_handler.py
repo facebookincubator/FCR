@@ -406,7 +406,7 @@ class TestCommandHandler(AsyncTestCase):
             return {dev: "%s: Success" % dev.hostname for dev in chunk.keys()}
 
         self.cmd_handler._bulk_run_remote = _bulk_run_remote
-        self.cmd_handler.bulk_run_local = _bulk_run_local
+        self.cmd_handler._bulk_run_local = _bulk_run_local
 
         all_results = await self.cmd_handler.bulk_run(
             commands, 10, 10, client_ip, client_port, uuid
