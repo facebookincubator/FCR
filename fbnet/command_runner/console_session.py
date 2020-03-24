@@ -22,6 +22,7 @@ from typing import (
 )
 
 from .command_session import SSHCommandSession
+from .options import Option
 
 
 if TYPE_CHECKING:
@@ -72,6 +73,15 @@ class ConsoleCommandSession(SSHCommandSession):
 
     _CONSOLE_PROMPT_RE: Optional[Pattern] = None
     _CONSOLE_EXPECT_DELAY: int = 5
+
+    _CONSOLE_LOGIN_TIMEOUT_S = Option(
+        "--console_login_timeout_s",
+        help="The upper bound of the time (in seconds) that FCR waits for a "
+        "console server to login to the target device (only applies when a "
+        "console is used to connect to a device). (default: %(default)s)",
+        type=int,
+        default=60,
+    )
 
     def __init__(
         self,
@@ -150,6 +160,7 @@ class ConsoleCommandSession(SSHCommandSession):
         kickstart: bool = False,
         username_tried: bool = False,
         pwd_tried: bool = False,
+        get_response_timeout: int = _CONSOLE_EXPECT_DELAY,
     ) -> None:
         """
         A helper function that tries to login into the device.
@@ -165,7 +176,7 @@ class ConsoleCommandSession(SSHCommandSession):
         this will also prevent false TimeoutError to happen.
         """
         try:
-            res = await self._get_response()
+            res = await self._get_response(timeout=get_response_timeout)
         except asyncio.TimeoutError:
             if kickstart and username:
                 # We likely didn't get anything from the console. Try sending a
@@ -207,6 +218,13 @@ class ConsoleCommandSession(SSHCommandSession):
             # carriage returns, resulting in multiple login prompts. We will
             # simply ignore the subsequent login prompts.
             if username is not None:
+                # TODO: It seems the original author of this session used the
+                # arguments `username` and `passwd` to indicate whether the
+                # username or password have been sent to the device (it will
+                # set the corresponding argument to None after sending the
+                # credential). This seems to be duplicated with the arguments
+                # `username_tried` and `pwd_tried` we added later. If so, we'll
+                # need to remove one of them
                 self.send(self._username)
             # if we don't have username, we are likely waiting for password
             return await self._try_login(
@@ -223,9 +241,13 @@ class ConsoleCommandSession(SSHCommandSession):
                 # passwd information not available
                 # Likely we have alreay sent the password. Bail out instead
                 # of getting stuck in a loop.
-                raise RuntimeError("Failed to login: Password not expected")
+                raise RuntimeError("Failed to login: Missing password")
             self.send(self._password)
-            return await self._try_login(username_tried=username_tried, pwd_tried=True)
+            return await self._try_login(
+                username_tried=username_tried,
+                pwd_tried=True,
+                get_response_timeout=self._CONSOLE_LOGIN_TIMEOUT_S,  # pyre-ignore
+            )
 
         elif res.groupdict.get("interact_prompts"):
             # send Y to get past the post login prompt
@@ -241,10 +263,10 @@ class ConsoleCommandSession(SSHCommandSession):
         else:
             raise RuntimeError("Matched no group: %s" % (res.groupdict))
 
-    async def _get_response(self) -> "ResponseMatch":
+    async def _get_response(self, timeout: int) -> "ResponseMatch":
         # A small delay to avoid having to match extraneous input
         await asyncio.sleep(0.1)
-        res = await self.expect(self.get_prompt_re())
+        res = await self.expect(self.get_prompt_re(), timeout=timeout)
         return res
 
     async def _try_logout(self, kick_shutdown: bool = False) -> None:
