@@ -280,7 +280,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                     retry_count += 1
                 except Exception as e:
                     raise ttypes.SessionException(
-                        message="bulk_run_remote failed: %r" % (e)
+                        message=f"bulk_run_remote failed: {e}"
                     ) from e
 
         # Split the request into chunks and run them on remote hosts
