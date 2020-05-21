@@ -215,6 +215,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("devices", nargs="+", help="list of devices")
     args = parser.parse_args()
+    # pyre-fixme[16]: Callable `bin` has no attribute `fcr-cli`.
     fcr = FCR(args.devices)
     try:
         fcr.cmdloop()

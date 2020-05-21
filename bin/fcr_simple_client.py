@@ -117,4 +117,5 @@ def run(
 
 
 if __name__ == "__main__":
+    # pyre-fixme[16]: Callable `bin` has no attribute `fcr_simple_client`.
     fcr()

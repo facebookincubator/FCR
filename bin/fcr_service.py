@@ -61,4 +61,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # pyre-fixme[16]: Callable `bin` has no attribute `fcr_service`.
     main()

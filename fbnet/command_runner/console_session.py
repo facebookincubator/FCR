@@ -137,7 +137,7 @@ class ConsoleCommandSession(SSHCommandSession):
             data = []
             # This statement ensures that _stream_reader is not none
             if self._stream_reader:
-                data = await self._stream_reader.drain()  # pyre-ignore
+                data = await self._stream_reader.drain()
             raise asyncio.TimeoutError(
                 "Timeout during waiting for prompt."
                 f"Currently received data: {data[-200:]}"
@@ -246,7 +246,7 @@ class ConsoleCommandSession(SSHCommandSession):
             return await self._try_login(
                 username_tried=username_tried,
                 pwd_tried=True,
-                get_response_timeout=self._CONSOLE_LOGIN_TIMEOUT_S,  # pyre-ignore
+                get_response_timeout=self._CONSOLE_LOGIN_TIMEOUT_S,
             )
 
         elif res.groupdict.get("interact_prompts"):
@@ -283,8 +283,7 @@ class ConsoleCommandSession(SSHCommandSession):
         logout_cmd = (
             self._devinfo.vendor_data.exit_command or self._DEFAULT_LOGOUT_COMMAND
         )
-        self._stream_writer.write(logout_cmd + b"\n")  # pyre-ignore
-        # Make sure we logout of the system
+        self._stream_writer.write(logout_cmd + b"\n")
         while True:
             try:
                 res = await self.expect(self.get_prompt_re())
@@ -364,7 +363,7 @@ class ConsoleCommandSession(SSHCommandSession):
         if self._opts.get("raw_session"):
             # This statement ensures _stream_reader is not none
             if self._stream_reader:
-                await self._stream_reader.drain()  # pyre-ignore
+                await self._stream_reader.drain()
             self.send(cmd)
             resp = await self.wait_prompt(prompt_re)
             return resp.data + resp.matched

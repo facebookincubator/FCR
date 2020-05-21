@@ -57,7 +57,9 @@ class DeviceVendor(ServiceObj):
     }
 
     _PROMPTS_RE = re.compile(
-        b"|".join([b"(%s)" % p for p in _DEFAULTS["prompt_regex"]]), re.M
+        # pyre-fixme[16]: `int` has no attribute `__iter__`.
+        b"|".join([b"(%s)" % p for p in _DEFAULTS["prompt_regex"]]),
+        re.M,
     )
 
     _SESSION_NAMES = {b"ssh": SessionType.SSH, b"netconf": SessionType.SSH_NETCONF}
