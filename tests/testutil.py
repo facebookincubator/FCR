@@ -11,7 +11,8 @@ import functools
 import unittest
 
 
-# pyre-fixme[13]: Attribute `slow_callback_duration` is never initialized.
+# `asyncio.events.AbstractEventLoop` to have type `float` but is never initialized.
+# pyre-fixme[13]: Attribute `slow_callback_duration` inherited from abstract class
 class FcrTestEventLoop(asyncio.SelectorEventLoop):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

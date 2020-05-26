@@ -284,6 +284,7 @@ class ConsoleCommandSession(SSHCommandSession):
             self._devinfo.vendor_data.exit_command or self._DEFAULT_LOGOUT_COMMAND
         )
         self._stream_writer.write(logout_cmd + b"\n")
+        # Make sure we logout of the system
         while True:
             try:
                 res = await self.expect(self.get_prompt_re())

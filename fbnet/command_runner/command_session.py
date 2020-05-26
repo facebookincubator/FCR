@@ -73,8 +73,7 @@ class SessionReaperTask(PeriodicServiceTask):
     def __init__(
         self,
         service: ServiceObj,
-        # pyre-fixme[9]: sessions has type `Dict[Hashable, CommandSession]`; used as
-        #  `None`.
+        # pyre-fixme[9]: sessions is `Dict[Hashable, CommandSession]` but is `None`
         sessions: Dict[Hashable, "CommandSession"] = None,
     ) -> None:
         super().__init__(
@@ -779,7 +778,7 @@ class CliCommandSession(CommandSession):
         self._exit_status = status
 
 
-# pyre-fixme[11]: Annotation `SSHClient` is not defined as a type.
+# pyre-fixme[11]: Annotation `asyncssh.SSHClient` is not defined as a type.
 class SSHCommandClient(asyncssh.SSHClient):
     """
     The connection objects are leaked if the session timeout while the
