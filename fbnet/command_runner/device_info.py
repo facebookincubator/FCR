@@ -24,22 +24,10 @@ class DeviceInfo(ServiceObj):
     """
 
     def __init__(
-        self,
-        service,
-        hostname,
-        username,
-        password,
-        pref_ips,
-        ip,
-        vendor_data,
-        role,
-        ch_model,
-        alias=None,
+        self, service, hostname, pref_ips, ip, vendor_data, role, ch_model, alias=None
     ):
         super().__init__(service, "DeviceInfo")
         self._hostname = hostname
-        self._username = username  # Default username for device
-        self._password = password  # Default password for device
         self._pref_ips = pref_ips
         self._ip = ip
         self._vendor_data = vendor_data
@@ -140,14 +128,6 @@ class DeviceInfo(ServiceObj):
                 f"found for {self._hostname}"
             )
         return self._ip.addr
-
-    @property
-    def username(self):
-        return self._username
-
-    @property
-    def password(self):
-        return self._password
 
     @property
     def role(self):

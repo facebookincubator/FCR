@@ -188,9 +188,9 @@ class CommandSession(ServiceObj):
         self._extra_info = {}
         self._exit_status = None
 
-        # use the specified username/password or fallback to device defaults
-        self._username = options.get("username") or devinfo.username
-        self._password = options.get("password") or devinfo.password
+        # use the specified username/password passed in by user
+        self._username = options.get("username")
+        self._password = options.get("password")
         self._client_ip = options["client_ip"]
         self._client_port = options["client_port"]
         self._loop = loop

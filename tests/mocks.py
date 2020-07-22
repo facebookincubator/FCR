@@ -18,9 +18,6 @@ from fbnet.command_runner.service import FcrServiceBase
 from .mock_session import MockCommandSession
 
 
-test_user = "testuser"
-test_pass = "testpass"
-
 mock_vendors = """
 {
   "vendor_config": {
@@ -68,8 +65,6 @@ class MockDeviceDB(BaseDeviceDB):
         return DeviceInfo(
             self.service,
             "test-dev-%d" % (idx),
-            test_user,
-            test_pass,
             addrs,
             addrs[0],
             self.service.vendors.get(vendor),
