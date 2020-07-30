@@ -344,7 +344,7 @@ class CommandSession(ServiceObj):
                 self._create_connection(), self.open_timeout, loop=self._loop
             )
         except asyncio.TimeoutError:
-            self.logger.error("Timeout during connection setup")
+            self.logger.exception("Timeout during connection setup")
             data = []
             # TODO(mzheng): Move the _steam_reader check to subclasses that
             # define it
