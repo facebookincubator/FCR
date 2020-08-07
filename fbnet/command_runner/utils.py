@@ -38,7 +38,11 @@ def _check_device(device: Optional[ttypes.Device]) -> None:
     if not device.username:
         missing_list.append("username")
 
-    if not device.password:
+    # Here we check strictly whether the password is None. This is for
+    # sometimes when the device is unprovisioned, it does not require
+    # password to login. In this case, we allow user to enter an empty
+    # string
+    if device.password is None:
         missing_list.append("password")
 
     if missing_list:
@@ -79,29 +83,28 @@ def input_fields_validator(fn):  # noqa C901
                 raise ttypes.SessionException(
                     message=f"The ({i + 1})th argument cannot be None."
                 )
-
-            if isinstance(arg, ttypes.Device):
+            elif isinstance(arg, ttypes.Device):
                 _check_device(arg)
-
-            if isinstance(arg, ttypes.Session):
+            elif isinstance(arg, ttypes.Session):
                 _check_session(arg)
+            # This if-statememt will match device_to_commands or device_to_configlets
+            elif isinstance(arg, dict):
+                for device in arg:
+                    _check_device(device)
 
         for argument, val in kwargs.items():
             if argument == "command" and not val:
                 raise ttypes.SessionException(
                     message="Required argument (command) cannot be None."
                 )
-
-            if argument == "device":
+            elif argument == "device":
                 _check_device(val)
-
-            if argument == "session":
+            elif argument == "session":
                 _check_session(val)
-
-            if argument == "device_to_commands" or argument == "device_to_configlets":
+            elif argument == "device_to_commands" or argument == "device_to_configlets":
                 if not val:
                     raise ttypes.SessionException(
-                        message=f"Required argument ({val}) cannot be None."
+                        message=f"Required argument ({argument}) cannot be None."
                     )
 
                 for device in val:
