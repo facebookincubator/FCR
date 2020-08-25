@@ -797,7 +797,7 @@ class SSHCommandClient(asyncssh.SSHClient):
 
 
 class SSHCommandSession(CliCommandSession):
-    TERM_TYPE = "vt100"
+    TERM_TYPE: Optional[str] = "vt100"
 
     def __init__(self, counter_mgr, devinfo, options, loop):
         super().__init__(counter_mgr, devinfo, options, loop)
