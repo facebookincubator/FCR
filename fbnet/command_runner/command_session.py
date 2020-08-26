@@ -775,7 +775,7 @@ class CliCommandSession(CommandSession):
     def exit_status_received(self, status):
         self.logger.info("exit status received: %s", status)
         self._connected = False
-        self._exit_status = status
+        self._exit_status = str(status)
 
 
 class SSHCommandClient(asyncssh.SSHClient):

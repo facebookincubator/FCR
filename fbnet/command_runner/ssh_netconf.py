@@ -61,6 +61,7 @@ class SSHNetconf(SSHCommandSession):
         prompt_re: Optional[re.Pattern] = None,
     ) -> bytes:
         try:
+            self.logger.info(f"Sending command to device. Command: {cmd}")
             self._send_command(cmd)
             # Wait for response with timeout
             resp = await asyncio.wait_for(
