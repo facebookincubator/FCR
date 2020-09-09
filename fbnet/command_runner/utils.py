@@ -6,10 +6,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from functools import wraps
-from typing import Optional
+import re
+import xml.etree.ElementTree as et
+from functools import lru_cache, wraps
+from typing import Optional, Set, Union
 
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
+
+
+_XML_NAMESPACE_REGEX: str = r"""\{[^}]*\}"""
+_NETCONF_BASE_CAPABILITY_REGEX: str = ".*netconf:base:[0-9]+[.][0-9]+$"
 
 
 def canonicalize(val):
@@ -71,6 +77,61 @@ def _check_session(session: Optional[ttypes.Session]) -> None:
         raise ttypes.SessionException(
             message=f"Following required Session fields are missing: {missing_list}"
         )
+
+
+# TODO: Expose cache size to cli option
+@lru_cache(maxsize=128)
+def construct_netconf_capability_set(
+    netconf_hello_msg: Optional[Union[str, bytes]]
+) -> Set[str]:
+    """
+    Given a str or a bytes of netconf hello message, return a set of netconf base
+    capabilities in that hello message
+    For example, given a netconf hello message:
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <capabilities>
+            <capability>urn:ietf:params:netconf:base:1.0</capability>
+            <capability>urn:ietf:params:netconf:capability:rollback-on-error:1.0</capability>
+            <capability>urn:ietf:params:netconf:capability:validate:1.1</capability>
+            <capability>urn:ietf:params:netconf:capability:confirmed-commit:1.1</capability>
+        </capabilities>
+    </hello>
+    This function will return {"urn:ietf:params:netconf:base:1.0"}
+    """
+
+    capabilities = set()
+    if not netconf_hello_msg:
+        return capabilities
+
+    root = et.fromstring(netconf_hello_msg)
+
+    # Retrieve the xml namespace from the tag of root of ElementTree
+    # For later usage of the iter method that searches for capability
+    namespace_match = re.search(_XML_NAMESPACE_REGEX, root.tag, re.IGNORECASE)
+    ns = namespace_match.group(0) if namespace_match else ""
+
+    # Iteratively look for element in the xml that has the tag that matches
+    # the pattern 'namespace' + capability. For example, a typical Netconf 1.0
+    # hello message would look like this after constructing the element tree:
+    # <{urn:ietf:params:xml:ns:netconf:base:1.0}hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+    #   <{urn:ietf:params:xml:ns:netconf:base:1.0}capabilities>
+    #     <{urn:ietf:params:xml:ns:netconf:base:1.0}capability>urn:ietf:params:netconf:base:1.0</capability>
+    #   </capabilities>
+    # </hello>
+    # In order to match capability items, we need to include the namespace while searching
+    for capability in root.iter(f"{ns}capability"):
+        if not capability.text:
+            # sanity check
+            continue
+        elif re.search(
+            _NETCONF_BASE_CAPABILITY_REGEX,
+            capability.text,  # pyre-ignore
+            re.IGNORECASE,
+        ):
+            capabilities.add(capability.text)
+
+    return capabilities
 
 
 def input_fields_validator(fn):  # noqa C901

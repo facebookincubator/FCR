@@ -11,7 +11,10 @@ import re
 from typing import Any, Dict, List, Optional
 
 from fbnet.command_runner.command_session import ResponseMatch, SSHCommandSession
+from fbnet.command_runner.counters import Counters
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import CommandResult
+
+from .utils import construct_netconf_capability_set
 
 
 class SSHNetconf(SSHCommandSession):
@@ -32,6 +35,14 @@ class SSHNetconf(SSHCommandSession):
 
         self.server_hello: Optional[str] = None
 
+    @classmethod
+    def register_counter(cls, counters: Counters):
+        super().register_counters(counters)
+
+        stats = ["sum", "avg"]
+        counters.add_stats_counter("netconf_capability_construction.error", stats)
+        counters.add_stats_counter("netconf_capability_construction.all", stats)
+
     async def _setup_connection(self) -> None:
         # Wait for the hello message from the peer. We will save this message
         # and include this with first reply.
@@ -39,6 +50,8 @@ class SSHNetconf(SSHCommandSession):
         self.server_hello = resp.data.strip()
         # Send our hello message to the server
         self._send_command(self.HELLO_MESSAGE)
+
+        self._validate_netconf_capabilities()
 
     def _send_command(self, cmd: bytes) -> None:
         # Send a command followed by a delimiter
@@ -53,6 +66,40 @@ class SSHNetconf(SSHCommandSession):
             result.capabilities = self.server_hello
             self.server_hello = None
         return result
+
+    def _validate_netconf_capabilities(self) -> None:
+        """
+        Validates that the remote netconf host (device) has FCR's netconf
+        base capability. Raise exception if not.
+        """
+
+        assert self.server_hello, "We haven't received hello message from Device yet!"
+
+        self.inc_counter("netconf_capability_construction.all")
+        try:
+            remote_host_netconf_base_capabilities_set = construct_netconf_capability_set(
+                self.server_hello  # pyre-ignore
+            )
+            local_netconf_base_capabilities_set = construct_netconf_capability_set(
+                self.HELLO_MESSAGE
+            )
+        except Exception:
+            # Failed at constructing the capability set, let's continue the session
+            # without validating the capabilities
+            self.logger.exception("Failed at constructing remote host's capability set")
+            self.inc_counter("netconf_capability_construction.error")
+            return
+
+        if not (
+            remote_host_netconf_base_capabilities_set
+            & local_netconf_base_capabilities_set
+        ):
+            # Device does not share common capability with us, terminate the connection
+            super().close()
+            raise ConnectionError(
+                "Remote host and FCR do not share common Netconf base capabilities!\n"
+                f"Current FCR supported Netconf base capabilities: {local_netconf_base_capabilities_set}"
+            )
 
     async def _run_command(
         self,

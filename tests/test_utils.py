@@ -13,6 +13,7 @@ from fbnet.command_runner.utils import (
     _check_device,
     _check_session,
     canonicalize,
+    construct_netconf_capability_set,
     input_fields_validator,
 )
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
@@ -57,6 +58,53 @@ class InputFieldsValidatorTest(AsyncTestCase):
         missing_list = ["hostname", "id", "name"]
         for missing_field in missing_list:
             self.assertIn(missing_field, ex.exception.message)
+
+    def test_construct_capability_set(self) -> None:
+        empty_hello_msg = ""
+        res = construct_netconf_capability_set(empty_hello_msg)
+        self.assertTrue(len(res) == 0)
+
+        # Test hello msg in bytes with namespace
+        hello_msg_with_namespace: bytes = b"""<?xml version="1.0" encoding="UTF-8" ?>
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <capabilities>
+    <capability>urn:ietf:params:netconf:base:1.0</capability>
+    <capability>urn:ietf:params:netconf:capability:rollback-on-error:1.0</capability>
+    <capability>urn:ietf:params:netconf:capability:validate:1.1</capability>
+    <capability>urn:ietf:params:netconf:capability:confirmed-commit:1.1</capability>
+  </capabilities>
+</hello>
+"""
+        res = construct_netconf_capability_set(hello_msg_with_namespace)
+        self.assertEqual(res, {"urn:ietf:params:netconf:base:1.0"})
+
+        # Test hello msg in string with namespace
+        hello_msg_with_namespace: str = """<?xml version="1.0" encoding="UTF-8" ?>
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <capabilities>
+    <capability>urn:ietf:params:netconf:base:1.0</capability>
+    <capability>urn:ietf:params:netconf:capability:rollback-on-error:1.0</capability>
+    <capability>urn:ietf:params:netconf:capability:validate:1.1</capability>
+    <capability>urn:ietf:params:netconf:capability:confirmed-commit:1.1</capability>
+  </capabilities>
+</hello>
+"""
+        res = construct_netconf_capability_set(hello_msg_with_namespace)
+        self.assertEqual(res, {"urn:ietf:params:netconf:base:1.0"})
+
+        # Test hello msg in bytes without namespace
+        hello_msg_without_namespace: bytes = b"""<?xml version="1.0" encoding="UTF-8" ?>
+<hello>
+  <capabilities>
+    <capability>urn:ietf:params:netconf:base:1.0</capability>
+    <capability>urn:ietf:params:netconf:capability:rollback-on-error:1.0</capability>
+    <capability>urn:ietf:params:netconf:capability:validate:1.1</capability>
+    <capability>urn:ietf:params:netconf:capability:confirmed-commit:1.1</capability>
+  </capabilities>
+</hello>
+"""
+        res = construct_netconf_capability_set(hello_msg_without_namespace)
+        self.assertEqual(res, {"urn:ietf:params:netconf:base:1.0"})
 
     @async_test
     async def test_input_fields_validator(self) -> None:
