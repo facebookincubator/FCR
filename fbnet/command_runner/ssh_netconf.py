@@ -55,7 +55,6 @@ class SSHNetconf(SSHCommandSession):
 
     def _send_command(self, cmd: bytes) -> None:
         # Send a command followed by a delimiter
-        # pyre-fixme[16]: `None` has no attribute `write`.
         self._stream_writer.write(b"\n" + cmd + self.DELIM + b"\n")
 
     def _format_output(self, cmd: bytes, resp: ResponseMatch) -> bytes:
@@ -120,7 +119,6 @@ class SSHNetconf(SSHCommandSession):
             return self._format_output(cmd, resp)
         except asyncio.TimeoutError:
             self.logger.error("Timeout waiting for command response")
-            # pyre-fixme[16]: `None` has no attribute `drain`.
             data = await self._stream_reader.drain()
             raise RuntimeError("Command Response Timeout", data[-200:])
 

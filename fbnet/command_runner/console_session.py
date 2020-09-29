@@ -137,7 +137,6 @@ class ConsoleCommandSession(SSHCommandSession):
             data = []
             # This statement ensures that _stream_reader is not none
             if self._stream_reader:
-                # pyre-fixme[16]: `None` has no attribute `drain`.
                 data = await self._stream_reader.drain()
             raise asyncio.TimeoutError(
                 "Timeout during waiting for prompt."
@@ -284,7 +283,6 @@ class ConsoleCommandSession(SSHCommandSession):
         logout_cmd = (
             self._devinfo.vendor_data.exit_command or self._DEFAULT_LOGOUT_COMMAND
         )
-        # pyre-fixme[16]: `None` has no attribute `write`.
         self._stream_writer.write(logout_cmd + b"\n")
         # Make sure we logout of the system
         while True:
@@ -366,7 +364,6 @@ class ConsoleCommandSession(SSHCommandSession):
         if self._opts.get("raw_session"):
             # This statement ensures _stream_reader is not none
             if self._stream_reader:
-                # pyre-fixme[16]: `None` has no attribute `drain`.
                 await self._stream_reader.drain()
             self.send(cmd)
             resp = await self.wait_prompt(prompt_re)
