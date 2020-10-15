@@ -33,7 +33,12 @@ class TestCommandHandler(AsyncTestCase):
         super().tearDown()
 
     def mock_device(self, name, console="", command_prompts=None):
-        return Mock(hostname=name, console=console, command_prompts=command_prompts)
+        return Mock(
+            hostname=name,
+            console=console,
+            command_prompts=command_prompts,
+            pre_setup_commands=[],
+        )
 
     @async_test
     async def test_run_success(self):

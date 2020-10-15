@@ -132,6 +132,17 @@ struct Device {
    * The optional session data that is needed to initialize the session.
    */
   18: optional SessionData session_data,
+
+  /*
+  List of commands that FCR will execute immediately after login to the device
+  and before running cli_setup commands
+
+  Example of usecase:
+  Some unprovisioned device needs to enter `cli` before actually execute any
+  commands, with this field, user can specify this usecase and force the device
+  to enter cli mode
+  */
+  19: optional list<string> pre_setup_commands,
 }
 
 struct CommandResult {

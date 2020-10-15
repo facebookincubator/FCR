@@ -58,7 +58,10 @@ class CommandSessionTest(AsyncTestCase):
 
     def mock_device(self, name, console=None, command_prompts=None):
         return mock.Mock(
-            hostname=name, console=console, command_prompts=command_prompts
+            hostname=name,
+            console=console,
+            command_prompts=command_prompts,
+            pre_setup_commands=[],
         )
 
     def _get_session(self):

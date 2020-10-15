@@ -13,7 +13,7 @@ import re
 import time
 from collections import namedtuple
 from functools import wraps
-from typing import Dict, Hashable, NamedTuple, Optional, Union
+from typing import Dict, Hashable, List, NamedTuple, Optional, Union
 
 import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
@@ -184,6 +184,9 @@ class CommandSession(ServiceObj):
         ) or {}
 
         self._hostname = devinfo.hostname
+        self._pre_setup_commands: List[str] = (
+            (device.pre_setup_commands or []) if device else []
+        )
 
         self._extra_info = {}
         self._exit_status = None
@@ -634,7 +637,11 @@ class CliCommandSession(CommandSession):
         # particular session needs to send password, it should override this
         # method and complete the login before calling this method
         await self.wait_prompt()
+        for cmd in self._pre_setup_commands:
+            self.logger.debug(f"Sending pre setup command: {cmd}")
+            await self.run_command(cmd.encode("utf-8") + b"\n")
         for cmd in self._devinfo.vendor_data.cli_setup:
+            self.logger.debug(f"Sending setup command: {cmd}")
             await self.run_command(cmd + b"\n")
 
     async def _create_connection(self):
