@@ -59,8 +59,8 @@ class ConsoleCommandSession(SSHCommandSession):
     _CONSOLE_PROMPTS: Dict[bytes, bytes] = {
         # For login we need to ignore output like:
         #  Last login: Mon May  8 13:53:17 on ttyS0
-        b"login": b".*((?<!Last ).ogin|.sername):",
-        b"passwd": rb"\n.*assword\s?:",
+        b"login": rb".*((?<!Last ).ogin|.sername):\s*$",
+        b"passwd": rb"\n.*assword\s?:\s*$",
         # Ignore login failure message like P64639613
         b"prompt": b"\n.*[#>%](?!Login incorrect)",
         b"interact_prompts": rb"Do you acknowledge\? \(Y/N\)\?",
