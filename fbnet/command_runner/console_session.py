@@ -27,7 +27,9 @@ from .options import Option
 
 if TYPE_CHECKING:
     from asyncio import AbstractEventLoop
+
     from fbnet.command_runner.service import FcrServiceBase
+
     from .command_session import ResponseMatch
 
 
