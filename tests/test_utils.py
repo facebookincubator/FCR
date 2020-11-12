@@ -79,6 +79,7 @@ class InputFieldsValidatorTest(AsyncTestCase):
         self.assertEqual(res, {"urn:ietf:params:netconf:base:1.0"})
 
         # Test hello msg in string with namespace
+        # pyre-fixme[35]: Target cannot be annotated.
         hello_msg_with_namespace: str = """<?xml version="1.0" encoding="UTF-8" ?>
 <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <capabilities>
