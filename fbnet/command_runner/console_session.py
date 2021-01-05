@@ -359,10 +359,10 @@ class ConsoleCommandSession(SSHCommandSession):
 
     async def _run_command(
         self,
-        cmd: str,
+        cmd: bytes,
         timeout: Optional[int] = None,
         prompt_re: Optional[Pattern] = None,
-    ) -> Union[str, bytes]:
+    ) -> bytes:
         if self._opts.get("raw_session"):
             # This statement ensures _stream_reader is not none
             if self._stream_reader:
