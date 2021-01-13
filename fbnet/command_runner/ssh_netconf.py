@@ -78,7 +78,7 @@ class SSHNetconf(SSHCommandSession):
         self.inc_counter("netconf_capability_construction.all")
         try:
             remote_host_netconf_base_capabilities_set = (
-                construct_netconf_capability_set(self.server_hello)  # pyre-ignore
+                construct_netconf_capability_set(self.server_hello)
             )
             local_netconf_base_capabilities_set = construct_netconf_capability_set(
                 self.HELLO_MESSAGE
