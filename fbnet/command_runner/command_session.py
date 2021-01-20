@@ -389,7 +389,7 @@ class CommandSession(ServiceObj):
             self._connected = False
 
     @_update_last_access_time_and_in_use
-    async def run_command(self, command, *args, **kwargs):
+    async def run_command(self, command: bytes, *args, **kwargs) -> bytes:
         return await self._run_command(command, *args, **kwargs)
 
     @abc.abstractmethod
