@@ -48,6 +48,38 @@ def _append_debug_info_to_exception(fn):
     return wrapper
 
 
+def _ensure_uuid(fn):
+    """Make sure the 'uuid' parameter for both input and return is non-empty"""
+
+    @wraps(fn)
+    async def wrapper(*args, **kwargs):
+        uuid = ""
+        callargs = inspect.getcallargs(fn, *args, **kwargs)
+        if "uuid" in callargs:
+            uuid = callargs["uuid"] or uuid4().hex[:8]
+            callargs["uuid"] = uuid
+
+        # Note: this won't work for functions that specify positional-only or
+        # kwarg-only parameters.
+        result = await fn(**callargs)
+
+        # Set UUID on the resulting struct -- if it supports it: Map of, or
+        # raw, CommandResult and Session
+        if isinstance(result, (ttypes.CommandResult, ttypes.Session)):
+            result.uuid = uuid
+        elif isinstance(result, dict):
+            for val in result.values():
+                # If size of result is large, we can refactor to only check the
+                # first element. (time taken: ~100ns * N)
+                if not isinstance(val, ttypes.CommandResult):
+                    break
+                val.uuid = uuid
+
+        return result
+
+    return wrapper
+
+
 class CommandHandler(Counters, FacebookBase, FcrIface):
     """
     Command implementation for api defined in thrift for command runner
@@ -140,19 +172,15 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         """Method to set the class variable _bulk_session_count"""
         cls._bulk_session_count = new_count
 
-    def _generate_new_uuid(self, old_uuid):
-        """ Generate a new uuid from the existing one """
-        return old_uuid or uuid4().hex[:8]
-
     def add_debug_info_to_error_message(self, error_msg, uuid):
         return f"{error_msg} (DebugInfo: thrift_uuid={uuid})"
 
     @input_fields_validator
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def run(
         self, command, device, timeout, open_timeout, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         result = await self._run_commands(
             [command], device, timeout, open_timeout, client_ip, client_port, uuid
         )
@@ -174,10 +202,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
     @input_fields_validator
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def bulk_run(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         if (len(device_to_commands) < self.LB_THRESHOLD) and (
             self._bulk_session_count < self.BULK_SESSION_LIMIT
         ):
@@ -228,6 +256,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         return all_results
 
+    @_ensure_uuid
     async def bulk_run_local(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
@@ -235,10 +264,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
         )
 
+    @_ensure_uuid
     async def _bulk_run_local(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         devices = sorted(device_to_commands.keys(), key=lambda d: d.hostname)
 
         session_count = self._bulk_session_count
@@ -284,10 +313,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
     @input_fields_validator
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def open_session(
         self, device, open_timeout, idle_timeout, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._open_session(
             device,
             open_timeout,
@@ -300,18 +329,18 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
     @input_fields_validator
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def run_session(
         self, session, command, timeout, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._run_session(
             session, command, timeout, client_ip, client_port, uuid
         )
 
     @input_fields_validator
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def close_session(self, session, client_ip, client_port, uuid):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         try:
             session = CommandSession.get(session.id, client_ip, client_port)
             await session.close()
@@ -321,10 +350,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             ) from e
 
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def open_raw_session(
         self, device, open_timeout, idle_timeout, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self._open_session(
             device,
             open_timeout,
@@ -336,10 +365,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         )
 
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def run_raw_session(
         self, tsession, command, timeout, prompt_regex, client_ip, client_port, uuid
     ):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         if not prompt_regex:
             raise ttypes.SessionException(message="prompt_regex not specified")
 
@@ -350,8 +379,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         )
 
     @_append_debug_info_to_exception
+    @_ensure_uuid
     async def close_raw_session(self, tsession, client_ip, client_port, uuid):
-        uuid = self._generate_new_uuid(old_uuid=uuid)
         return await self.close_session(tsession, client_ip, client_port, uuid)
 
     async def _open_session(

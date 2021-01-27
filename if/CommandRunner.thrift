@@ -158,12 +158,14 @@ struct CommandResult {
   // The hello message specifies the server capabilities that clients can
   // use to verify support for data models.
   4: optional string capabilities,
+  5: string uuid,
 }
 
 struct Session {
   1: required i64 id,
   2: required string name,
   3: required string hostname,
+  4: string uuid,
 }
 
 service Command extends fb303.FacebookService {
