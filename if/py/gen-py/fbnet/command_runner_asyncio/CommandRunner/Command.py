@@ -35,12 +35,8 @@ all_structs = []
 UTF8STRINGS = bool(0) or sys.version_info.major >= 3
 
 import thrift
-if six.PY3:
-  import asyncio
-  from thrift.util.asyncio import call_as_future
-else:
-  import trollius as asyncio
-  from thrift.util.trollius import call_as_future
+import asyncio
+from thrift.util.asyncio import call_as_future
 from thrift.util.Decorators import *
 
 class Iface(fb303_asyncio.fb303.FacebookService.Iface):
@@ -3927,4 +3923,3 @@ ContextIface._processor_type = ContextProcessor
 
 fix_spec(all_structs)
 del all_structs
-
