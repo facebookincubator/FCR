@@ -64,7 +64,7 @@ class ConsoleCommandSession(SSHCommandSession):
         b"login": rb".*((?<!Last ).ogin|.sername):\s*$",
         b"passwd": rb"\n.*assword\s?:\s*$",
         # Ignore login failure message like P64639613
-        b"prompt": b"\n.*[#>%](?!Login incorrect)",
+        b"prompt": b"\n.*[$#>%](?!Login incorrect)",
         b"interact_prompts": rb"Do you acknowledge\? \(Y/N\)\?",
     }
 
