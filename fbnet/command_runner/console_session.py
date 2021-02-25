@@ -96,9 +96,11 @@ class ConsoleCommandSession(SSHCommandSession):
         self._console: str = options["console"]
 
     @classmethod
-    def _build_prompt_re(
-        cls, prompts: Dict[bytes, bytes], ignore: Set[bytes]
-    ) -> Pattern:
+    def _build_prompt_re(cls, prompts: Dict[bytes, bytes], ignore: Set[bytes]) -> None:
+        """
+        This function takes in a regex to match prompts against (and also ignore), computes
+        the prompts regex and set the global _CONSOLE_PROMPT_RE to the computed regex.
+        """
         prompts_re = [
             b"(?P<%s>%s)" % (group, regex) for group, regex in prompts.items()
         ]
@@ -106,21 +108,19 @@ class ConsoleCommandSession(SSHCommandSession):
         ignore_prompts = b"|".join((b"(%s)" % p for p in ignore))
         prompts_re.append(b"(?P<ignore>%s)" % ignore_prompts)
         prompt_re = b"|".join(prompts_re)
-        return re.compile(prompt_re + rb"\s*$")
+        cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + rb"\s*$")
 
     @classmethod
     def get_prompt_re(cls) -> Pattern:
         """
         The first time this is called, we will builds the prompt for the
         console. After that we will return the pre-computed regex
-        Due to this if statement and that cls._build_prompt_re method returns
-        a valid Pattern, we can ensure cls_CONSOLE_PROMPT_RE is not
+        Due to this if statement and that cls._CONSOLE_PROMPT_RE method returns
+        a valid Pattern, we can ensure cls._CONSOLE_PROMPT_RE is not
         none, therefore we should ignore the pyre warning
         """
         if not cls._CONSOLE_PROMPT_RE:
-            cls._CONSOLE_PROMPT_RE = cls._build_prompt_re(
-                cls._CONSOLE_PROMPTS, cls._CONSOLE_INGORE
-            )
+            cls._build_prompt_re(cls._CONSOLE_PROMPTS, cls._CONSOLE_INGORE)
         return cls._CONSOLE_PROMPT_RE  # pyre-ignore
 
     async def dest_info(self) -> Tuple[str, Union[str, int]]:
