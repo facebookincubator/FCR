@@ -6,7 +6,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import itertools
 import re
 from collections import namedtuple
 
@@ -114,20 +113,35 @@ class DeviceInfo(ServiceObj):
             if self.check_ip(ip):
                 return ip.addr
 
-        # None of the required IP is pingable, return a fallback ip for best
-        # effort connection
+        # None of the required IP is pingable, return first valid IP address
+        # if use_mgmt_ip is True, then return the first valid MGMT IP address
         self.inc_counter("device_info.default_ip")
+        for ip in [self._ip] + self._pref_ips:
+            # ip.addr is None, skip
+            if not ip.addr:
+                continue
+
+            # return first valid ip address if user didn't specify to use mgmt ip
+            if not use_mgmt_ip:
+                return ip.addr
+
+            # return first valid mgmt ip if user specifies to use mgmt ip
+            if self._is_mgmt_ip(ip):
+                self.inc_counter("device_info.fallback_to_mgmt_ip")
+                return ip.addr
+
+        # No valid MGMT IPs were found when user specifies use_mgmt_ip, raise
+        # LookupError
         if use_mgmt_ip:
-            # TODO: rename self._ip to self._fallback_ip
-            for ip in itertools.chain([self._ip], self._pref_ips):
-                if self._is_mgmt_ip(ip) and ip.addr:
-                    self.inc_counter("device_info.fallback_to_mgmt_ip")
-                    return ip.addr
             raise LookupError(
                 "User has set 'mgmt_ip=True' in the request but no mgmt ip is "
                 f"found for {self._hostname}"
             )
-        return self._ip.addr
+
+        # None of the IPs is valid, raise LookupError
+        raise LookupError(
+            f"No Valid IP address was found for the device {self._hostname}"
+        )
 
     @property
     def role(self):
