@@ -16,7 +16,6 @@ from typing import (
     NamedTuple,
     Optional,
     Pattern,
-    Set,
     Tuple,
     Union,
 )
@@ -60,17 +59,16 @@ class ConsoleCommandSession(SSHCommandSession):
     _INTERACT_PROMPTS: Dict[bytes, bytes] = {b"Y": rb"Do you acknowledge\? \(Y/N\)\?"}
     _CONSOLE_PROMPTS: Dict[bytes, bytes] = {
         # For login we need to ignore output like:
-        #  Last login: Mon May  8 13:53:17 on ttyS0
+        #   Last login: Mon May  8 13:53:17 on ttyS0
         b"login": rb".*((?<!Last ).ogin|.sername):\s*$",
         b"passwd": rb"\n.*assword\s?:\s*$",
         # Ignore login failure message like P64639613
         b"prompt": b"\n.*[$#>%](?!Login incorrect)",
         b"interact_prompts": rb"Do you acknowledge\? \(Y/N\)\?",
+        # Ignore these prompts during login attempts
+        b"ignore_prompts": b"( to cli \\])|(who is on this device.\\]\\r\\n)|(Press RETURN to get started\r\n)",
     }
 
-    # Certain prompts that we get during the login attemts that we will like to
-    # ignore
-    _CONSOLE_INGORE: Set[bytes] = {rb" to cli \]", rb"who is on this device.\]\r\n"}
     _DEFAULT_LOGOUT_COMMAND: bytes = b"exit"
 
     _CONSOLE_PROMPT_RE: Optional[Pattern] = None
@@ -96,17 +94,14 @@ class ConsoleCommandSession(SSHCommandSession):
         self._console: str = options["console"]
 
     @classmethod
-    def _build_prompt_re(cls, prompts: Dict[bytes, bytes], ignore: Set[bytes]) -> None:
+    def _build_prompt_re(cls, prompts: Dict[bytes, bytes]) -> None:
         """
-        This function takes in a regex to match prompts against (and also ignore), computes
+        This function takes in a regex to match prompts against, computes
         the prompts regex and set the global _CONSOLE_PROMPT_RE to the computed regex.
         """
         prompts_re = [
             b"(?P<%s>%s)" % (group, regex) for group, regex in prompts.items()
         ]
-        # Add a set of prompts that we want to ignore
-        ignore_prompts = b"|".join((b"(%s)" % p for p in ignore))
-        prompts_re.append(b"(?P<ignore>%s)" % ignore_prompts)
         prompt_re = b"|".join(prompts_re)
         cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + rb"\s*$")
 
@@ -120,7 +115,7 @@ class ConsoleCommandSession(SSHCommandSession):
         none, therefore we should ignore the pyre warning
         """
         if not cls._CONSOLE_PROMPT_RE:
-            cls._build_prompt_re(cls._CONSOLE_PROMPTS, cls._CONSOLE_INGORE)
+            cls._build_prompt_re(cls._CONSOLE_PROMPTS)
         return cls._CONSOLE_PROMPT_RE  # pyre-ignore
 
     async def dest_info(self) -> Tuple[str, Union[str, int]]:
@@ -196,7 +191,7 @@ class ConsoleCommandSession(SSHCommandSession):
             else:
                 raise
 
-        if res.groupdict.get("ignore"):
+        if res.groupdict.get("ignore_prompts"):
             # If we match anything in the ignore prompts, set a \r\n
             self._send_newline(end=b"")
             await asyncio.sleep(0.2)  # Let the console catch up
@@ -301,7 +296,7 @@ class ConsoleCommandSession(SSHCommandSession):
                 self.logger.exception(f"Console session log out failure: {ex}")
                 return
 
-            if res.groupdict.get("ignore"):
+            if res.groupdict.get("ignore_prompts"):
                 # If we match anything in the ignore prompts, set a \r\n
                 self._send_newline(end=b"")
                 await asyncio.sleep(0.2)  # Let the console catch up
