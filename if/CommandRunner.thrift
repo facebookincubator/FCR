@@ -7,30 +7,29 @@ include "common/fb303/if/fb303.thrift"
 
 namespace py.asyncio fbnet.command_runner_asyncio.CommandRunner
 
-
 exception FBNetDataException {
-  1: string message,
+  1: string message;
 }
 
 exception UnsupportedDeviceException {
-  1: string message,
+  1: string message;
 }
 
 exception SessionException {
-  1: string message,
+  1: string message;
 }
 
 exception UnsupportedCommandException {
-  1: string message,
+  1: string message;
 }
 
 exception InstanceOverloaded {
-  1: string message,
+  1: string message;
 }
 
-const string CONS_AUTO = 'auto'
-const string FAILURE_STATUS = 'failure'
-const string SUCCESS_STATUS = 'success'
+const string CONS_AUTO = 'auto';
+const string FAILURE_STATUS = 'failure';
+const string SUCCESS_STATUS = 'success';
 
 enum SessionType {
   SSH = 1,
@@ -60,7 +59,7 @@ struct SessionData {
   // with get_client(FcrClient) as client:
   //     res = client.run(cmd, dev)
   //
-  1: optional string subsystem,
+  1: optional string subsystem;
 
   // This command is executed on the remote system to start a session
   //
@@ -89,21 +88,21 @@ struct SessionData {
   // with get_client(FcrClient) as client:
   //     res = client.run(cmd, dev)
 
-  2: optional string exec_command,
+  2: optional string exec_command;
   // Extra options that supported by the given session type. For example,
   //  - The following session support extra_options={'port': PORT}: SSH, NETCONF
-  3: optional map<string, string> extra_options,
+  3: optional map<string, string> extra_options;
 }
 
 struct Device {
-  1: required string hostname,
+  1: required string hostname;
 
-  10: required string username,
-  11: required string password,
+  10: required string username;
+  11: required string password;
 
-  13: optional string console = '',
+  13: optional string console = '';
   // default not using mgmt ip
-  14: optional bool mgmt_ip = 0,
+  14: optional bool mgmt_ip = 0;
   /*
    * explicitly specify the expected prompts for commands. This can be used
    * for commands that don't result in normal prompts (exit, reboot etc)
@@ -114,24 +113,24 @@ struct Device {
    *    }
    *    device = Device(hostname='bb01.iad1', prompts=prompts)
    */
-  15: optional map<string, string> command_prompts,
+  15: optional map<string, string> command_prompts;
 
   /*
    * IP address (v4/v6) to be used for the device. If specified, this will be
    * used instead of doing a lookup.
    */
-  16: optional string ip_address,
+  16: optional string ip_address;
 
   /*
    * Session Type to use for this device. This overrides the default session
    * type for the device.
    */
-  17: optional SessionType session_type,
+  17: optional SessionType session_type;
 
   /*
    * The optional session data that is needed to initialize the session.
    */
-  18: optional SessionData session_data,
+  18: optional SessionData session_data;
 
   /*
   List of commands that FCR will execute immediately after login to the device
@@ -142,30 +141,30 @@ struct Device {
   commands, with this field, user can specify this usecase and force the device
   to enter cli mode
   */
-  19: optional list<string> pre_setup_commands,
+  19: optional list<string> pre_setup_commands;
 }
 
 struct CommandResult {
-  1: required string output,
+  1: required string output;
   // if everything works, status = SUCCESS_STATUS
   // if there is some error, status contains the error msg and output has
   // what has received so far
-  2: required string status,
-  3: required string command,
+  2: required string status;
+  3: required string command;
 
   // Capabilities for the session.
   // This used to return the initial hello message from the peer.
   // The hello message specifies the server capabilities that clients can
   // use to verify support for data models.
-  4: optional string capabilities,
-  5: string uuid,
+  4: optional string capabilities;
+  5: string uuid;
 }
 
 struct Session {
-  1: required i64 id,
-  2: required string name,
-  3: required string hostname,
-  4: string uuid,
+  1: required i64 id;
+  2: required string name;
+  3: required string hostname;
+  4: string uuid;
 }
 
 service Command extends fb303.FacebookService {
@@ -180,24 +179,22 @@ service Command extends fb303.FacebookService {
    * @return CommandResult
    */
   CommandResult run(
-    1: string command
-    2: Device device
-
+    1: string command,
+    2: Device device,
     /*
      * optional arguments
      */
     // max time (sec) to wait to get the full response
-    3: i32 timeout = 300
+    3: i32 timeout = 300,
     // max time (sec) allowed to spend authenticating into the device
-    4: i32 open_timeout = 30
-
+    4: i32 open_timeout = 30,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se, 2: UnsupportedDeviceException ude)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se, 2: UnsupportedDeviceException ude);
 
   /* Run a list of commands on a list of devices.
    *
@@ -209,26 +206,24 @@ service Command extends fb303.FacebookService {
    * @return Mapping from hostname to CommandResult
    */
   map<string, list<CommandResult>> bulk_run(
-    1: map<Device, list<string>> device_to_commands
-
+    1: map<Device, list<string>> device_to_commands,
     /*
      * optional arguments
      */
     // max time (sec) to wait to get the full response of a single command.
     // the max time it could take per device is timeout * number of commands
-    3: i32 timeout = 300
+    3: i32 timeout = 300,
     // max time (sec) allowed to spend authenticating into the device
-    4: i32 open_timeout = 30
-
+    4: i32 open_timeout = 30,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  )
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  );
 
-   /*
+  /*
     * To USER: DO NOT use this function
     *
     * To Developer: This is another version of bulk_run which
@@ -236,17 +231,16 @@ service Command extends fb303.FacebookService {
     *
     */
   map<string, list<CommandResult>> bulk_run_local(
-    1: map<Device, list<string>> device_to_commands
-    3: i32 timeout = 300
-    4: i32 open_timeout = 30
-
+    1: map<Device, list<string>> device_to_commands,
+    3: i32 timeout = 300,
+    4: i32 open_timeout = 30,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-   ) throws (1: InstanceOverloaded ioe)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: InstanceOverloaded ioe);
 
   /*
    * The following APIs is used to interact with a single device just
@@ -273,7 +267,6 @@ wr mem'''
    *
    */
 
-
   /* Establish a management session with a device. The session does not persist
    * across thrift connections, i.e., the session dies when you are disconnected
    * from the command runner thrift service.
@@ -281,23 +274,21 @@ wr mem'''
    * @return Session
    */
   Session open_session(
-    1: Device device
-
+    1: Device device,
     /*
      * optional arguments
      */
     // max time (sec) allowed to spend authenticating into the device
-    2: i32 open_timeout = 60
+    2: i32 open_timeout = 60,
     // max time (sec) allowed for the session to go unused
-    3: i32 idle_timeout = 300
-
+    3: i32 idle_timeout = 300,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se);
 
   /* Run a command within a session. The command could potentially modify
    * the device configuration based on the permission you have on the device.
@@ -310,22 +301,20 @@ conf t
    * @return CommandResult
    */
   CommandResult run_session(
-    1: Session session
-    2: string command
-
+    1: Session session,
+    2: string command,
     /*
      * optional arguments
      */
     // max time (sec) to wait to get the full response
-    3: i32 timeout = 300
-
+    3: i32 timeout = 300,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se);
 
   /* Close the session. Each open_session call should be accompanied with a
    * close_session call to free connection with the device.
@@ -333,39 +322,35 @@ conf t
    * @return void
    */
   void close_session(
-    1: Session session
-
+    1: Session session,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se);
 
   // open_raw_session() should be used when user want to bypass session setup
   // (login and run setup commands).
   // If open_raw_session(), following calls should be run_raw_session() and
   // close_raw_session().
   Session open_raw_session(
-    1: Device device
-
+    1: Device device,
     /*
      * optional arguments
      */
     // max time (sec) allowed to spend authenticating into the device
-    2: i32 open_timeout = 60
+    2: i32 open_timeout = 60,
     // max time (sec) allowed for the session to go unused
-    3: i32 idle_timeout = 300
-
+    3: i32 idle_timeout = 300,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se)
-
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se);
 
   /*
    * This is similar to run_session(). This is used in conjunction with
@@ -375,25 +360,22 @@ conf t
    * @return CommandResult
    */
   CommandResult run_raw_session(
-    1: Session session
-    2: string command
-
+    1: Session session,
+    2: string command,
     /*
      * optional arguments
      */
     // max time (sec) to wait to get the full response
-    3: i32 timeout = 300
-
+    3: i32 timeout = 300,
     // Specify a prompt that you expect at the end of command.
-    4: string prompt_regex
-
+    4: string prompt_regex,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se);
 
   /* Close the session. Each open_raw_session call should be accompanied with a
    * close_session call to free connection with the device.
@@ -401,13 +383,12 @@ conf t
    * @return void
    */
   void close_raw_session(
-    1: Session session
-
+    1: Session session,
     /*
      * don't populate the following arguments unless you know what you are doing
      */
-    10: string client_ip = ""
-    11: string client_port = ""
-    12: string uuid = ""
-  ) throws (1: SessionException se)
+    10: string client_ip = "",
+    11: string client_port = "",
+    12: string uuid = "",
+  ) throws (1: SessionException se);
 }
