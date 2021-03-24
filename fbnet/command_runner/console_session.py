@@ -108,18 +108,15 @@ class ConsoleCommandSession(SSHCommandSession):
         prompt_re = b"|".join(prompts_re)
         cls._DEFAULT_CONSOLE_PROMPTS_RE = re.compile(prompt_re + rb"\s*$")
 
-    @classmethod
-    def get_prompt_re(cls) -> Pattern:
+    def get_prompt_re(self, vendor_name: Optional[str] = None) -> Pattern:
         """
-        The first time this is called, we will builds the prompt for the
-        console. After that we will return the pre-computed regex
-        Due to this if statement and that cls._DEFAULT_CONSOLE_PROMPTS_RE method returns
-        a valid Pattern, we can ensure cls._DEFAULT_CONSOLE_PROMPTS_RE is not
-        none, therefore we should ignore the pyre warning
+        This method takes in a vendor name and retrieves the pre-compiled group regex
+        corresponding to that vendor from the _console_prompts_re_dict. If the vendor is not given or
+        does not already exist in the dictionary, return the default (hard-coded) regex.
         """
-        if not cls._DEFAULT_CONSOLE_PROMPTS_RE:
-            cls._build_prompt_re(cls._DEFAULT_CONSOLE_PROMPTS)
-        return cls._DEFAULT_CONSOLE_PROMPTS_RE  # pyre-ignore
+        if not self._DEFAULT_CONSOLE_PROMPTS_RE:
+            self._build_prompt_re(self._DEFAULT_CONSOLE_PROMPTS)
+        return self._DEFAULT_CONSOLE_PROMPTS_RE  # pyre-ignore
 
     async def dest_info(self) -> Tuple[str, Union[str, int]]:
         console = await self.get_console_info()
@@ -266,7 +263,9 @@ class ConsoleCommandSession(SSHCommandSession):
     async def _get_response(self, timeout: int) -> "ResponseMatch":
         # A small delay to avoid having to match extraneous input
         await asyncio.sleep(0.1)
-        res = await self.expect(self.get_prompt_re(), timeout=timeout)
+        res = await self.expect(
+            self.get_prompt_re(self._devinfo.vendor_name), timeout=timeout
+        )
         return res
 
     async def _try_logout(self, kick_shutdown: bool = False) -> None:
@@ -287,7 +286,7 @@ class ConsoleCommandSession(SSHCommandSession):
         # Make sure we logout of the system
         while True:
             try:
-                res = await self.expect(self.get_prompt_re())
+                res = await self.expect(self.get_prompt_re(self._devinfo.vendor_name))
             except asyncio.TimeoutError:
                 if kick_shutdown:
                     self._send_newline()
