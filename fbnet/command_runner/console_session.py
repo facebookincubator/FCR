@@ -56,8 +56,11 @@ class ConsoleCommandSession(SSHCommandSession):
     Currently we only support SSH connection to the console server
     """
 
-    _INTERACT_PROMPTS: Dict[bytes, bytes] = {b"Y": rb"Do you acknowledge\? \(Y/N\)\?"}
-    _CONSOLE_PROMPTS: Dict[bytes, bytes] = {
+    # The three default class variables below let you preset the prompts in-case vendor is unknown.
+    _DEFAULT_INTERACT_PROMPTS: Dict[bytes, bytes] = {
+        b"Y": rb"Do you acknowledge\? \(Y/N\)\?"
+    }
+    _DEFAULT_CONSOLE_PROMPTS: Dict[bytes, bytes] = {
         # For login we need to ignore output like:
         #   Last login: Mon May  8 13:53:17 on ttyS0
         b"login": rb".*((?<!Last ).ogin|.sername):\s*$",
@@ -68,10 +71,10 @@ class ConsoleCommandSession(SSHCommandSession):
         # Ignore these prompts during login attempts
         b"ignore_prompts": b"( to cli \\])|(who is on this device.\\]\\r\\n)|(Press RETURN to get started\r\n)",
     }
+    _DEFAULT_CONSOLE_PROMPTS_RE: Optional[Pattern] = None
 
     _DEFAULT_LOGOUT_COMMAND: bytes = b"exit"
 
-    _CONSOLE_PROMPT_RE: Optional[Pattern] = None
     _CONSOLE_EXPECT_DELAY: int = 5
 
     _CONSOLE_LOGIN_TIMEOUT_S = Option(
@@ -97,26 +100,26 @@ class ConsoleCommandSession(SSHCommandSession):
     def _build_prompt_re(cls, prompts: Dict[bytes, bytes]) -> None:
         """
         This function takes in a regex to match prompts against, computes
-        the prompts regex and set the global _CONSOLE_PROMPT_RE to the computed regex.
+        the prompts regex and set the global _DEFAULT_CONSOLE_PROMPTS_RE to the computed regex.
         """
         prompts_re = [
             b"(?P<%s>%s)" % (group, regex) for group, regex in prompts.items()
         ]
         prompt_re = b"|".join(prompts_re)
-        cls._CONSOLE_PROMPT_RE = re.compile(prompt_re + rb"\s*$")
+        cls._DEFAULT_CONSOLE_PROMPTS_RE = re.compile(prompt_re + rb"\s*$")
 
     @classmethod
     def get_prompt_re(cls) -> Pattern:
         """
         The first time this is called, we will builds the prompt for the
         console. After that we will return the pre-computed regex
-        Due to this if statement and that cls._CONSOLE_PROMPT_RE method returns
-        a valid Pattern, we can ensure cls._CONSOLE_PROMPT_RE is not
+        Due to this if statement and that cls._DEFAULT_CONSOLE_PROMPTS_RE method returns
+        a valid Pattern, we can ensure cls._DEFAULT_CONSOLE_PROMPTS_RE is not
         none, therefore we should ignore the pyre warning
         """
-        if not cls._CONSOLE_PROMPT_RE:
-            cls._build_prompt_re(cls._CONSOLE_PROMPTS)
-        return cls._CONSOLE_PROMPT_RE  # pyre-ignore
+        if not cls._DEFAULT_CONSOLE_PROMPTS_RE:
+            cls._build_prompt_re(cls._DEFAULT_CONSOLE_PROMPTS)
+        return cls._DEFAULT_CONSOLE_PROMPTS_RE  # pyre-ignore
 
     async def dest_info(self) -> Tuple[str, Union[str, int]]:
         console = await self.get_console_info()
@@ -322,7 +325,7 @@ class ConsoleCommandSession(SSHCommandSession):
     def _interact_prompts_action(self, prompt_match: AnyStr) -> None:
         interact_prompts = [
             b"(?P<%s>%s)" % (group, regex)
-            for group, regex in self._INTERACT_PROMPTS.items()
+            for group, regex in self._DEFAULT_INTERACT_PROMPTS.items()
         ]
         interact_prompts_re = b"|".join(interact_prompts)
         interact_prompt_match = re.match(
