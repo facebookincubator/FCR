@@ -365,9 +365,13 @@ class ConsoleCommandSession(SSHCommandSession):
         self.send(b"\r", end)
 
     def _interact_prompts_action(self, prompt_match: AnyStr) -> None:
+        # Check if to use default interactive prompts or configured prompts
+        vendor_interact_prompts = self._interact_prompts_re_dict.get(
+            self._devinfo.vendor_name.encode("utf8"), self._DEFAULT_INTERACT_PROMPTS
+        )
         interact_prompts = [
             b"(?P<%s>%s)" % (group, regex)
-            for group, regex in self._DEFAULT_INTERACT_PROMPTS.items()
+            for group, regex in vendor_interact_prompts.items()
         ]
         interact_prompts_re = b"|".join(interact_prompts)
         interact_prompt_match = re.match(
