@@ -171,7 +171,9 @@ class ConsoleCommandSession(SSHCommandSession):
     ) -> "ResponseMatch":
         try:
             return await asyncio.wait_for(
-                self.wait_prompt(regex), timeout, loop=self._loop
+                self.wait_prompt(prompt_re=regex, timeout=timeout),
+                timeout,
+                loop=self._loop,
             )
         except asyncio.TimeoutError as ex:
             data = []
@@ -321,24 +323,28 @@ class ConsoleCommandSession(SSHCommandSession):
         if not self._stream_writer:
             return
 
-        self.logger.info("Logout from device")
         logout_cmd = (
             self._devinfo.vendor_data.exit_command or self._DEFAULT_LOGOUT_COMMAND
         )
+        self.logger.info(f"Logout from device, running logout command: {logout_cmd}")
         self._stream_writer.write(logout_cmd + b"\n")
         # Make sure we logout of the system
         while True:
             try:
-                res = await self.expect(self.get_prompt_re(self._devinfo.vendor_name))
+                res = await self._get_response(timeout=self._CONSOLE_EXPECT_DELAY)
             except asyncio.TimeoutError:
                 if kick_shutdown:
+                    self.logger.info(
+                        "Received first timeout while matching console prompt, "
+                        "sending a new line character to the console"
+                    )
                     self._send_newline()
                     return await self._try_logout()
                 else:
                     self.logger.exception("Console session timed out while logging out")
                     return
-            except Exception as ex:
-                self.logger.exception(f"Console session log out failure: {ex}")
+            except Exception:
+                self.logger.exception("Console session log out failure")
                 return
 
             if res.groupdict.get("ignore_prompts"):
@@ -349,9 +355,7 @@ class ConsoleCommandSession(SSHCommandSession):
                 self.logger.info("Logout successfully")
                 return
             else:
-                self.logger.error(
-                    "Get unexpected prompt when logging out: {}".format(res)
-                )
+                self.logger.error(f"Get unexpected prompt when logging out: {res}")
                 return
 
     async def _close(self) -> None:

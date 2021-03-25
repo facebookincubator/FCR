@@ -382,11 +382,11 @@ class CommandSession(ServiceObj):
             if self.key in self._ALL_SESSIONS:
                 del self._ALL_SESSIONS[self.key]
         finally:
-            self.inc_counter("%s.closed" % self.objname)
             await self._close()
             if self._cmd_stream is not None:
                 self._cmd_stream.close()
             self._connected = False
+            self.inc_counter("%s.closed" % self.objname)
 
     @_update_last_access_time_and_in_use
     async def run_command(self, command: bytes, *args, **kwargs) -> bytes:
@@ -459,7 +459,7 @@ class CommandStreamReader(asyncio.StreamReader):
     def logger(self):
         return self._session.logger
 
-    async def wait_for(self, predicate):
+    async def wait_for(self, predicate, timeout=None):
         """
         Wait for the predicate to become true on the stream. As and when new
         data is available, the predicate will be re-evaluated.
@@ -473,6 +473,16 @@ class CommandStreamReader(asyncio.StreamReader):
         start_ts = time.time()
 
         while res is None:
+            now = time.time()
+
+            # Here we add a protection to avoid this function from doing infinite regex matching
+            # This will ensure that we will eventually break out from the while loop if timeout
+            # is set
+            if timeout and now - start_ts >= timeout:
+                raise asyncio.TimeoutError(
+                    "FCR timeout during matching regex against current buffer output from device."
+                )
+
             self.logger.debug(
                 "match failed in: %d: %d: %s",
                 len(self._buffer),
@@ -486,8 +496,6 @@ class CommandStreamReader(asyncio.StreamReader):
                 raise RuntimeError(
                     "Reader buffer overrun: %d: %d" % (len(self._buffer), self._limit)
                 )
-
-            now = time.time()
 
             if now - start_ts > self.QUICK_COMMAND_RUNTIME:
                 # Keep waiting for data till we get a timeout
@@ -514,14 +522,14 @@ class CommandStreamReader(asyncio.StreamReader):
         self.logger.debug("searching for: %s", regex)
         return regex.search(data, start)
 
-    async def readuntil_re(self, regex, start=0):
+    async def readuntil_re(self, regex, timeout=None, start=0):
         """
         Read data until a regex is matched on the input stream
         """
         self.logger.debug("readuntil_re: %s", regex)
 
         try:
-            match = await self.wait_for(lambda data: regex.search(data, start))
+            match = await self.wait_for(lambda data: regex.search(data, start), timeout)
 
             m_beg, m_end = match.span()
             # We are matching against the data stored stored in bytebuffer
@@ -649,20 +657,22 @@ class CliCommandSession(CommandSession):
         await self.wait_until_connected(self.open_timeout)
         await self._setup_connection()
 
-    async def wait_prompt(self, prompt_re=None):
+    async def wait_prompt(self, prompt_re=None, timeout=None):
         """
         Wait for a prompt
         """
         return await self._stream_reader.readuntil_re(
-            prompt_re or self._devinfo.prompt_re, -self._MAX_PROMPT_SIZE
+            prompt_re or self._devinfo.prompt_re,
+            timeout,
+            -self._MAX_PROMPT_SIZE,
         )
 
-    async def _wait_response(self, cmd, prompt_re):
+    async def _wait_response(self, cmd, prompt_re, timeout):
         """
         Wait for command response from the device
         """
         self.logger.debug("Waiting for prompt")
-        resp = await self.wait_prompt(prompt_re)
+        resp = await self.wait_prompt(prompt_re=prompt_re, timeout=timeout)
         return resp
 
     def _fixup_whitespace(self, output):
@@ -752,10 +762,10 @@ class CliCommandSession(CommandSession):
 
             try:
                 prompt = prompt_re or cmdinfo.prompt_re
-
+                cmd_timeout = timeout or self._devinfo.vendor_data.cmd_timeout_sec
                 resp = await asyncio.wait_for(
-                    self._wait_response(command, prompt),
-                    timeout or self._devinfo.vendor_data.cmd_timeout_sec,
+                    self._wait_response(command, prompt, cmd_timeout),
+                    cmd_timeout,
                     loop=self._loop,
                 )
                 output.append(self._format_output(command, resp))
