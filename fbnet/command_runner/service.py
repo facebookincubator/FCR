@@ -111,7 +111,7 @@ class FcrServiceBase:
         try:
             self._loop.run_forever()
         finally:
-            pending_tasks = asyncio.Task.all_tasks(loop=self._loop)
+            pending_tasks = asyncio.all_tasks(loop=self._loop)
             for task in pending_tasks:
                 task.cancel()
             self._loop.run_until_complete(
@@ -136,7 +136,7 @@ class FcrServiceBase:
         """
         self.logger.info("Terminating")
 
-        pending_tasks = asyncio.Task.all_tasks(loop=self.loop)
+        pending_tasks = asyncio.all_tasks(loop=self.loop)
         for t in pending_tasks:
             t.cancel()
 
