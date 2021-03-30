@@ -36,13 +36,15 @@ def _append_debug_info_to_exception(fn):
             uuid = kwargs.get("uuid", "unknown")
             # Exception defined in command runner thrift spec has attribute 'message'
             if hasattr(ex, "message"):
-                ex.message = self.add_debug_info_to_error_message(  # noqa
+                ex.message = await self.add_debug_info_to_error_message(  # noqa
                     error_msg=ex.message, uuid=uuid  # noqa
                 )
                 raise ex
             else:
                 raise type(ex)(
-                    self.add_debug_info_to_error_message(error_msg=str(ex), uuid=uuid)
+                    await self.add_debug_info_to_error_message(
+                        error_msg=str(ex), uuid=uuid
+                    )
                 ).with_traceback(sys.exc_info()[2])
 
     return wrapper
@@ -172,7 +174,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         """Method to set the class variable _bulk_session_count"""
         cls._bulk_session_count = new_count
 
-    def add_debug_info_to_error_message(self, error_msg, uuid):
+    async def add_debug_info_to_error_message(self, error_msg, uuid):
         return f"{error_msg} (DebugInfo: thrift_uuid={uuid})"
 
     @input_fields_validator
@@ -483,7 +485,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             if not isinstance(e, ttypes.SessionException):
                 e = ttypes.SessionException(message="%r" % e)
             if return_exceptions:
-                e.message = self.add_debug_info_to_error_message(  # noqa
+                e.message = await self.add_debug_info_to_error_message(  # noqa
                     error_msg=e.message, uuid=uuid  # noqa
                 )
                 return [
