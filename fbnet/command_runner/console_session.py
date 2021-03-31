@@ -58,7 +58,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
     # The three default class variables below let you preset the prompts in-case vendor is unknown.
     # If you would like to hard-code or preset the prompts for specific devices, you can do so
-    # during initalization by passing in the desired preset dictionaries into _build_and_set_prompts_re_dict()
+    # by hardcoding _CONFIG_CONSOLE_PROMPTS_RE_DICT and _CONFIG_INTERACT_PROMPTS_RE_DICT
     _DEFAULT_INTERACT_PROMPTS: Dict[bytes, bytes] = {
         b"Y": rb"Do you acknowledge\? \(Y/N\)\?"
     }
@@ -88,6 +88,9 @@ class ConsoleCommandSession(SSHCommandSession):
         default=60,
     )
 
+    _CONFIG_CONSOLE_PROMPTS_RE_DICT: Optional[Dict[bytes, Pattern]] = None
+    _CONFIG_INTERACT_PROMPTS_RE_DICT: Optional[Dict[bytes, Dict[bytes, bytes]]] = None
+
     def __init__(
         self,
         service: "FcrServiceBase",
@@ -97,30 +100,29 @@ class ConsoleCommandSession(SSHCommandSession):
     ) -> None:
         super().__init__(service, devinfo, options, loop)
         self._console: str = options["console"]
-        self._console_prompts_re_dict: Dict[bytes, Pattern] = {}
-        self._interact_prompts_re_dict: Dict[bytes, Dict[bytes, bytes]] = {}
 
+    @classmethod
     def _build_and_set_prompts_re_dict(
-        self,
+        cls,
         vendor_prompts: Optional[Dict[bytes, Dict[bytes, bytes]]] = None,
         vendor_interact_prompts: Optional[Dict[bytes, Dict[bytes, bytes]]] = None,
     ) -> None:
         """
         This method takes in a dictionary of a dictionary of vendor specific prompts, builds each
-        set of vendor prompts and adds them to the instance dictionary of regexs console_prompts_re_dict to be matched
+        set of vendor prompts and adds them to the instance dictionary of regexs CONFIG_CONSOLE_PROMPTS_RE_DICT to be matched
         against console prompts. Also sets the interact_prompts dictionary,
         if applicable (unneccessary to compile regexes until there is a match).
         """
-        self._interact_prompts_re_dict.clear()
-        self._console_prompts_re_dict.clear()
+        cls._CONFIG_CONSOLE_PROMPTS_RE_DICT = {}
+        cls._CONFIG_INTERACT_PROMPTS_RE_DICT = {}
 
         if vendor_prompts:
             for vendor, prompts in vendor_prompts.items():
-                self._console_prompts_re_dict[
+                cls._CONFIG_CONSOLE_PROMPTS_RE_DICT[  # pyre-ignore
                     vendor
-                ] = self._build_individual_prompt_re(prompts)
+                ] = cls._build_individual_prompt_re(prompts)
         if vendor_interact_prompts:
-            self._interact_prompts_re_dict = vendor_interact_prompts
+            cls._CONFIG_INTERACT_PROMPTS_RE_DICT = vendor_interact_prompts
 
     @classmethod
     def _build_individual_prompt_re(
@@ -138,28 +140,30 @@ class ConsoleCommandSession(SSHCommandSession):
         prompt_re = b"|".join(prompts_re)
         return re.compile(prompt_re + rb"\s*$")
 
-    def get_prompt_re(self, vendor_name: Optional[str] = None) -> Pattern:
+    @classmethod
+    def get_default_console_prompt_re(cls) -> Pattern:
+        # This check ensures that _DEFAULT_CONSOLE_PROMPTS_RE is not None, ignoring pyre warning
+        if not cls._DEFAULT_CONSOLE_PROMPTS_RE:
+            cls._DEFAULT_CONSOLE_PROMPTS_RE = cls._build_individual_prompt_re(
+                cls._DEFAULT_CONSOLE_PROMPTS
+            )
+        return cls._DEFAULT_CONSOLE_PROMPTS_RE  # pyre-ignore
+
+    @classmethod
+    def get_prompt_re(cls, vendor_name: Optional[str] = None) -> Pattern:
         """
         This method takes in a vendor name and retrieves the pre-compiled group regex
-        corresponding to that vendor from the _console_prompts_re_dict. If the vendor is not given or
+        corresponding to that vendor from the _CONFIG_CONSOLE_PROMPTS_RE_DICT. If the vendor is not given or
         does not already exist in the dictionary, return the default (hard-coded) regex.
         If the default regex is not already built, build it and then set it.
         """
-        if (
-            not vendor_name
-            or vendor_name.encode("utf8") not in self._console_prompts_re_dict
-        ):
-            if not self._DEFAULT_CONSOLE_PROMPTS_RE:
-                self._DEFAULT_CONSOLE_PROMPTS_RE = self._build_individual_prompt_re(
-                    self._DEFAULT_CONSOLE_PROMPTS
-                )
-            # Ignore pyre warning because after calling build, _DEFAULT_CONSOLE_PROMPTS_RE must be a Pattern
-            return self._DEFAULT_CONSOLE_PROMPTS_RE  # pyre-ignore
+        # This check ensure that _CONFIG_CONSOLE_PROMPTS_RE_DICT is not None, ignoring pyre warning
+        if cls._CONFIG_CONSOLE_PROMPTS_RE_DICT and vendor_name:
+            return cls._CONFIG_CONSOLE_PROMPTS_RE_DICT.get(  # pyre-ignore
+                vendor_name.encode("utf-8"), cls.get_default_console_prompt_re()
+            )
 
-        # Ignore pyre warning because the first 'if' clause guarentees the vendor name pattern is not None
-        return self._console_prompts_re_dict.get(  # pyre-ignore
-            vendor_name.encode("utf8")
-        )
+        return cls.get_default_console_prompt_re()
 
     async def dest_info(self) -> Tuple[str, Union[str, int]]:
         console = await self.get_console_info()
@@ -370,9 +374,17 @@ class ConsoleCommandSession(SSHCommandSession):
 
     def _interact_prompts_action(self, prompt_match: AnyStr) -> None:
         # Check if to use default interactive prompts or configured prompts
-        vendor_interact_prompts = self._interact_prompts_re_dict.get(
-            self._devinfo.vendor_name.encode("utf8"), self._DEFAULT_INTERACT_PROMPTS
-        )
+        vendor_interact_prompts = self._DEFAULT_CONSOLE_PROMPTS
+        if (
+            self._CONFIG_INTERACT_PROMPTS_RE_DICT
+            and self._devinfo.vendor_name.encode("utf8")  # pyre-ignore
+            in self._CONFIG_INTERACT_PROMPTS_RE_DICT
+        ):
+            vendor_interact_prompts = (
+                self._CONFIG_INTERACT_PROMPTS_RE_DICT.get(  # pyre-ignore
+                    self._devinfo.vendor_name.encode("utf8")
+                )
+            )
         interact_prompts = [
             b"(?P<%s>%s)" % (group, regex)
             for group, regex in vendor_interact_prompts.items()
