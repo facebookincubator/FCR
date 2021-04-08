@@ -13,7 +13,7 @@ import re
 import time
 from collections import namedtuple
 from functools import wraps
-from typing import Dict, Hashable, List, NamedTuple, Optional, Union
+from typing import Dict, Hashable, List, NamedTuple, Optional, Union, Tuple
 
 import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
@@ -210,6 +210,7 @@ class CommandSession(ServiceObj):
 
         self._last_access_time: float = time.time()
         self._in_use_count: int = 0
+        self._open_time_ms: int = 0
 
     def get_session_name(self):
         return self.objname
@@ -260,10 +261,15 @@ class CommandSession(ServiceObj):
 
     async def __aenter__(self):
         try:
+            open_connection_time = time.perf_counter()
             await self.setup()
         except Exception as e:
             await self.close()
             raise self._build_session_exc(e) from e
+        finally:
+            self._open_time_ms = int(
+                (time.perf_counter() - open_connection_time) * 1000
+            )
 
         return self
 
@@ -289,11 +295,11 @@ class CommandSession(ServiceObj):
             raise KeyError("Session not found", key) from ke
 
     @property
-    def hostname(self):
+    def hostname(self) -> str:
         return self._hostname
 
     @property
-    def username(self):
+    def username(self) -> str:
         return self._username
 
     @property
@@ -301,23 +307,27 @@ class CommandSession(ServiceObj):
         return self._devinfo
 
     @property
-    def id(self):
+    def id(self) -> int:
         return id(self)
 
     @property
-    def key(self):
+    def key(self) -> Tuple[int, str, int]:
         return (self.id, self._client_ip, self._client_port)
 
     @property
-    def open_timeout(self):
+    def open_timeout(self) -> int:
         return self._opts.get("open_timeout")
 
     @property
-    def use_mgmt_ip(self):
+    def open_time_ms(self) -> int:
+        return self._open_time_ms
+
+    @property
+    def use_mgmt_ip(self) -> bool:
         return self._opts.get("mgmt_ip")
 
     @property
-    def idle_timeout(self):
+    def idle_timeout(self) -> int:
         return self._opts.get("idle_timeout")
 
     @property
@@ -333,10 +343,10 @@ class CommandSession(ServiceObj):
         return self._in_use_count > 0
 
     @property
-    def exit_status(self):
+    def exit_status(self) -> int:
         return self._exit_status
 
-    async def _create_connection(self):
+    async def _create_connection(self) -> None:
         await self.connect()
 
     @_update_last_access_time_and_in_use
