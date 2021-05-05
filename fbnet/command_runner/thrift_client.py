@@ -57,7 +57,7 @@ class AsyncioThriftClient(ServiceObj):
         return self._host, self._port
 
     async def _get_timeouts(self):
-        """ Set the timeout for thrift calls """
+        """Set the timeout for thrift calls"""
         return {"": self._timeout or self._TIMEOUT}
 
     async def open(self):
