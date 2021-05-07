@@ -11,9 +11,9 @@ import asyncio
 import logging
 import re
 import time
+import typing
 from collections import namedtuple
 from functools import wraps
-from typing import Dict, Hashable, List, NamedTuple, Optional, Union, Tuple
 
 import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
@@ -22,6 +22,11 @@ from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
 from .base_service import PeriodicServiceTask, ServiceObj
 from .options import Option
 
+if typing.TYPE_CHECKING:
+    from fbnet.command_runner.service import FcrServiceBase
+
+    from .counters import Counters
+    from .device_info import DeviceInfo
 
 # Register additional key exchange algorithms
 asyncssh.public_key.register_public_key_alg(b"rsa-sha2-256", asyncssh.rsa._RSAKey)
@@ -31,17 +36,19 @@ log = logging.getLogger("fcr.CommandSession")
 ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "match"])
 
 
-class PeerInfo(NamedTuple):
-    ip: Optional[str] = None
-    port: Optional[Union[int, str]] = None
+class PeerInfo(typing.NamedTuple):
+    ip: typing.Optional[str] = None
+    port: typing.Optional[typing.Union[int, str]] = None
 
     def __str__(self) -> str:
         return f"({self.ip}, {self.port})"
 
 
 class LogAdapter(logging.LoggerAdapter):
-    def process(self, msg, kwargs):
-        return "[session_id=%s]: %s" % (self.extra["session"].id, msg), kwargs
+    def process(
+        self, msg: str, kwargs: typing.MutableMapping[str, typing.Any]
+    ) -> typing.Tuple[typing.Any, typing.MutableMapping[str, typing.Any]]:
+        return f"[session_id={self.extra['session'].id}]: {msg}", kwargs
 
 
 class SessionReaperTask(PeriodicServiceTask):
@@ -73,8 +80,9 @@ class SessionReaperTask(PeriodicServiceTask):
     def __init__(
         self,
         service: ServiceObj,
-        # pyre-fixme[9]: sessions is `Dict[Hashable, CommandSession]` but is `None`
-        sessions: Dict[Hashable, "CommandSession"] = None,
+        sessions: typing.Optional[
+            typing.Dict[typing.Hashable, "CommandSession"]
+        ] = None,
     ) -> None:
         super().__init__(
             service, name=self.__class__.__name__, period=self.SESSION_REAP_PERIOD_S
@@ -82,8 +90,8 @@ class SessionReaperTask(PeriodicServiceTask):
         self._sessions = sessions or CommandSession._ALL_SESSIONS
 
     @classmethod
-    def register_counters(cls, counter_mgr):
-        counter_mgr.add_stats_counter(cls.COUNTER_KEY_REAPED_ALL, ["count"])
+    def register_counters(cls, stats_mgr: "Counters") -> None:
+        stats_mgr.add_stats_counter(cls.COUNTER_KEY_REAPED_ALL, ["count"])
 
     def _bump_counters_for_reaped_session(self, session: "CommandSession") -> None:
         self.inc_counter(self.COUNTER_KEY_REAPED_ALL)
@@ -132,7 +140,7 @@ class SessionReaperTask(PeriodicServiceTask):
             self.logger.exception(f"Error when reaping session {ex!r}")
 
 
-def _update_last_access_time_and_in_use(fn):
+def _update_last_access_time_and_in_use(fn: typing.Callable) -> typing.Callable:
     """
     This is a decorator to update the last access time of the session before and
     after calling the wrapped function
@@ -163,13 +171,19 @@ class CommandSession(ServiceObj):
     associated with the session.
     """
 
-    _ALL_SESSIONS: Dict[Hashable, "CommandSession"] = {}
+    _ALL_SESSIONS: typing.Dict[typing.Hashable, "CommandSession"] = {}
 
     # the prompt is at the end of input. So rather then searching in the entire
     # buffer, we will only look in the trailing data
     _MAX_PROMPT_SIZE = 100
 
-    def __init__(self, service, devinfo, options, loop):
+    def __init__(
+        self,
+        service: "FcrServiceBase",
+        devinfo: "DeviceInfo",
+        options: typing.Dict[str, typing.Any],
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
 
         # Setup devinfo as this is needed to create the logger
         self._devinfo = devinfo
@@ -184,7 +198,7 @@ class CommandSession(ServiceObj):
         ) or {}
 
         self._hostname = devinfo.hostname
-        self._pre_setup_commands: List[str] = (
+        self._pre_setup_commands: typing.List[str] = (
             (device.pre_setup_commands or []) if device else []
         )
 
@@ -212,13 +226,13 @@ class CommandSession(ServiceObj):
         self._in_use_count: int = 0
         self._open_time_ms: int = 0
 
-    def get_session_name(self):
+    def get_session_name(self) -> str:
         return self.objname
 
-    def get_peer_info(self):
+    def get_peer_info(self) -> PeerInfo:
         return self._extra_info.get("peer")
 
-    def create_logger(self):
+    def create_logger(self) -> LogAdapter:
         logger = logging.getLogger(
             "fcr.{klass}.{dev.vendor_name}.{dev.hostname}".format(
                 klass=self.__class__.__name__, dev=self._devinfo
@@ -227,39 +241,37 @@ class CommandSession(ServiceObj):
 
         return LogAdapter(logger, {"session": self})
 
-    def build_result(self, output, status, command):
+    def build_result(
+        self, output: str, status: str, command: str
+    ) -> ttypes.CommandResult:
         return ttypes.CommandResult(output=output, status=status, command=command)
 
-    def __repr__(self):
-        return "%s [%s] [%s]" % (
-            self.__class__.__name__,
-            self._devinfo.hostname,
-            self.id,
-        )
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} [{self._devinfo.hostname}] [{self.id}]"
 
     @classmethod
-    def register_counters(cls, counters):
-        counters.register_counter("%s.setup" % cls.__name__)
-        counters.register_counter("%s.connected" % cls.__name__)
-        counters.register_counter("%s.failed" % cls.__name__)
-        counters.register_counter("%s.closed" % cls.__name__)
+    def register_counters(cls, stats_mgr: "Counters") -> None:
+        stats_mgr.register_counter(f"{cls.__name__}.setup")
+        stats_mgr.register_counter(f"{cls.__name__}.connected")
+        stats_mgr.register_counter(f"{cls.__name__}.failed")
+        stats_mgr.register_counter(f"{cls.__name__}.closed")
 
     @classmethod
-    def get_session_count(cls):
+    def get_session_count(cls) -> int:
         return len(cls._ALL_SESSIONS)
 
     @classmethod
-    async def wait_sessions(cls, req_name, service):
+    async def wait_sessions(cls, req_name: str, service: ServiceObj) -> None:
         session_count = cls.get_session_count()
 
         while session_count != 0:
             await asyncio.sleep(1, loop=service.loop)
             session_count = cls.get_session_count()
-            service.logger.info("%s: pending sessions: %d", req_name, session_count)
+            service.logger.info(f"{req_name}: pending sessions: {session_count}")
 
-        service.logger.info("%s: no pending sesison", req_name)
+        service.logger.info(f"{req_name}: no pending sesison")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "CommandSession":
         try:
             open_connection_time = time.perf_counter()
             await self.setup()
@@ -273,21 +285,20 @@ class CommandSession(ServiceObj):
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.close()
         if exc_val:
             raise self._build_session_exc(exc_val) from exc_val
 
-    def _build_session_exc(self, exc):
-        msg = "Failed (session: %s, peer: %s): %r" % (
-            self.get_session_name(),
-            self.get_peer_info(),
-            exc,
+    def _build_session_exc(self, exc: Exception) -> SessionException:
+        msg = (
+            f"Failed (session: {self.get_session_name()}, "
+            f"peer: {self.get_peer_info()}): {exc!r}"
         )
         return SessionException(message=msg)
 
     @classmethod
-    def get(cls, session_id, client_ip, client_port):
+    def get(cls, session_id: int, client_ip: str, client_port: int) -> "CommandSession":
         key = (session_id, client_ip, client_port)
         try:
             return cls._ALL_SESSIONS[key]
@@ -311,7 +322,7 @@ class CommandSession(ServiceObj):
         return id(self)
 
     @property
-    def key(self) -> Tuple[int, str, int]:
+    def key(self) -> typing.Tuple[int, str, int]:
         return (self.id, self._client_ip, self._client_port)
 
     @property
@@ -350,8 +361,8 @@ class CommandSession(ServiceObj):
         await self.connect()
 
     @_update_last_access_time_and_in_use
-    async def setup(self):
-        self.inc_counter("%s.setup" % self.objname)
+    async def setup(self) -> "CommandSession":
+        self.inc_counter(f"{self.objname}.setup")
         try:
             await asyncio.wait_for(
                 self._create_connection(), self.open_timeout, loop=self._loop
@@ -361,6 +372,7 @@ class CommandSession(ServiceObj):
             data = []
             # TODO(mzheng): Move the _steam_reader check to subclasses that
             # define it
+            # pyre-fixme
             if hasattr(self, "_stream_reader") and self._stream_reader:
                 data = await self._stream_reader.drain()
             raise asyncio.TimeoutError(
@@ -369,20 +381,20 @@ class CommandSession(ServiceObj):
             )
         return self
 
-    async def connect(self):
+    async def connect(self) -> None:
         """
         Initiates a connection on the session
         """
         try:
             self._cmd_stream = await self._connect()
-            self.inc_counter("%s.connected" % self.objname)
-            self.logger.info("Connected: %s", self._extra_info)
+            self.inc_counter(f"{self.objname}.connected")
+            self.logger.info(f"Connected: {self._extra_info}")
         except Exception as e:
-            self.logger.error("Connect Failed %r", e)
-            self.inc_counter("%s.failed" % self.objname)
+            self.logger.error(f"Connect Failed {e!r}")
+            self.inc_counter(f"{self.objname}.failed")
             raise e
 
-    async def close(self):
+    async def close(self) -> None:
         """
         Close the session. This removes the session from the cache. Also
         invokes the session specific _close method
@@ -396,40 +408,52 @@ class CommandSession(ServiceObj):
             if self._cmd_stream is not None:
                 self._cmd_stream.close()
             self._connected = False
-            self.inc_counter("%s.closed" % self.objname)
+            self.inc_counter(f"{self.objname}.closed")
 
     @_update_last_access_time_and_in_use
-    async def run_command(self, command: bytes, *args, **kwargs) -> bytes:
-        return await self._run_command(command, *args, **kwargs)
+    async def run_command(
+        self,
+        command: bytes,
+        timeout: typing.Optional[int] = None,
+        prompt_re: typing.Optional[typing.Pattern] = None,
+    ) -> bytes:
+        return await self._run_command(
+            command=command, timeout=timeout, prompt_re=prompt_re
+        )
 
     @abc.abstractmethod
-    async def _connect(self):
+    async def _connect(self) -> None:
         """
         This needs to be implemented by the actual session classes
         """
         pass
 
     @abc.abstractmethod
-    async def _close(self):
+    async def _close(self) -> None:
         """
         This needs to be implemented by the actual session classes
         """
         pass
 
     @abc.abstractmethod
-    async def _run_command(self, command, *args, **kwargs):
+    async def _run_command(
+        self,
+        command: bytes,
+        timeout: typing.Optional[int] = None,
+        prompt_re: typing.Optional[typing.Pattern] = None,
+    ) -> bytes:
         """
         This needs to be implemented by the actual session classes
         """
         pass
 
-    async def wait_until_connected(self, timeout=None):
+    async def wait_until_connected(self, timeout: typing.Optional[int] = None) -> None:
         """
         Wait until the session is marked as connected
         """
         await self.wait_for(lambda _: self._connected, timeout=timeout)
 
-    async def _notify(self):
+    async def _notify(self) -> None:
         """
         notify a change in stream state
         """
@@ -437,7 +461,9 @@ class CommandSession(ServiceObj):
         self._event.notify_all()
         self._event.release()
 
-    async def wait_for(self, predicate, timeout=None):
+    async def wait_for(
+        self, predicate: typing.Callable, timeout: typing.Optional[int] = None
+    ) -> None:
         """
         Wait for condition to become true on the session
         """
@@ -461,24 +487,26 @@ class CommandStreamReader(asyncio.StreamReader):
     QUICK_COMMAND_RUNTIME = 1
     COMMAND_DATA_TIMEOUT = 1
 
-    def __init__(self, session, *args, **kwargs):
+    def __init__(self, session: CommandSession, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._session = session
 
     @property
-    def logger(self):
+    def logger(self) -> LogAdapter:
         return self._session.logger
 
-    async def wait_for(self, predicate, timeout=None):
+    async def wait_for(
+        self, predicate: typing.Callable, timeout: typing.Optional[int] = None
+    ) -> typing.Match:
         """
         Wait for the predicate to become true on the stream. As and when new
         data is available, the predicate will be re-evaluated.
         """
 
-        if self._exception is not None:
+        if self._exception is not None:  # pyre-ignore
             raise self._exception
 
-        res = predicate(self._buffer)
+        res = predicate(self._buffer)  # pyre-ignore
 
         start_ts = time.time()
 
@@ -494,10 +522,7 @@ class CommandStreamReader(asyncio.StreamReader):
                 )
 
             self.logger.debug(
-                "match failed in: %d: %d: %s",
-                len(self._buffer),
-                self._limit,
-                self._buffer[-100:],
+                f"match failed in: {len(self._buffer)}: {self._limit}: {self._buffer[-100:]}"  # pyre-ignore
             )
             self._session.inc_counter("streamreader.wait_for_retry")
 
@@ -511,9 +536,13 @@ class CommandStreamReader(asyncio.StreamReader):
                 # Keep waiting for data till we get a timeout
                 try:
                     while True:
-                        fut = self._wait_for_data("CommandStreamReader.wait_for")
+                        fut = self._wait_for_data(  # pyre-ignore
+                            "CommandStreamReader.wait_for"
+                        )
                         await asyncio.wait_for(
-                            fut, timeout=self.COMMAND_DATA_TIMEOUT, loop=self._loop
+                            fut,
+                            timeout=self.COMMAND_DATA_TIMEOUT,
+                            loop=self._loop,  # pyre-ignore
                         )
                 except asyncio.TimeoutError:
                     # Now try to match the prompt
@@ -528,11 +557,18 @@ class CommandStreamReader(asyncio.StreamReader):
 
         return res
 
-    def _search_re(self, regex, data, start=0):
-        self.logger.debug("searching for: %s", regex)
+    def _search_re(
+        self, regex: typing.Pattern, data: bytes, start: int = 0
+    ) -> typing.Optional[typing.Match]:
+        self.logger.debug(f"searching for: {regex}")
         return regex.search(data, start)
 
-    async def readuntil_re(self, regex, timeout=None, start=0):
+    async def readuntil_re(
+        self,
+        regex: typing.Pattern,
+        timeout: typing.Optional[int] = None,
+        start: int = 0,
+    ) -> ResponseMatch:
         """
         Read data until a regex is matched on the input stream
         """
@@ -568,9 +604,9 @@ class CommandStreamReader(asyncio.StreamReader):
             data = rdata[:m_beg]  # Data before the regex match
             matched = rdata[m_beg:m_end]  # portion that matched regex
         except AssertionError:
-            if self._eof:
+            if self._eof:  # pyre-ignore
                 # We are at the EOF. Read the whole buffer and send it back
-                data = await self.read(len(self._buffer))
+                data = await self.read(len(self._buffer))  # pyre-ignore
                 matched = b""
                 match = None
                 groupdict = None
@@ -580,12 +616,12 @@ class CommandStreamReader(asyncio.StreamReader):
 
         return ResponseMatch(data, matched, groupdict, match)
 
-    async def drain(self):
+    async def drain(self) -> bytes:
         """
         Drain the read buffer. Typically used before sending a new commands to
         make sure the stream in in sane state
         """
-        return await self.read(len(self._buffer))
+        return await self.read(len(self._buffer))  # pyre-ignore
 
 
 class CommandStream(asyncio.StreamReaderProtocol):
@@ -593,7 +629,9 @@ class CommandStream(asyncio.StreamReaderProtocol):
     # TODO: make this tweakable from configerator
     _BUFFER_LIMIT = 100 * (2 ** 20)  # 100M
 
-    def __init__(self, session, loop):
+    def __init__(
+        self, session: "CliCommandSession", loop: asyncio.AbstractEventLoop
+    ) -> None:
         super().__init__(
             CommandStreamReader(session, limit=self._BUFFER_LIMIT, loop=loop),
             client_connected_cb=self._on_connect,
@@ -602,7 +640,9 @@ class CommandStream(asyncio.StreamReaderProtocol):
         self._session = session
         self._loop = loop
 
-    def _on_connect(self, stream_reader, stream_writer):
+    def _on_connect(
+        self, stream_reader: asyncio.StreamReader, stream_writer: asyncio.StreamWriter
+    ) -> None:
         """
         called when transport is connected
         """
@@ -613,20 +653,20 @@ class CommandStream(asyncio.StreamReaderProtocol):
         super().data_received(b"\n")
         self._session._session_connected(stream_reader, stream_writer)
 
-    def close(self):
-        if self._stream_writer:
+    def close(self) -> None:
+        if self._stream_writer:  # pyre-ignore
             self._stream_writer.close()
 
-    def data_received(self, data, datatype=None):
+    def data_received(self, data: bytes, datatype=None) -> None:
         # TODO: check if we need to handle stderr data separately
         # for stderr data: datatype == EXTENDED_DATA_STDERR
         return super().data_received(data)
 
-    def session_started(self):
+    def session_started(self) -> None:
         # Not used yet. But needs to be defined
         pass
 
-    def exit_status_received(self, status):
+    def exit_status_received(self, status: str) -> None:
         self._session.exit_status_received(status)
 
 
@@ -635,7 +675,13 @@ class CliCommandSession(CommandSession):
     A command session for CLI commands. Does prompt processing on the command stream.
     """
 
-    def __init__(self, service, devinfo, options, loop):
+    def __init__(
+        self,
+        service: "FcrServiceBase",
+        devinfo: "DeviceInfo",
+        options: typing.Dict[str, typing.Any],
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
         super().__init__(service, devinfo, options, loop)
 
         self._cmd_stream = None
@@ -644,13 +690,13 @@ class CliCommandSession(CommandSession):
         # TODO: investigate if we need an error stream
 
     @classmethod
-    def register_counters(cls, counters):
-        super().register_counters(counters)
-        counters.register_counter("streamreader.wait_for_retry")
-        counters.register_counter("streamreader.overrun")
-        counters.register_counter("streamreader.overrun")
+    def register_counters(cls, stats_mgr: "Counters") -> None:
+        super().register_counters(stats_mgr)
+        stats_mgr.register_counter("streamreader.wait_for_retry")
+        stats_mgr.register_counter("streamreader.overrun")
+        stats_mgr.register_counter("streamreader.overrun")
 
-    async def _setup_connection(self):
+    async def _setup_connection(self) -> None:
         # At this point login process should already be complete. If a
         # particular session needs to send password, it should override this
         # method and complete the login before calling this method
@@ -662,12 +708,16 @@ class CliCommandSession(CommandSession):
             self.logger.debug(f"Sending setup command: {cmd}")
             await self.run_command(cmd + b"\n")
 
-    async def _create_connection(self):
+    async def _create_connection(self) -> None:
         await super()._create_connection()
         await self.wait_until_connected(self.open_timeout)
         await self._setup_connection()
 
-    async def wait_prompt(self, prompt_re=None, timeout=None):
+    async def wait_prompt(
+        self,
+        prompt_re: typing.Optional[typing.Pattern] = None,
+        timeout: typing.Optional[int] = None,
+    ) -> ResponseMatch:
         """
         Wait for a prompt
         """
@@ -677,7 +727,9 @@ class CliCommandSession(CommandSession):
             -self._MAX_PROMPT_SIZE,
         )
 
-    async def _wait_response(self, cmd, prompt_re, timeout):
+    async def _wait_response(
+        self, cmd: bytes, prompt_re: typing.Pattern, timeout: int
+    ) -> ResponseMatch:
         """
         Wait for command response from the device
         """
@@ -685,7 +737,7 @@ class CliCommandSession(CommandSession):
         resp = await self.wait_prompt(prompt_re=prompt_re, timeout=timeout)
         return resp
 
-    def _fixup_whitespace(self, output):
+    def _fixup_whitespace(self, output: bytes) -> bytes:
         # we need to sanitize the output to remove '\r' and other chars.
         # List of chars that will be removed
         #        ' *\x08+': space* followed by backspace characters
@@ -701,7 +753,7 @@ class CliCommandSession(CommandSession):
 
         return output.strip()
 
-    def _format_output(self, cmd, resp):
+    def _format_output(self, cmd: bytes, resp: ResponseMatch) -> bytes:
         """
         Format the output to comply with following format
 
@@ -738,13 +790,18 @@ class CliCommandSession(CommandSession):
 
         return output
 
-    async def _run_command(self, cmd, timeout=None, prompt_re=None):
+    async def _run_command(
+        self,
+        command: bytes,
+        timeout: typing.Optional[int] = None,
+        prompt_re: typing.Optional[typing.Pattern] = None,
+    ) -> bytes:
         """
         Run a command and return response to user
         """
         if not self._connected:
             raise RuntimeError(
-                "Not Connected", "status: %r" % self.exit_status, self.key
+                "Not Connected", f"status: {self.exit_status!r}", self.key
             )
 
         # Ideally there should be no data on the stream. We will in any case
@@ -752,17 +809,17 @@ class CliCommandSession(CommandSession):
         # that we are in sane state
         stale_data = await self._stream_reader.drain()
         if len(stale_data) != 0:
-            self.logger.warning("Stale data on session: %s", stale_data)
+            self.logger.warning(f"Stale data on session: {stale_data}")
 
         output = []
 
-        commands = cmd.splitlines()
+        commands = command.splitlines()
         for command in commands:
             cmdinfo = self._devinfo.get_command_info(
                 command, self._opts.get("command_prompts")
             )
 
-            self.logger.info("RUN: %r", cmdinfo.cmd)
+            self.logger.info(f"RUN: {cmdinfo.cmd!r}")
 
             # Send any precmd data (e.g. \x15 to clear the commandline)
             if cmdinfo.precmd:
@@ -786,7 +843,9 @@ class CliCommandSession(CommandSession):
 
         return b"\n".join(output).rstrip()
 
-    def _session_connected(self, stream_reader, stream_writer):
+    def _session_connected(
+        self, stream_reader: asyncio.StreamReader, stream_writer: asyncio.StreamWriter
+    ) -> None:
         """
         This called once the session is connected to the transport.
         stream_reader and stream_writer are used for receiving and sending
@@ -799,8 +858,8 @@ class CliCommandSession(CommandSession):
         # Notify anyone waiting for session to be connected
         asyncio.ensure_future(self._notify(), loop=self._loop)
 
-    def exit_status_received(self, status):
-        self.logger.info("exit status received: %s", status)
+    def exit_status_received(self, status: str) -> None:
+        self.logger.info(f"exit status received: {status}")
         self._connected = False
         self._exit_status = str(status)
 
@@ -814,41 +873,52 @@ class SSHCommandClient(asyncssh.SSHClient):
     to close the connection when we close the session.
     """
 
-    def __init__(self, session):
+    def __init__(self, session: "SSHCommandSession") -> None:
         super().__init__()
         self._session = session
 
-    def connection_made(self, conn):
+    def connection_made(self, conn: asyncssh.SSHClientConnection) -> None:
         super().connection_made(conn)
         self._session.connection_made(conn)
 
 
 class SSHCommandSession(CliCommandSession):
-    TERM_TYPE: Optional[str] = "vt100"
+    TERM_TYPE: typing.Optional[str] = "vt100"
 
-    def __init__(self, counter_mgr, devinfo, options, loop):
-        super().__init__(counter_mgr, devinfo, options, loop)
+    def __init__(
+        self,
+        service: "FcrServiceBase",
+        devinfo: "DeviceInfo",
+        options: typing.Dict[str, typing.Any],
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
+        super().__init__(service, devinfo, options, loop)
 
         self._conn = None
         self._chan = None
 
-    def connection_made(self, conn):
+    def connection_made(self, conn: asyncssh.SSHClientConnection) -> None:
         s = conn.get_extra_info("socket")
         self._extra_info["fd"] = s.fileno()
         self._extra_info["sockname"] = conn.get_extra_info("sockname")
         self._conn = conn
 
-    def _client_factory(self):
+    def _client_factory(self) -> SSHCommandClient:
         return SSHCommandClient(self)
 
-    async def dest_info(self):
+    async def dest_info(self) -> typing.Tuple[str, int, str, str]:
         ip = self._devinfo.get_ip(self._opts)
         port = int(
             self._extra_options.get("port") or self._devinfo.vendor_data.get_port()
         )
         return (ip, port, self._username, self._password)
 
-    async def _connect(self, subsystem=None, exec_command=None):
+    # pyre-fixme: Inconsistent override
+    async def _connect(
+        self,
+        subsystem: typing.Optional[str] = None,
+        exec_command: typing.Optional[str] = None,
+    ) -> asyncssh.SSHTCPSession:
         """
         Some session types require us to run a command to start a session. The
         SSH protocol defines three ways to start a session.
@@ -900,7 +970,7 @@ class SSHCommandSession(CliCommandSession):
         self._chan = chan
         return cmd_stream
 
-    async def _close(self):
+    async def _close(self) -> None:
         if self._chan is not None:
             self._chan.close()
         if self._conn is not None:

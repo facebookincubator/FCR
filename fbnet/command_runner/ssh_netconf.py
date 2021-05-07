@@ -8,7 +8,7 @@
 
 import asyncio
 import re
-from typing import Any, Dict, List, Optional
+import typing
 
 from fbnet.command_runner.command_session import ResponseMatch, SSHCommandSession
 from fbnet.command_runner.counters import Counters
@@ -16,9 +16,13 @@ from fbnet.command_runner_asyncio.CommandRunner.ttypes import CommandResult
 
 from .utils import construct_netconf_capability_set
 
+if typing.TYPE_CHECKING:
+    from fbnet.command_runner.device_info import DeviceInfo
+    from fbnet.command_runner.service import FcrServiceBase
+
 
 class SSHNetconf(SSHCommandSession):
-    TERM_TYPE: Optional[str] = None
+    TERM_TYPE: typing.Optional[str] = None
     DELIM: bytes = b"]]>]]>"
     PROMPT: re.Pattern = re.compile(DELIM)
 
@@ -30,10 +34,16 @@ class SSHNetconf(SSHCommandSession):
 </hello>
 """
 
-    def __init__(self, *args: List[Any], **kwargs: Dict[str, Any]) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        service: "FcrServiceBase",
+        devinfo: "DeviceInfo",
+        options: typing.Dict[str, typing.Any],
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
+        super().__init__(service, devinfo, options, loop)
 
-        self.server_hello: Optional[str] = None
+        self.server_hello: typing.Optional[str] = None
 
     @classmethod
     def register_counter(cls, counters: Counters):
@@ -103,27 +113,30 @@ class SSHNetconf(SSHCommandSession):
 
     async def _run_command(
         self,
-        cmd: bytes,
-        timeout: Optional[int] = None,
-        prompt_re: Optional[re.Pattern] = None,
+        command: bytes,
+        timeout: typing.Optional[int] = None,
+        prompt_re: typing.Optional[typing.Pattern] = None,
     ) -> bytes:
         try:
-            self.logger.info(f"Sending command to device. Command: {cmd}")
-            self._send_command(cmd)
+            self.logger.info(f"Sending command to device. Command: {command}")
+            self._send_command(command)
             # Wait for response with timeout
             resp = await asyncio.wait_for(
                 self.wait_prompt(self.PROMPT),
                 timeout or self._devinfo.vendor_data.cmd_timeout_sec,
                 loop=self._loop,
             )
-            return self._format_output(cmd, resp)
+            return self._format_output(command, resp)
         except asyncio.TimeoutError:
             self.logger.error("Timeout waiting for command response")
             data = await self._stream_reader.drain()
             raise RuntimeError("Command Response Timeout", data[-200:])
 
+    # pyre-fixme: Inconsistent return type
     async def _connect(
-        self, subsystem: Optional[str] = None, exec_command: Optional[str] = None
+        self,
+        subsystem: typing.Optional[str] = None,
+        exec_command: typing.Optional[str] = None,
     ) -> None:
         command = None
         device = self._opts.get("device")
@@ -138,5 +151,5 @@ class SSHNetconf(SSHCommandSession):
                     "either subsystem or exce_command must be specified "
                     "for netconf session"
                 )
-
+        # pyre-fixme: Inconsistent return type
         return await super()._connect(subsystem=subsystem, exec_command=command)

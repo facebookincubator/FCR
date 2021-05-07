@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from fbnet.command_runner.service import FcrServiceBase
 
     from .command_session import ResponseMatch
+    from .device_info import DeviceInfo
 
 
 class ConsoleInfo(NamedTuple):
@@ -94,8 +95,8 @@ class ConsoleCommandSession(SSHCommandSession):
     def __init__(
         self,
         service: "FcrServiceBase",
-        devinfo: Dict[str, Any],
-        options: Dict[str, str],
+        devinfo: "DeviceInfo",
+        options: Dict[str, Any],
         loop: "AbstractEventLoop",
     ) -> None:
         super().__init__(service, devinfo, options, loop)
@@ -165,10 +166,10 @@ class ConsoleCommandSession(SSHCommandSession):
 
         return cls.get_default_console_prompt_re()
 
-    async def dest_info(self) -> Tuple[str, Union[str, int]]:
+    async def dest_info(self) -> Tuple[str, int, str, str]:
         console = await self.get_console_info()
-        self.logger.info("%s", str(console))
-        return (console.server, console.port)
+        self.logger.info(f"{str(console)}")
+        return (console.server, console.port, self._username, self._password)
 
     async def expect(
         self, regex: Pattern, timeout: int = _CONSOLE_EXPECT_DELAY
@@ -419,7 +420,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
     async def _run_command(
         self,
-        cmd: bytes,
+        command: bytes,
         timeout: Optional[int] = None,
         prompt_re: Optional[Pattern] = None,
     ) -> bytes:
@@ -427,8 +428,8 @@ class ConsoleCommandSession(SSHCommandSession):
             # This statement ensures _stream_reader is not none
             if self._stream_reader:
                 await self._stream_reader.drain()
-            self.send(cmd)
+            self.send(command)
             resp = await self.wait_prompt(prompt_re)
             return resp.data + resp.matched
         else:
-            return await super()._run_command(cmd, timeout, prompt_re)
+            return await super()._run_command(command, timeout, prompt_re)
