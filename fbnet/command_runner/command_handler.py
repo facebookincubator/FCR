@@ -21,6 +21,7 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
 
 from .command_session import CommandSession
 from .counters import Counters
+from .global_namespace import GlobalNamespace
 from .options import Option
 from .utils import input_fields_validator
 
@@ -31,9 +32,8 @@ def _append_debug_info_to_exception(fn):
         try:
             return await fn(self, *args, **kwargs)
         except Exception as ex:
-            # Exclude the first item, 'self', from inspect.getfullargspec(fn).args
-            kwargs.update(zip(inspect.getfullargspec(fn).args[1:], args))
-            uuid = kwargs.get("uuid", "unknown")
+            # Retrieve request uuid from the global namespace
+            uuid = GlobalNamespace.get_request_uuid()
             # Exception defined in command runner thrift spec has attribute 'message'
             if hasattr(ex, "message"):
                 ex.message = await self.add_debug_info_to_error_message(  # noqa
