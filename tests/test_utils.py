@@ -22,7 +22,7 @@ from .testutil import AsyncTestCase, async_test
 
 
 class CanonicalizeTest(unittest.TestCase):
-    def test_canonicalize(self):
+    def test_canonicalize(self) -> None:
         self.assertEqual(canonicalize("abc"), b"abc")
         self.assertEqual(canonicalize(b"abc"), b"abc")
         self.assertEqual(canonicalize(["abc", "xyz", b"123"]), [b"abc", b"xyz", b"123"])

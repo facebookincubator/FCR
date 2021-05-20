@@ -7,15 +7,21 @@
 # LICENSE file in the root directory of this source tree.
 
 import asyncio
+import typing
 
 from mock import Mock
 
 from .mocks import MockService
 from .testutil import AsyncTestCase, async_test
 
+if typing.TYPE_CHECKING:
+    from fbnet.command_runner_asyncio.CommandRunner.ttypes import Device
+
+    from .mock_session import MockCommandSession
+
 
 class DeviceInfoTest(AsyncTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.mock_options = {}
@@ -39,27 +45,27 @@ class DeviceInfoTest(AsyncTestCase):
             0
         ]
 
-    def _get_pingable(self, dev):
+    def _get_pingable(self, dev: typing.Dict[str, str]) -> str:
         if dev["name"] in self.pingable_addrs:
-            addrtype = self.pingable_addrs.get(dev["name"])
+            addrtype = self.pingable_addrs[dev["name"]]
             return dev[addrtype + ".prefix"]
         return dev["ip"]
 
-    async def _get_device(self, name):
+    async def _get_device(self, name: str) -> "Device":
         device = Mock(hostname=name)
         return await self.mocks.device_db.get(device)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.mocks.tearDown()
         super().tearDown()
 
-    async def _setup_session(self):
+    async def _setup_session(self) -> "MockCommandSession":
         return await self.test_devinfo.setup_session(
             Mock(), self.test_device, self.session_options, self._loop
         )
 
     @async_test
-    async def test_setup_session(self):
+    async def test_setup_session(self) -> None:
         session = await self._setup_session()
 
         self.assertIsNotNone(session)
@@ -69,7 +75,7 @@ class DeviceInfoTest(AsyncTestCase):
         await session.close()
 
     @async_test
-    async def test_setup_session_delay(self):
+    async def test_setup_session_delay(self) -> None:
         self.mock_options["connect_delay"] = 0.1
         self.session_options["open_timeout"] = 0.3
 
@@ -82,7 +88,7 @@ class DeviceInfoTest(AsyncTestCase):
         await session.close()
 
     @async_test
-    async def test_setup_session_timeout(self):
+    async def test_setup_session_timeout(self) -> None:
         self.mock_options["connect_delay"] = 0.1
         self.session_options["open_timeout"] = 0.05
 
@@ -90,7 +96,7 @@ class DeviceInfoTest(AsyncTestCase):
             await self._setup_session()
 
     @async_test
-    async def test_setup_session_setup_failure(self):
+    async def test_setup_session_setup_failure(self) -> None:
         # make run_command throw an error
         self.mock_options["run_error"] = True
         # inject some test commands into session setup

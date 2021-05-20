@@ -7,13 +7,17 @@
 # LICENSE file in the root directory of this source tree.
 
 import asyncio
+import typing
 
 from fbnet.command_runner import command_session
+
+if typing.TYPE_CHECKING:
+    from fbnet.command_runner.counters import Counters
 
 
 class MockCommandTransport(asyncio.Transport):
 
-    _COMMAND_OUTPUTS = {
+    _COMMAND_OUTPUTS: typing.Dict[bytes, bytes] = {
         b"\x15": b"",
         b"en\n": b"en\n$",
         b"term width 511\n": b"term width 511\n$",
@@ -31,7 +35,12 @@ Test for user prompts
 <<<User Magic Prompt>>>""",
     }
 
-    def __init__(self, mock_options, protocol_factory, loop):
+    def __init__(
+        self,
+        mock_options: typing.Dict[str, typing.Any],
+        protocol_factory: typing.Callable,
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
         super().__init__()
         self._options = mock_options
         self._protocol = protocol_factory()
@@ -41,41 +50,43 @@ Test for user prompts
 
         self._recv_data(self._prompt, self.prompt_delay())
 
-    def prompt_delay(self):
+    def prompt_delay(self) -> int:
         return self._options.get("prompt_delay", 0)
 
-    def command_delay(self):
+    def command_delay(self) -> int:
         return self._options.get("command_delay", 0)
 
-    def _gen_cmd_response(self, cmd):
+    def _gen_cmd_response(self, cmd: bytes) -> bytes:
         return self._COMMAND_OUTPUTS[cmd]
-        response = b"""Mock response for %s\n"""
-        return response % cmd.strip()
 
-    def _recv_data(self, data, delay=0.1):
+    def _recv_data(self, data: bytes, delay: float = 0.1) -> None:
         self._loop.call_later(delay, self._protocol.data_received, data)
 
-    def _run_command(self, cmd):
+    def _run_command(self, cmd: bytes) -> None:
         # Echo back the command
         response = self._gen_cmd_response(cmd)
         self._recv_data(response, self.command_delay())
 
-    def write(self, data):
+    def write(self, data: bytes) -> None:
         self._run_command(data)
 
-    def close(self):
+    def close(self) -> None:
         pass
 
 
 class MockSessionFactory:
-    def __init__(self, mock_options, session_class):
+    def __init__(
+        self,
+        mock_options: typing.Dict[str, typing.Any],
+        session_class: typing.Type["MockCommandSession"],
+    ) -> None:
         self._mock_options = mock_options
         self._session_class = session_class
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> "MockCommandSession":
         return self._session_class(self._mock_options, *args, **kwargs)
 
-    def register_counters(self, counter_mgr):
+    def register_counters(self, counter_mgr: "Counters") -> None:
         pass
 
 
@@ -84,7 +95,9 @@ class MockCommandSession(command_session.CliCommandSession):
     A mock commands session used for testing
     """
 
-    def __init__(self, mock_options, *args, **kwargs):
+    def __init__(
+        self, mock_options: typing.Dict[str, typing.Any], *args, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self._mock_options = mock_options
@@ -93,10 +106,10 @@ class MockCommandSession(command_session.CliCommandSession):
         self._transport = None
         self._cmd_stream = None
 
-    def set_option(self, opt, value):
+    def set_option(self, opt: str, value: typing.Any) -> None:
         self._mock_options[opt] = value
 
-    def _delayed_connect(self):
+    def _delayed_connect(self) -> None:
         self.connect_called = True
         # Declare the session as connected
         self._cmd_stream = command_session.CommandStream(self, loop=self._loop)
@@ -104,17 +117,17 @@ class MockCommandSession(command_session.CliCommandSession):
             self._mock_options, lambda: self._cmd_stream, loop=self._loop
         )
 
-    async def _connect(self):
+    async def _connect(self) -> None:
         self._extra_info["peer"] = command_session.PeerInfo("test-ip", 22)
         if self._mock_options.get("connect_drop", False):
             return
         delay = self._mock_options.get("connect_delay", 0)
         self._loop.call_later(delay, self._delayed_connect)
 
-    async def _close(self):
+    async def _close(self) -> None:
         self.close_called = True
 
-    async def _run_command(self, *args, **kwargs):
+    async def _run_command(self, *args, **kwargs) -> bytes:
         run_error = self._mock_options.get("run_error", False)
         if run_error:
             raise IOError("Run Error")
@@ -122,5 +135,5 @@ class MockCommandSession(command_session.CliCommandSession):
             return await super()._run_command(*args, **kwargs)
 
     @classmethod
-    def Factory(cls, mock_options):
+    def Factory(cls, mock_options) -> MockSessionFactory:
         return MockSessionFactory(mock_options, MockCommandSession)

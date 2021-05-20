@@ -8,6 +8,7 @@
 
 import asyncio
 import logging
+import typing
 
 import mock
 from fbnet.command_runner.command_session import CommandSession
@@ -21,7 +22,7 @@ log = logging.getLogger()
 
 
 class CommandSessionTest(AsyncTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.mock_options = {}
@@ -46,7 +47,7 @@ class CommandSessionTest(AsyncTestCase):
             self.options["client_port"],
         )
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         try:
             q_session = self._get_session()
             self._run_loop(q_session.close())
@@ -56,7 +57,12 @@ class CommandSessionTest(AsyncTestCase):
         self.mocks.tearDown()
         super().tearDown()
 
-    def mock_device(self, name, console=None, command_prompts=None):
+    def mock_device(
+        self,
+        name: str,
+        console: typing.Optional[str] = None,
+        command_prompts: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> mock.Mock:
         return mock.Mock(
             hostname=name,
             console=console,
@@ -64,7 +70,7 @@ class CommandSessionTest(AsyncTestCase):
             pre_setup_commands=[],
         )
 
-    def _get_session(self):
+    def _get_session(self) -> CommandSession:
         """
         helper method the get session from cache
         """
@@ -72,16 +78,16 @@ class CommandSessionTest(AsyncTestCase):
             self.session_id, self.options["client_ip"], self.options["client_port"]
         )
 
-    def test_create(self):
+    def test_create(self) -> None:
         self.assertFalse(self.session._connected)
         self.assertIn(self.key, CommandSession._ALL_SESSIONS)
 
-    def test_get(self):
+    def test_get(self) -> None:
         q_session = self._get_session()
         self.assertEqual(self.session, q_session)
 
     @async_test
-    async def test_connect(self):
+    async def test_connect(self) -> None:
         # Session is initially not connected
         self.assertFalse(self.session._connected)
 
@@ -91,19 +97,19 @@ class CommandSessionTest(AsyncTestCase):
         self.assertTrue(self.session._connected)
 
     @async_test
-    async def test_delay_connect(self):
+    async def test_delay_connect(self) -> None:
         # Session is initially not connected
         self.assertFalse(self.session._connected)
 
         self.session.set_option("connect_delay", 0.1)
         # Initiate the connection and wait for connect
         await self.session.connect()
-        await self.session.wait_until_connected(0.2)
+        await self.session.wait_until_connected(0.2)  # pyre-ignore
 
         self.assertTrue(self.session._connected)
 
     @async_test
-    async def test_connect_timeout(self):
+    async def test_connect_timeout(self) -> None:
         # Session is initially not connected
         self.assertFalse(self.session._connected)
 
@@ -111,12 +117,12 @@ class CommandSessionTest(AsyncTestCase):
         # Initiate the connection and wait for connect
         with self.assertRaises(asyncio.TimeoutError):
             await self.session.connect()
-            await self.session.wait_until_connected(0.1)
+            await self.session.wait_until_connected(0.1)  # pyre-ignore
 
         self.assertFalse(self.session._connected)
 
     @async_test
-    async def test_setup_success(self):
+    async def test_setup_success(self) -> None:
         device = self.mock_device("test-dev-1")
         devinfo = await self.mocks.device_db.get(device)
 
@@ -134,7 +140,7 @@ class CommandSessionTest(AsyncTestCase):
         self.assertTrue(session._connected)
 
     @async_test
-    async def test_setup_prompt_timeout(self):
+    async def test_setup_prompt_timeout(self) -> None:
         device = self.mock_device("test-dev-1")
         devinfo = await self.mocks.device_db.get(device)
 
@@ -153,7 +159,7 @@ class CommandSessionTest(AsyncTestCase):
             await session.setup()
 
     @async_test
-    async def test_setup_command_timeout(self):
+    async def test_setup_command_timeout(self) -> None:
         device = self.mock_device("test-dev-1")
         devinfo = await self.mocks.device_db.get(device)
 
@@ -174,7 +180,7 @@ class CommandSessionTest(AsyncTestCase):
             await session.setup()
 
     @async_test
-    async def test_close(self):
+    async def test_close(self) -> None:
         q_session = self._get_session()
         self.assertEqual(self.session, q_session)
 
@@ -184,7 +190,7 @@ class CommandSessionTest(AsyncTestCase):
             q_session = self._get_session()
 
     @async_test
-    async def test_run_command(self):
+    async def test_run_command(self) -> None:
         with self.assertRaises(RuntimeError) as rexc:
             await self.session.run_command(b"test\n")
 
@@ -199,7 +205,7 @@ class CommandSessionTest(AsyncTestCase):
         self.assertEqual(res, b"$ test1\nMock response for test1")
 
     @async_test
-    async def test_run_command_timeout_prompt(self):
+    async def test_run_command_timeout_prompt(self) -> None:
 
         # Initiate the connection and wait for connect
         await self.session.connect()

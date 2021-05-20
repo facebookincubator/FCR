@@ -7,6 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import logging
+import typing
 
 import pkg_resources
 from fbnet.command_runner.base_service import ServiceTask
@@ -16,6 +17,9 @@ from fbnet.command_runner.device_vendor import DeviceVendor, DeviceVendors
 from fbnet.command_runner.service import FcrServiceBase
 
 from .mock_session import MockCommandSession
+
+if typing.TYPE_CHECKING:
+    from .testutil import FcrTestEventLoop
 
 
 mock_vendors = """
@@ -47,12 +51,12 @@ log = logging.getLogger()
 
 
 class MockDeviceDB(BaseDeviceDB):
-    def __init__(self, service):
+    def __init__(self, service: "MockService") -> None:
         super().__init__(service)
 
         self.mock_devices = [self.mock_dev(i) for i in range(1, 10)]
 
-    def mock_dev(self, idx):
+    def mock_dev(self, idx: int) -> DeviceInfo:
         addrs = [
             "fd01:db00:11:{:04x}::a".format(idx),
             "fd01:db00:11:{:04x}::b".format(idx),
@@ -72,13 +76,15 @@ class MockDeviceDB(BaseDeviceDB):
             "ch_model",
         )
 
-    async def _fetch_device_data(self, name_filter=None, hostname=None):
+    async def _fetch_device_data(
+        self, name_filter=None, hostname=None
+    ) -> typing.List[DeviceInfo]:
         self.logger.info("got devices: %s", self.mock_devices)
         return self.mock_devices
 
 
 class MockDeviceVendors(DeviceVendors):
-    def __init__(self, service):
+    def __init__(self, service: "MockService") -> None:
         super().__init__(service)
 
         jsonb = pkg_resources.resource_string(__name__, "mock_vendors.json")
@@ -86,7 +92,9 @@ class MockDeviceVendors(DeviceVendors):
 
 
 class MockService(FcrServiceBase):
-    def __init__(self, mock_options, loop):
+    def __init__(
+        self, mock_options: typing.Dict[str, typing.Any], loop: "FcrTestEventLoop"
+    ) -> None:
 
         super().__init__("MockService", args=[], loop=loop)
 
@@ -100,12 +108,12 @@ class MockService(FcrServiceBase):
         self.device_db = MockDeviceDB(self)
         self.setUp()
 
-    def _run_loop(self, *coro):
+    def _run_loop(self, *coro) -> typing.Any:
         return self._loop.run_until_complete(*coro)
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._run_loop(self.device_db.wait_for_data())
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         for _, svc_task in ServiceTask.all_tasks():
             svc_task.cancel()

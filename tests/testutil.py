@@ -8,38 +8,41 @@
 
 import asyncio
 import functools
+import typing
 import unittest
 
+if typing.TYPE_CHECKING:
+    from fbnet.command_runner.counters import Counters
 
 # `asyncio.events.AbstractEventLoop` to have type `float` but is never initialized.
 # pyre-fixme[13]: Attribute `slow_callback_duration` inherited from abstract class
 class FcrTestEventLoop(asyncio.SelectorEventLoop):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._counter_mgr = None
 
-    def inc_counter(self, name):
+    def inc_counter(self, name: str) -> None:
         if self._counter_mgr:
             self._counter_mgr.incCounter(name)
 
-    def set_counter_mgr(self, counter_mgr):
+    def set_counter_mgr(self, counter_mgr: "Counters") -> None:
         self._counter_mgr = counter_mgr
 
 
-def async_test(func):
+def async_test(func) -> typing.Callable:
     @functools.wraps(func)
-    def _wrapper(self, *args, **kwargs):
+    def _wrapper(self, *args, **kwargs) -> None:
         self._loop.run_until_complete(func(self, *args, **kwargs))
 
     return _wrapper
 
 
 class AsyncTestCase(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._loop = FcrTestEventLoop()
         asyncio.set_event_loop(None)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         pending = [t for t in asyncio.Task.all_tasks(self._loop) if not t.done()]
 
         if pending:
@@ -52,11 +55,11 @@ class AsyncTestCase(unittest.TestCase):
 
         self._loop.close()
 
-    def wait_for_tasks(self, timeout=10):
+    def wait_for_tasks(self, timeout: int = 10) -> None:
         pending = asyncio.Task.all_tasks(self._loop)
         self._loop.run_until_complete(asyncio.gather(*pending, loop=self._loop))
 
-    def _run_loop(self, *args):
+    def _run_loop(self, *args) -> typing.List[typing.Any]:
         """
         Run a set of coroutines in a loop
         """

@@ -6,6 +6,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import typing
+
 from fbnet.command_runner.command_handler import CommandHandler
 from fbnet.command_runner.options import Option
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
@@ -21,18 +23,23 @@ uuid = ""
 
 
 class TestCommandHandler(AsyncTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.mock_options = {}
         self._mocks = MockService(self.mock_options, loop=self._loop)
         self.stats_mgr = Mock()
         self.cmd_handler = CommandHandler(self._mocks)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self._mocks.tearDown()
         super().tearDown()
 
-    def mock_device(self, name, console="", command_prompts=None):
+    def mock_device(
+        self,
+        name: str,
+        console: str = "",
+        command_prompts: typing.Optional[typing.Dict[str, str]] = None,
+    ) -> Mock:
         return Mock(
             hostname=name,
             console=console,
@@ -41,7 +48,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_success(self):
+    async def test_run_success(self) -> None:
         device = self.mock_device("test-dev-1")
         result = await self.cmd_handler.run(
             "show version\n", device, 5, 5, client_ip, client_port, uuid
@@ -53,7 +60,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_no_device(self):
+    async def test_run_no_device(self) -> None:
         device = self.mock_device("test-dev-100")
 
         with self.assertRaises(ttypes.SessionException) as exc:
@@ -66,7 +73,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_connect_timeout(self):
+    async def test_run_connect_timeout(self) -> None:
         device = self.mock_device("test-dev-2")
 
         self.mock_options["connect_drop"] = True
@@ -81,7 +88,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_command_timeout(self):
+    async def test_run_command_timeout(self) -> None:
         device = self.mock_device("test-dev-2")
 
         with self.assertRaises(ttypes.SessionException) as exc:
@@ -94,7 +101,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_success_user_prompt(self):
+    async def test_run_success_user_prompt(self) -> None:
         command_prompts = {"user prompt test": "<<<User Magic Prompt>>>"}
         device = self.mock_device("test-dev-1", command_prompts=command_prompts)
         result = await self.cmd_handler.run(
@@ -117,7 +124,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_success_user_prompt_failed(self):
+    async def test_run_success_user_prompt_failed(self) -> None:
         command_prompts = {"user prompt test": "<<<XX User Magic Prompt>>>"}
         device = self.mock_device("test-dev-1", command_prompts=command_prompts)
         result = await self.cmd_handler.run(
@@ -142,7 +149,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_open_session(self):
+    async def test_open_session(self) -> None:
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
@@ -154,7 +161,7 @@ class TestCommandHandler(AsyncTestCase):
         self.assertEqual(session.hostname, device.hostname)
 
     @async_test
-    async def test_open_session_no_device(self):
+    async def test_open_session_no_device(self) -> None:
         device = self.mock_device("test-dev-10")
 
         with self.assertRaises(ttypes.SessionException) as exc:
@@ -168,7 +175,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_open_session_timeout(self):
+    async def test_open_session_timeout(self) -> None:
         device = self.mock_device("test-dev-2")
 
         self.mock_options["connect_drop"] = True
@@ -184,7 +191,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_session(self):
+    async def test_run_session(self) -> None:
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
@@ -201,7 +208,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_session_invalid(self):
+    async def test_run_session_invalid(self) -> None:
         session = Mock(id=1234)
 
         with self.assertRaises(ttypes.SessionException) as exc:
@@ -216,7 +223,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_run_session_command_timeout(self):
+    async def test_run_session_command_timeout(self) -> None:
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
@@ -238,7 +245,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_close_session(self):
+    async def test_close_session(self) -> None:
         device = self.mock_device("test-dev-1")
 
         session = await self.cmd_handler.open_session(
@@ -248,7 +255,7 @@ class TestCommandHandler(AsyncTestCase):
         await self.cmd_handler.close_session(session, client_ip, client_port, uuid)
 
     @async_test
-    async def test_close_session_invalid(self):
+    async def test_close_session_invalid(self) -> None:
         session = Mock(id=1234)
 
         with self.assertRaises(ttypes.SessionException) as exc:
@@ -261,7 +268,7 @@ class TestCommandHandler(AsyncTestCase):
         )
 
     @async_test
-    async def test_bulk_run_local(self):
+    async def test_bulk_run_local(self) -> None:
         devices = ["test-dev-%d" % i for i in range(1, 5)]
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
@@ -274,7 +281,7 @@ class TestCommandHandler(AsyncTestCase):
                 self.assert_command_result(result)
 
     @async_test
-    async def test_bulk_run_local_with_invalid_devices(self):
+    async def test_bulk_run_local_with_invalid_devices(self) -> None:
         devices = ["test-dev-%d" % i for i in range(0, 5)]
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
@@ -295,7 +302,7 @@ class TestCommandHandler(AsyncTestCase):
         Option.config.lb_threshold = 20
 
     @async_test
-    async def test_bulk_run_local_with_command_timeout(self):
+    async def test_bulk_run_local_with_command_timeout(self) -> None:
         devices = ["test-dev-%d" % i for i in range(0, 5)]
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
@@ -319,7 +326,7 @@ class TestCommandHandler(AsyncTestCase):
                 self.assert_command_result(result)
 
     @async_test
-    async def test_bulk_run_local_with_connect_timeout(self):
+    async def test_bulk_run_local_with_connect_timeout(self) -> None:
         devices = ["test-dev-%d" % i for i in range(0, 2)]
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
@@ -347,7 +354,7 @@ class TestCommandHandler(AsyncTestCase):
                 )
 
     @async_test
-    async def test_bulk_run_local_overload(self):
+    async def test_bulk_run_local_overload(self) -> None:
         devices = ["test-dev-%d" % i for i in range(1, 5)]
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
@@ -362,7 +369,7 @@ class TestCommandHandler(AsyncTestCase):
         self.assertIn("Too many session open: 4", exc.exception.message)
 
     @async_test
-    async def test_bulk_run_load_balance(self):
+    async def test_bulk_run_load_balance(self) -> None:
         Option.config.lb_threshold = 2
         device_names = {"test-dev-%d" % i for i in range(0, 10)}
 
@@ -393,7 +400,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
     @async_test
-    async def test_bulk_run_below_threshold(self):
+    async def test_bulk_run_below_threshold(self) -> None:
         Option.config.lb_threshold = 20
         device_names = {"test-dev-%d" % i for i in range(0, 10)}
 
@@ -431,7 +438,7 @@ class TestCommandHandler(AsyncTestCase):
                 resp, "%s: Success" % dev.hostname, "Correct response is received"
             )
 
-    def assert_command_result(self, result):
+    def assert_command_result(self, result: ttypes.CommandResult) -> None:
         if result.command == "show version\n":
             self.assertEqual(result.status, "success")
             self.assertEqual(

@@ -15,15 +15,15 @@ from .testutil import AsyncTestCase
 
 
 class TestService(AsyncTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._mock_service = mock.Mock(loop=self._loop)
 
-    def test_abstract_service(self):
+    def test_abstract_service(self) -> None:
         with self.assertRaises(TypeError):
-            ServiceTask("RunTest", service=self._mock_service)
+            ServiceTask("RunTest", service=self._mock_service)  # pyre-ignore
 
-    def test_run(self):
+    def test_run(self) -> None:
         class DummyServiceTask(ServiceTask):
             _run_called = False
             _cleanup_called = False
@@ -40,7 +40,7 @@ class TestService(AsyncTestCase):
         self.assertTrue(service._run_called)
         self.assertTrue(service._cleanup_called)
 
-    def test_cancel(self):
+    def test_cancel(self) -> None:
         class DummyServiceTask(ServiceTask):
             _run_called = False
             _run_complete = False
@@ -73,7 +73,7 @@ class TestService(AsyncTestCase):
             self.assertFalse(svc._run_complete)
             self.assertTrue(svc._cleanup_called)
 
-    def test_exception(self):
+    def test_exception(self) -> None:
         class DummyServiceTask(ServiceTask):
             _run_called = False
             _run_complete = False
@@ -99,15 +99,15 @@ class TestService(AsyncTestCase):
 
 
 class TestPeriodicService(AsyncTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._mock_service = mock.Mock(loop=self._loop)
 
-    def test_abstract_service(self):
+    def test_abstract_service(self) -> None:
         with self.assertRaises(TypeError):
-            PeriodicServiceTask(self._mock_service, "RunTest", 1)
+            PeriodicServiceTask(self._mock_service, "RunTest", 1)  # pyre-ignore
 
-    def test_run(self):
+    def test_run(self) -> None:
         class DummyServiceTask(PeriodicServiceTask):
             _run_called = 0
             _cleanup_called = False
@@ -128,7 +128,7 @@ class TestPeriodicService(AsyncTestCase):
         self.assertEqual(service._run_called, 5)
         self.assertTrue(service._cleanup_called)
 
-    def test_exception(self):
+    def test_exception(self) -> None:
         class DummyServiceTask(PeriodicServiceTask):
             _run_called = 0
             _cleanup_called = False
