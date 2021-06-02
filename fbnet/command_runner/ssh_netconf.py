@@ -143,9 +143,9 @@ class SSHNetconf(SSHCommandSession):
 
         # One of subsystem/command needs to be specified. If subsystem is specified
         # we will ignore the commmand
-        subsystem = device.session_data.subsystem
+        subsystem = device.session_data.subsystem if device.session_data else None
         if not subsystem:
-            command = device.session_data.exec_command
+            command = device.session_data.exec_command if device.session_data else None
             if not command:
                 raise RuntimeError(
                     "either subsystem or exce_command must be specified "
