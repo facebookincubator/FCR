@@ -8,6 +8,7 @@
 
 import re
 from collections import namedtuple
+from typing import NamedTuple
 
 from .base_service import ServiceObj
 from .console_session import ConsoleCommandSession
@@ -15,6 +16,7 @@ from .console_session import ConsoleCommandSession
 
 CommandInfo = namedtuple("CommandInfo", "cmd precmd prompt_re")
 DeviceIP = namedtuple("DeviceIP", ["name", "addr", "mgmt_ip"])
+IPInfo = NamedTuple("IPInfo", [("addr", str), ("is_pingable", bool)])
 
 
 class DeviceInfo(ServiceObj):
@@ -95,11 +97,17 @@ class DeviceInfo(ServiceObj):
     def hostname(self):
         return self._hostname
 
-    def get_ip(self, options):
+    def get_ip(self, options) -> IPInfo:
+        """
+        Returns IP address and whether it is pingable or not.
+
+        ip_address = devinfo.get_ip(...).addr
+        is_pingable = devinfo.get_ip(...).is_pingable
+        """
         # If user specified an ip address, then use it directly
         ip_address = options.get("ip_address")
         if ip_address:
-            return ip_address
+            return IPInfo(ip_address, self.check_ip(ip_address))
 
         # Return the first pingable IP
         use_mgmt_ip = options.get("mgmt_ip")
@@ -111,7 +119,7 @@ class DeviceInfo(ServiceObj):
                 continue
 
             if self.check_ip(ip):
-                return ip.addr
+                return IPInfo(ip.addr, True)
 
         # None of the required IP is pingable, return first valid IP address
         # if use_mgmt_ip is True, then return the first valid MGMT IP address
@@ -123,12 +131,12 @@ class DeviceInfo(ServiceObj):
 
             # return first valid ip address if user didn't specify to use mgmt ip
             if not use_mgmt_ip:
-                return ip.addr
+                return IPInfo(ip.addr, False)
 
             # return first valid mgmt ip if user specifies to use mgmt ip
             if self._is_mgmt_ip(ip):
                 self.inc_counter("device_info.fallback_to_mgmt_ip")
-                return ip.addr
+                return IPInfo(ip.addr, False)
 
         # No valid MGMT IPs were found when user specifies use_mgmt_ip, raise
         # LookupError

@@ -907,7 +907,7 @@ class SSHCommandSession(CliCommandSession):
         return SSHCommandClient(self)
 
     async def dest_info(self) -> typing.Tuple[str, int, str, str]:
-        ip = self._devinfo.get_ip(self._opts)
+        ip = self._devinfo.get_ip(self._opts).addr
         port = int(
             self._extra_options.get("port") or self._devinfo.vendor_data.get_port()
         )
