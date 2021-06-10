@@ -7,6 +7,24 @@ include "common/fb303/if/fb303.thrift"
 
 namespace py.asyncio fbnet.command_runner_asyncio.CommandRunner
 
+enum FcrErrorCode {
+  /* Error Codes */
+  // 1-99: FCR error
+  UNKNOWN = 1,
+  RUNTIME_ERROR = 2,
+
+  // 100-199: User error
+  VALIDATION_ERROR = 100,
+  PERMISSION_ERROR = 101,
+  VALUE_ERROR = 102,
+
+  // 200-299: Device error
+  DEVICE_ERROR = 200,
+
+  // 300-399: Network error
+  CONNECTION_ERROR = 300,
+}
+
 exception FBNetDataException {
   1: string message;
 }
@@ -17,6 +35,7 @@ exception UnsupportedDeviceException {
 
 exception SessionException {
   1: string message;
+  2: FcrErrorCode code;
 }
 
 exception UnsupportedCommandException {
