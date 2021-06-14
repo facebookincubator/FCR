@@ -552,6 +552,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             "session_type": device.session_type,
             "device": device,
             "raw_session": raw_session,
+            "clear_command": device.clear_command,
         }
 
         if device.command_prompts:

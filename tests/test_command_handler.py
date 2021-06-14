@@ -45,6 +45,7 @@ class TestCommandHandler(AsyncTestCase):
             console=console,
             command_prompts=command_prompts,
             pre_setup_commands=[],
+            clear_command=None,
         )
 
     @async_test

@@ -184,7 +184,12 @@ class DeviceInfo(ServiceObj):
     def _autocomplete(self):
         return self.vendor_data.autocomplete
 
-    def get_command_info(self, cmd, command_prompts=None):
+    def get_command_info(
+        self,
+        cmd,
+        command_prompts=None,
+        clear_command=None,
+    ):
         """
         get command information.
 
@@ -193,6 +198,7 @@ class DeviceInfo(ServiceObj):
           current command line
         * expected prompts: this is the prompt expected after the end of
           command output.
+        * clear command: this is the command to be sent to clear the command line.
         """
 
         cmd = cmd.strip()
@@ -220,6 +226,10 @@ class DeviceInfo(ServiceObj):
 
         # Send a NACK to clear the current command line
         precmd = self._vendor_data.clear_command
+        if clear_command == "":
+            precmd = None
+        elif clear_command:
+            precmd = clear_command.encode("utf-8")
 
         return CommandInfo(cmd, precmd, prompt_rex)
 

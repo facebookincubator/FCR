@@ -68,6 +68,7 @@ class CommandSessionTest(AsyncTestCase):
             console=console,
             command_prompts=command_prompts,
             pre_setup_commands=[],
+            clear_command=None,
         )
 
     def _get_session(self) -> CommandSession:

@@ -185,7 +185,6 @@ class CommandSession(ServiceObj):
         options: typing.Dict[str, typing.Any],
         loop: asyncio.AbstractEventLoop,
     ) -> None:
-
         # Setup devinfo as this is needed to create the logger
         self._devinfo = devinfo
 
@@ -821,7 +820,9 @@ class CliCommandSession(CommandSession):
         commands = command.splitlines()
         for command in commands:
             cmdinfo = self._devinfo.get_command_info(
-                command, self._opts.get("command_prompts")
+                command,
+                self._opts.get("command_prompts"),
+                self._opts.get("clear_command"),
             )
 
             self.logger.info(f"RUN: {cmdinfo.cmd!r}")
