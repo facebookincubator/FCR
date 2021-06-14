@@ -118,7 +118,7 @@ class MockCommandSession(command_session.CliCommandSession):
         )
 
     async def _connect(self) -> None:
-        self._extra_info["peer"] = command_session.PeerInfo("test-ip", 22)
+        self._extra_info["peer"] = command_session.PeerInfo("test-ip", True, 22)
         if self._mock_options.get("connect_drop", False):
             return
         delay = self._mock_options.get("connect_delay", 0)

@@ -166,10 +166,22 @@ class ConsoleCommandSession(SSHCommandSession):
 
         return cls.get_default_console_prompt_re()
 
-    async def dest_info(self) -> Tuple[str, int, str, str]:
+    async def dest_info(self) -> Tuple[str, bool, int, str, str]:
         console = await self.get_console_info()
         self.logger.info(f"{str(console)}")
-        return (console.server, console.port, self._username, self._password)
+
+        # By default we assume a console is directly specified by the user,
+        # so we don't want to raise error messages that it is not pingable
+        # Set is_pingable to True since check_ip method always returns True
+        is_pingable = True
+
+        return (
+            console.server,
+            is_pingable,
+            console.port,
+            self._username,
+            self._password,
+        )
 
     async def expect(
         self, regex: Pattern, timeout: int = _CONSOLE_EXPECT_DELAY

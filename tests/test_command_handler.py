@@ -142,7 +142,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertIn(
-            "Failed (session: MockCommandSession, peer: (test-ip, 22)): "
+            "Failed (session: MockCommandSession, peer: (test-ip, True, 22)): "
             "RuntimeError('Command Response Timeout', "
             "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>')",
             exc.exception.message,

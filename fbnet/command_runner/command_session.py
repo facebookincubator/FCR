@@ -38,10 +38,11 @@ ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "ma
 
 class PeerInfo(typing.NamedTuple):
     ip: typing.Optional[str] = None
+    ip_is_pingable: typing.Optional[bool] = True
     port: typing.Optional[typing.Union[int, str]] = None
 
     def __str__(self) -> str:
-        return f"({self.ip}, {self.port})"
+        return f"({self.ip}, {self.ip_is_pingable}, {self.port})"
 
 
 class LogAdapter(logging.LoggerAdapter):
@@ -229,7 +230,7 @@ class CommandSession(ServiceObj):
     def get_session_name(self) -> str:
         return self.objname
 
-    def get_peer_info(self) -> PeerInfo:
+    def get_peer_info(self) -> typing.Optional[PeerInfo]:
         return self._extra_info.get("peer")
 
     def create_logger(self) -> LogAdapter:
@@ -291,10 +292,14 @@ class CommandSession(ServiceObj):
             raise self._build_session_exc(exc_val) from exc_val
 
     def _build_session_exc(self, exc: Exception) -> SessionException:
+        peer_info = self.get_peer_info()
         msg = (
             f"Failed (session: {self.get_session_name()}, "
-            f"peer: {self.get_peer_info()}): {exc!r}"
+            f"peer: {peer_info}): {exc!r}"
         )
+
+        if isinstance(peer_info, PeerInfo) and not peer_info.ip_is_pingable:
+            msg += ", IP used in this connection is not pingable according to NetSonar"
         return SessionException(message=msg)
 
     @classmethod
@@ -906,12 +911,12 @@ class SSHCommandSession(CliCommandSession):
     def _client_factory(self) -> SSHCommandClient:
         return SSHCommandClient(self)
 
-    async def dest_info(self) -> typing.Tuple[str, int, str, str]:
-        ip = self._devinfo.get_ip(self._opts).addr
+    async def dest_info(self) -> typing.Tuple[str, bool, int, str, str]:
+        ip, ip_is_pingable = self._devinfo.get_ip(self._opts)
         port = int(
             self._extra_options.get("port") or self._devinfo.vendor_data.get_port()
         )
-        return (ip, port, self._username, self._password)
+        return (ip, ip_is_pingable, port, self._username, self._password)
 
     # pyre-fixme: Inconsistent override
     async def _connect(
@@ -936,8 +941,8 @@ class SSHCommandSession(CliCommandSession):
 
         see sec 6.5 https://tools.ietf.org/html/rfc4254 for more details
         """
-        ip, port, user, passwd = await self.dest_info()
-        self._extra_info["peer"] = PeerInfo(ip, port)
+        ip, ip_is_pingable, port, user, passwd = await self.dest_info()
+        self._extra_info["peer"] = PeerInfo(ip, ip_is_pingable, port)
 
         if self._devinfo.proxy_required(ip):
             host = self.service.get_http_proxy_url(ip)
