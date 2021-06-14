@@ -161,6 +161,13 @@ struct Device {
   to enter cli mode
   */
   19: optional list<string> pre_setup_commands;
+
+  /* The command to be sent to clear the command line (in bytes). E.g. "\x15"
+  * 1. Omit or set to None if clear_command should fall-back to default ("\x15")
+  * 2. Set to non-empty string for custom clear_command to override the default
+  * 3. Set to empty string (= "") to forgo sending a clear_command in-between commands.
+  */
+  20: optional string clear_command;
 }
 
 struct CommandResult {
