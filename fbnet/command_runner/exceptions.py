@@ -77,6 +77,10 @@ def ensure_thrift_exception(fn: F) -> F:
         except Exception as e:
             if isinstance(e, fcr_ttypes.SessionException):
                 raise e
+            # Thrift defined InstanceOverloaded exceptions are only for internal use
+            # so don't have to convert to Thrift defined SessionException
+            elif isinstance(e, fcr_ttypes.InstanceOverloaded):
+                raise e
 
             fcr_ex: fcr_ttypes.SessionException
             if isinstance(e, FcrBaseException):

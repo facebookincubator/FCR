@@ -21,6 +21,7 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
 
 from .command_session import CommandSession
 from .counters import Counters
+from .exceptions import ensure_thrift_exception
 from .global_namespace import GlobalNamespace
 from .options import Option
 from .utils import input_fields_validator
@@ -177,6 +178,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     async def add_debug_info_to_error_message(self, error_msg, uuid):
         return f"{error_msg} (DebugInfo: thrift_uuid={uuid})"
 
+    @ensure_thrift_exception
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
@@ -202,6 +204,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             for dev, cmds in device_to_commands.items()
         }
 
+    @ensure_thrift_exception
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
@@ -258,6 +261,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         return all_results
 
+    @ensure_thrift_exception
     @_ensure_uuid
     async def bulk_run_local(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
@@ -313,6 +317,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             self._get_result_key(dev): res for dev, res in zip(devices, cmd_results)
         }
 
+    @ensure_thrift_exception
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
@@ -329,6 +334,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raw_session=False,
         )
 
+    @ensure_thrift_exception
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
@@ -339,6 +345,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             session, command, timeout, client_ip, client_port, uuid
         )
 
+    @ensure_thrift_exception
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
@@ -351,6 +358,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 message="close_session failed: %r" % (e)
             ) from e
 
+    @ensure_thrift_exception
     @_append_debug_info_to_exception
     @_ensure_uuid
     async def open_raw_session(
@@ -366,6 +374,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raw_session=True,
         )
 
+    @ensure_thrift_exception
     @_append_debug_info_to_exception
     @_ensure_uuid
     async def run_raw_session(
@@ -380,6 +389,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             tsession, command, timeout, client_ip, client_port, uuid, prompt_re
         )
 
+    @ensure_thrift_exception
     @_append_debug_info_to_exception
     @_ensure_uuid
     async def close_raw_session(self, tsession, client_ip, client_port, uuid):
