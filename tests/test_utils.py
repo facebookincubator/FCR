@@ -9,6 +9,7 @@
 import unittest
 from typing import Dict, List, Optional
 
+from fbnet.command_runner.exceptions import ValidationErrorException
 from fbnet.command_runner.utils import (
     _check_device,
     _check_session,
@@ -30,34 +31,34 @@ class CanonicalizeTest(unittest.TestCase):
 
 class InputFieldsValidatorTest(AsyncTestCase):
     def test_check_device(self) -> None:
-        with self.assertRaises(ttypes.SessionException) as ex:
+        with self.assertRaises(ValidationErrorException) as ex:
             _check_device(device=None)
 
         self.assertEqual(
-            ex.exception.message, "Required argument (device) cannot be None."
+            str(ex.exception), "Required argument (device) cannot be None."
         )
 
-        with self.assertRaises(ttypes.SessionException) as ex:
+        with self.assertRaises(ValidationErrorException) as ex:
             _check_device(device=ttypes.Device())
 
         missing_list = ["hostname", "username", "password"]
         for missing_field in missing_list:
-            self.assertIn(missing_field, ex.exception.message)
+            self.assertIn(missing_field, str(ex.exception))
 
     def test_check_session(self) -> None:
-        with self.assertRaises(ttypes.SessionException) as ex:
+        with self.assertRaises(ValidationErrorException) as ex:
             _check_session(session=None)
 
         self.assertEqual(
-            ex.exception.message, "Required argument (session) cannot be None."
+            str(ex.exception), "Required argument (session) cannot be None."
         )
 
-        with self.assertRaises(ttypes.SessionException) as ex:
+        with self.assertRaises(ValidationErrorException) as ex:
             _check_session(session=ttypes.Session())
 
         missing_list = ["hostname", "id", "name"]
         for missing_field in missing_list:
-            self.assertIn(missing_field, ex.exception.message)
+            self.assertIn(missing_field, str(ex.exception))
 
     def test_construct_capability_set(self) -> None:
         empty_hello_msg = ""
@@ -133,22 +134,22 @@ class InputFieldsValidatorTest(AsyncTestCase):
         ) -> None:
             return
 
-        with self.assertRaises(ttypes.SessionException):
+        with self.assertRaises(ValidationErrorException):
             await test_command(self, command=None)
 
-        with self.assertRaises(ttypes.SessionException):
+        with self.assertRaises(ValidationErrorException):
             await test_device(self, device=ttypes.Device(hostname="test-device"))
 
-        with self.assertRaises(ttypes.SessionException):
+        with self.assertRaises(ValidationErrorException):
             await test_session(self, session=ttypes.Session(hostname="test-device"))
 
-        with self.assertRaises(ttypes.SessionException):
+        with self.assertRaises(ValidationErrorException):
             await test_device_to_commands(
                 self,
                 device_to_commands={ttypes.Device(hostname="test-device"): ["command"]},
             )
 
-        with self.assertRaises(ttypes.SessionException):
+        with self.assertRaises(ValidationErrorException):
             await test_device_to_configlets(
                 self,
                 device_to_configlets={

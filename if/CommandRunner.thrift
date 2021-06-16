@@ -25,10 +25,12 @@ enum FcrErrorCode {
   CONNECTION_ERROR = 300,
 }
 
+// This exception is deprecated; raise a SessionException instead
 exception FBNetDataException {
   1: string message;
 }
 
+// This exception is deprecated; raise a SessionException instead
 exception UnsupportedDeviceException {
   1: string message;
 }
@@ -38,6 +40,7 @@ exception SessionException {
   2: FcrErrorCode code;
 }
 
+// This exception is deprecated; raise a SessionException instead
 exception UnsupportedCommandException {
   1: string message;
 }

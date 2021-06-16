@@ -11,6 +11,7 @@ import xml.etree.ElementTree as et
 from functools import lru_cache, wraps
 from typing import Optional, Set, Union
 
+from fbnet.command_runner.exceptions import ValidationErrorException
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 
 
@@ -33,9 +34,7 @@ def canonicalize(val):
 
 def _check_device(device: Optional[ttypes.Device]) -> None:
     if not device:
-        raise ttypes.SessionException(
-            message="Required argument (device) cannot be None."
-        )
+        raise ValidationErrorException("Required argument (device) cannot be None.")
 
     missing_list = []
     if not device.hostname:
@@ -52,16 +51,14 @@ def _check_device(device: Optional[ttypes.Device]) -> None:
         missing_list.append("password")
 
     if missing_list:
-        raise ttypes.SessionException(
-            message=f"Following required Device fields are missing: {missing_list}"
+        raise ValidationErrorException(
+            f"Following required Device fields are missing: {missing_list}"
         )
 
 
 def _check_session(session: Optional[ttypes.Session]) -> None:
     if not session:
-        raise ttypes.SessionException(
-            message="Required argument (session) cannot be None."
-        )
+        raise ValidationErrorException("Required argument (session) cannot be None.")
 
     missing_list = []
     if not session.hostname:
@@ -74,8 +71,8 @@ def _check_session(session: Optional[ttypes.Session]) -> None:
         missing_list.append("name")
 
     if missing_list:
-        raise ttypes.SessionException(
-            message=f"Following required Session fields are missing: {missing_list}"
+        raise ValidationErrorException(
+            f"Following required Session fields are missing: {missing_list}"
         )
 
 
@@ -141,8 +138,8 @@ def input_fields_validator(fn):  # noqa C901
         for i, arg in enumerate(args):
 
             if arg is None:
-                raise ttypes.SessionException(
-                    message=f"The ({i + 1})th argument cannot be None."
+                raise ValidationErrorException(
+                    f"The ({i + 1})th argument cannot be None."
                 )
             elif isinstance(arg, ttypes.Device):
                 _check_device(arg)
@@ -155,8 +152,8 @@ def input_fields_validator(fn):  # noqa C901
 
         for argument, val in kwargs.items():
             if argument == "command" and not val:
-                raise ttypes.SessionException(
-                    message="Required argument (command) cannot be None."
+                raise ValidationErrorException(
+                    "Required argument (command) cannot be None."
                 )
             elif argument == "device":
                 _check_device(val)
@@ -164,8 +161,8 @@ def input_fields_validator(fn):  # noqa C901
                 _check_session(val)
             elif argument == "device_to_commands" or argument == "device_to_configlets":
                 if not val:
-                    raise ttypes.SessionException(
-                        message=f"Required argument ({argument}) cannot be None."
+                    raise ValidationErrorException(
+                        f"Required argument ({argument}) cannot be None."
                     )
 
                 for device in val:
