@@ -18,6 +18,7 @@ from fbnet.command_runner.exceptions import (
     DeviceErrorException,
     ConnectionErrorException,
     ensure_thrift_exception,
+    convert_to_fcr_exception,
 )
 from fbnet.command_runner_asyncio.CommandRunner import ttypes as fcr_ttypes
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import FcrErrorCode
@@ -60,6 +61,40 @@ class ExceptionTest(AsyncTestCase):
             self.assertIsInstance(converted_exc, fcr_ttypes.SessionException)
             self.assertEqual(exc._CODE, converted_exc.code)
             self.assertEqual(str(exc), converted_exc.message)
+
+    def test_convert_to_fcr_exception(self) -> None:
+        """
+        Test for the convert_to_fcr_exception function
+        The function should convert generic exception types to FcrBaseException types
+        and leave FcrBaseException types unchanged
+        """
+        exc_msg = "This is an exception!"
+
+        # Test that FcrBaseException types are unchanged
+        for exception_type in self.FCR_EXCEPTIONS:
+            exc = exception_type(exc_msg)
+            converted_exc = convert_to_fcr_exception(exc)
+
+            self.assertIsInstance(converted_exc, FcrBaseException)
+            self.assertEqual(exc._CODE, converted_exc._CODE)
+            self.assertEqual(str(exc), str(converted_exc))
+
+        # Test that known exception types are converted correctly
+        for exception_type in self.KNOWN_EXCEPTIONS:
+            exc = exception_type(exc_msg)
+            converted_exc = convert_to_fcr_exception(exc)
+
+            self.assertIsInstance(converted_exc, FcrBaseException)
+            self.assertEqual(self.KNOWN_EXCEPTIONS[exception_type], converted_exc._CODE)
+            self.assertEqual(str(exc), str(converted_exc))
+
+        # Test that unknown Exceptions are converted correctly
+        unknown_exc = Exception("This is an unknown exception!")
+        converted_exc = convert_to_fcr_exception(unknown_exc)
+
+        self.assertIsInstance(converted_exc, FcrBaseException)
+        self.assertEqual(FcrErrorCode.UNKNOWN, converted_exc._CODE)
+        self.assertEqual(repr(unknown_exc), str(converted_exc))
 
     @async_test
     async def test_ensure_thrift_exception(self) -> None:
@@ -110,7 +145,6 @@ class ExceptionTest(AsyncTestCase):
             converted_exc = context.exception
             self.assertIsInstance(converted_exc, fcr_ttypes.SessionException)
             self.assertEqual(self.KNOWN_EXCEPTIONS[exception_type], converted_exc.code)
-            print(converted_exc.message)
             self.assertEqual(str(exc), converted_exc.message)
 
         # Test that all unknown Exceptions are converted

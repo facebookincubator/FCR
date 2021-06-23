@@ -61,6 +61,28 @@ class ConnectionErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.CONNECTION_ERROR
 
 
+def convert_to_fcr_exception(e: Exception) -> FcrBaseException:
+    """
+    Convert all generic exceptions to FcrBaseException types
+    Leaves FcrBaseException types unchanged
+    """
+    if isinstance(e, FcrBaseException):
+        return e
+    elif isinstance(e, PermissionError):
+        # use str(e) for known exceptions to keep exception messages clean
+        return PermissionErrorException(str(e))
+    elif isinstance(e, ValueError):
+        return ValueErrorException(str(e))
+    elif isinstance(e, RuntimeError):
+        # keep RuntimeError as last elif case to avoid interfering
+        # with conversion of other RuntimeError-derived exceptions
+        # and catch any unidentified RuntimeError-derived exceptions
+        return RuntimeErrorException(str(e))
+    else:
+        # use repr(e) for unknown exceptions to preserve exception information
+        return UnknownException(repr(e))
+
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 
@@ -82,20 +104,10 @@ def ensure_thrift_exception(fn: F) -> F:
             elif isinstance(e, fcr_ttypes.InstanceOverloaded):
                 raise e
 
-            fcr_ex: fcr_ttypes.SessionException
-            if isinstance(e, FcrBaseException):
-                fcr_ex = await e.to_thrift_exception()
-            elif isinstance(e, PermissionError):
-                # use str(e) for known exceptions to keep exception messages clean
-                fcr_ex = await PermissionErrorException(str(e)).to_thrift_exception()
-            elif isinstance(e, ValueError):
-                fcr_ex = await ValueErrorException(str(e)).to_thrift_exception()
-            elif isinstance(e, RuntimeError):
-                fcr_ex = await RuntimeErrorException(str(e)).to_thrift_exception()
-            else:
-                # use repr(e) for unknown exceptions to preserve exception information
-                fcr_ex = await UnknownException(repr(e)).to_thrift_exception()
+            fcr_ex: fcr_ttypes.SessionException = await convert_to_fcr_exception(
+                e
+            ).to_thrift_exception()
 
-            raise fcr_ex
+            raise fcr_ex from e
 
     return cast(F, wrapper)
