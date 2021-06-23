@@ -53,12 +53,32 @@ class RuntimeErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.RUNTIME_ERROR
 
 
+class AssertionErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.ASSERTION_ERROR
+
+
+class LookupErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.LOOKUP_ERROR
+
+
+class StreamReaderErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.STREAM_READER_ERROR
+
+
+class CommandExecutionTimeoutErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.COMMAND_EXECUTION_TIMEOUT_ERROR
+
+
 class DeviceErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.DEVICE_ERROR
 
 
 class ConnectionErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.CONNECTION_ERROR
+
+
+class ConnectionTimeoutErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.CONNECTION_TIMEOUT_ERROR
 
 
 def convert_to_fcr_exception(e: Exception) -> FcrBaseException:
@@ -73,6 +93,10 @@ def convert_to_fcr_exception(e: Exception) -> FcrBaseException:
         return PermissionErrorException(str(e))
     elif isinstance(e, ValueError):
         return ValueErrorException(str(e))
+    elif isinstance(e, AssertionError):
+        return AssertionErrorException(str(e))
+    elif isinstance(e, LookupError) or isinstance(e, KeyError):
+        return LookupErrorException(str(e))
     elif isinstance(e, RuntimeError):
         # keep RuntimeError as last elif case to avoid interfering
         # with conversion of other RuntimeError-derived exceptions

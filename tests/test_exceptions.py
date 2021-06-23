@@ -15,8 +15,13 @@ from fbnet.command_runner.exceptions import (
     PermissionErrorException,
     ValueErrorException,
     RuntimeErrorException,
+    AssertionErrorException,
+    LookupErrorException,
+    StreamReaderErrorException,
+    CommandExecutionTimeoutErrorException,
     DeviceErrorException,
     ConnectionErrorException,
+    ConnectionTimeoutErrorException,
     ensure_thrift_exception,
     convert_to_fcr_exception,
 )
@@ -34,8 +39,13 @@ class ExceptionTest(AsyncTestCase):
         PermissionErrorException,
         ValueErrorException,
         RuntimeErrorException,
+        AssertionErrorException,
+        LookupErrorException,
+        StreamReaderErrorException,
+        CommandExecutionTimeoutErrorException,
         DeviceErrorException,
         ConnectionErrorException,
+        ConnectionTimeoutErrorException,
     ]
 
     # Other non-FcrBaseException exceptions that FCR knows about
@@ -43,6 +53,9 @@ class ExceptionTest(AsyncTestCase):
         PermissionError: FcrErrorCode.PERMISSION_ERROR,
         ValueError: FcrErrorCode.VALUE_ERROR,
         RuntimeError: FcrErrorCode.RUNTIME_ERROR,
+        AssertionError: FcrErrorCode.ASSERTION_ERROR,
+        LookupError: FcrErrorCode.LOOKUP_ERROR,
+        KeyError: FcrErrorCode.LOOKUP_ERROR,
     }
 
     @async_test

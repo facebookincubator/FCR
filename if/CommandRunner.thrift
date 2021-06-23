@@ -12,6 +12,10 @@ enum FcrErrorCode {
   // 1-99: FCR error
   UNKNOWN = 1,
   RUNTIME_ERROR = 2,
+  ASSERTION_ERROR = 3,
+  LOOKUP_ERROR = 4,
+  STREAM_READER_ERROR = 5,
+  COMMAND_EXECUTION_TIMEOUT_ERROR = 6,
 
   // 100-199: User error
   VALIDATION_ERROR = 100,
@@ -23,6 +27,7 @@ enum FcrErrorCode {
 
   // 300-399: Network error
   CONNECTION_ERROR = 300,
+  CONNECTION_TIMEOUT_ERROR = 301,
 }
 
 // This exception is deprecated; raise a SessionException instead
