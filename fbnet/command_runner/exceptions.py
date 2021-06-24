@@ -49,6 +49,10 @@ class ValueErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.VALUE_ERROR
 
 
+class UnsupportedDeviceErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.UNSUPPORTED_DEVICE_ERROR
+
+
 class RuntimeErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.RUNTIME_ERROR
 
@@ -67,6 +71,10 @@ class StreamReaderErrorException(FcrBaseException):
 
 class CommandExecutionTimeoutErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.COMMAND_EXECUTION_TIMEOUT_ERROR
+
+
+class NotImplementedErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.NOT_IMPLEMENTED_ERROR
 
 
 class DeviceErrorException(FcrBaseException):
@@ -97,6 +105,8 @@ def convert_to_fcr_exception(e: Exception) -> FcrBaseException:
         return AssertionErrorException(str(e))
     elif isinstance(e, LookupError) or isinstance(e, KeyError):
         return LookupErrorException(str(e))
+    elif isinstance(e, NotImplementedError):
+        return NotImplementedErrorException(str(e))
     elif isinstance(e, RuntimeError):
         # keep RuntimeError as last elif case to avoid interfering
         # with conversion of other RuntimeError-derived exceptions
