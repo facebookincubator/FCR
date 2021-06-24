@@ -6,9 +6,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import asyncio
 import typing
 
+from fbnet.command_runner.exceptions import ConnectionTimeoutErrorException
 from mock import Mock
 
 from .mocks import MockService
@@ -92,7 +92,7 @@ class DeviceInfoTest(AsyncTestCase):
         self.mock_options["connect_delay"] = 0.1
         self.session_options["open_timeout"] = 0.05
 
-        with self.assertRaises(asyncio.TimeoutError):
+        with self.assertRaises(ConnectionTimeoutErrorException):
             await self._setup_session()
 
     @async_test

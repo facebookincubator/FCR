@@ -21,7 +21,7 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
 
 from .command_session import CommandSession
 from .counters import Counters
-from .exceptions import ensure_thrift_exception
+from .exceptions import ensure_thrift_exception, convert_to_fcr_exception
 from .global_namespace import GlobalNamespace
 from .options import Option
 from .utils import input_fields_validator
@@ -244,9 +244,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                     await asyncio.sleep(delay)
                     retry_count += 1
                 except Exception as e:
-                    raise ttypes.SessionException(
-                        message=f"bulk_run_remote failed: {e}"
-                    ) from e
+                    raise type(e)(f"bulk_run_remote failed: {e!s}") from e
 
         # Split the request into chunks and run them on remote hosts
         tasks = [
@@ -354,9 +352,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             session = CommandSession.get(session.id, client_ip, client_port)
             await session.close()
         except Exception as e:
-            raise ttypes.SessionException(
-                message="close_session failed: %r" % (e)
-            ) from e
+            raise type(e)(f"close_session failed: {e!s}") from e
 
     @ensure_thrift_exception
     @_append_debug_info_to_exception
@@ -424,7 +420,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 id=session.id, name=session.hostname, hostname=device.hostname
             )
         except Exception as e:
-            raise ttypes.SessionException(message="open_session failed: %r" % e) from e
+            raise type(e)(f"open_session failed: {e!s}") from e
 
     async def _run_session(
         self, tsession, command, timeout, client_ip, client_port, uuid, prompt_re=None
@@ -433,7 +429,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             session = CommandSession.get(tsession.id, client_ip, client_port)
             return await self._run_command(session, command, timeout, uuid, prompt_re)
         except Exception as e:
-            raise ttypes.SessionException(message="run_session failed: %r" % (e)) from e
+            raise type(e)(f"run_session failed: {e!s}") from e
 
     def _get_result_key(self, device):
         # TODO: just returning the hostname for now. Some additional processing
@@ -492,9 +488,11 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         except Exception as e:
             await self._record_error(e, command, uuid, options, devinfo, session)
-            if not isinstance(e, ttypes.SessionException):
-                e = ttypes.SessionException(message="%r" % e)
             if return_exceptions:
+                if not isinstance(e, ttypes.SessionException):
+                    e = convert_to_fcr_exception(e)
+                    e = ttypes.SessionException(message=f"{e!s}", code=e._CODE)
+
                 e.message = await self.add_debug_info_to_error_message(  # noqa
                     error_msg=e.message, uuid=uuid  # noqa
                 )

@@ -6,12 +6,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import asyncio
 import logging
 import typing
 
 import mock
 from fbnet.command_runner.command_session import CommandSession
+from fbnet.command_runner.exceptions import (
+    RuntimeErrorException,
+    LookupErrorException,
+    CommandExecutionTimeoutErrorException,
+    ConnectionTimeoutErrorException,
+)
 
 from .mock_session import MockCommandSession
 from .mocks import MockService
@@ -116,7 +121,7 @@ class CommandSessionTest(AsyncTestCase):
 
         self.session.set_option("connect_delay", 0.2)
         # Initiate the connection and wait for connect
-        with self.assertRaises(asyncio.TimeoutError):
+        with self.assertRaises(ConnectionTimeoutErrorException):
             await self.session.connect()
             await self.session.wait_until_connected(0.1)  # pyre-ignore
 
@@ -156,7 +161,7 @@ class CommandSessionTest(AsyncTestCase):
         self.assertFalse(session._connected)
 
         # Initiate the connection and wait for connect
-        with self.assertRaises(asyncio.TimeoutError):
+        with self.assertRaises(ConnectionTimeoutErrorException):
             await session.setup()
 
     @async_test
@@ -177,7 +182,7 @@ class CommandSessionTest(AsyncTestCase):
         self.assertFalse(session._connected)
 
         # Initiate the connection and wait for connect
-        with self.assertRaises(asyncio.TimeoutError):
+        with self.assertRaises(ConnectionTimeoutErrorException):
             await session.setup()
 
     @async_test
@@ -187,12 +192,12 @@ class CommandSessionTest(AsyncTestCase):
 
         await self.session.close()
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(LookupErrorException):
             q_session = self._get_session()
 
     @async_test
     async def test_run_command(self) -> None:
-        with self.assertRaises(RuntimeError) as rexc:
+        with self.assertRaises(RuntimeErrorException) as rexc:
             await self.session.run_command(b"test\n")
 
         self.assertEqual(rexc.exception.args[0], "Not Connected")
@@ -213,7 +218,7 @@ class CommandSessionTest(AsyncTestCase):
         await self.session.wait_until_connected()
         await self.session.wait_prompt()
 
-        with self.assertRaises(RuntimeError) as rexc:
+        with self.assertRaises(CommandExecutionTimeoutErrorException) as rexc:
             await self.session.run_command(b"command timeout\n", 1)
 
         self.assertEqual(rexc.exception.args[0], "Command Response Timeout")

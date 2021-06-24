@@ -16,6 +16,16 @@ from collections import namedtuple
 from functools import wraps
 
 import asyncssh
+from fbnet.command_runner.exceptions import (
+    FcrBaseException,
+    RuntimeErrorException,
+    AssertionErrorException,
+    LookupErrorException,
+    StreamReaderErrorException,
+    CommandExecutionTimeoutErrorException,
+    ConnectionErrorException,
+    ConnectionTimeoutErrorException,
+)
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
 
@@ -290,16 +300,23 @@ class CommandSession(ServiceObj):
         if exc_val:
             raise self._build_session_exc(exc_val) from exc_val
 
-    def _build_session_exc(self, exc: Exception) -> SessionException:
+    def _build_session_exc(self, exc: Exception) -> Exception:
+        """
+        Builds a new exception of the same type as exc
+        Contains original exception's message plus additional messages.
+        """
         peer_info = self.get_peer_info()
-        msg = (
-            f"Failed (session: {self.get_session_name()}, "
-            f"peer: {peer_info}): {exc!r}"
-        )
+        msg = f"Failed (session: {self.get_session_name()}, peer: {peer_info}): "
+
+        if isinstance(exc, FcrBaseException):
+            msg += f"{exc!s}"
+        else:
+            msg += f"{exc!r}"
 
         if isinstance(peer_info, PeerInfo) and not peer_info.ip_is_pingable:
             msg += ", IP used in this connection is not pingable according to NetSonar"
-        return SessionException(message=msg)
+
+        return type(exc)(msg)
 
     @classmethod
     def get(cls, session_id: int, client_ip: str, client_port: int) -> "CommandSession":
@@ -307,7 +324,7 @@ class CommandSession(ServiceObj):
         try:
             return cls._ALL_SESSIONS[key]
         except KeyError as ke:
-            raise KeyError("Session not found", key) from ke
+            raise LookupErrorException("Session not found", key) from ke
 
     @property
     def hostname(self) -> str:
@@ -379,7 +396,7 @@ class CommandSession(ServiceObj):
             # pyre-fixme
             if hasattr(self, "_stream_reader") and self._stream_reader:
                 data = await self._stream_reader.drain()
-            raise asyncio.TimeoutError(
+            raise ConnectionTimeoutErrorException(
                 "Timeout during connection setup. Currently received data "
                 f"(last 200 char): {data[-200:]}"
             )
@@ -396,7 +413,9 @@ class CommandSession(ServiceObj):
         except Exception as e:
             self.logger.error(f"Connect Failed {e!r}")
             self.inc_counter(f"{self.objname}.failed")
-            raise e
+            if isinstance(e, FcrBaseException):
+                raise
+            raise ConnectionErrorException(repr(e)) from e
 
     async def close(self) -> None:
         """
@@ -455,7 +474,12 @@ class CommandSession(ServiceObj):
         """
         Wait until the session is marked as connected
         """
-        await self.wait_for(lambda _: self._connected, timeout=timeout)
+        try:
+            await self.wait_for(lambda _: self._connected, timeout=timeout)
+        except asyncio.TimeoutError as exc:
+            raise ConnectionTimeoutErrorException(
+                "Timed out before session marked as connected"
+            ) from exc
 
     async def _notify(self) -> None:
         """
@@ -508,7 +532,7 @@ class CommandStreamReader(asyncio.StreamReader):
         """
 
         if self._exception is not None:  # pyre-ignore
-            raise self._exception
+            raise StreamReaderErrorException(repr(self._exception)) from self._exception
 
         res = predicate(self._buffer)  # pyre-ignore
 
@@ -521,7 +545,7 @@ class CommandStreamReader(asyncio.StreamReader):
             # This will ensure that we will eventually break out from the while loop if timeout
             # is set
             if timeout and now - start_ts >= timeout:
-                raise asyncio.TimeoutError(
+                raise CommandExecutionTimeoutErrorException(
                     "FCR timeout during matching regex against current buffer output from device."
                 )
 
@@ -532,7 +556,7 @@ class CommandStreamReader(asyncio.StreamReader):
 
             if len(self._buffer) > self._limit:
                 self._session.inc_counter("streamreader.overrun")
-                raise RuntimeError(
+                raise StreamReaderErrorException(
                     "Reader buffer overrun: %d: %d" % (len(self._buffer), self._limit)
                 )
 
@@ -607,7 +631,7 @@ class CommandStreamReader(asyncio.StreamReader):
             rdata = await self.read(m_end)
             data = rdata[:m_beg]  # Data before the regex match
             matched = rdata[m_beg:m_end]  # portion that matched regex
-        except AssertionError:
+        except AssertionError as exc:
             if self._eof:  # pyre-ignore
                 # We are at the EOF. Read the whole buffer and send it back
                 data = await self.read(len(self._buffer))  # pyre-ignore
@@ -616,7 +640,7 @@ class CommandStreamReader(asyncio.StreamReader):
                 groupdict = None
             else:
                 # re-raise the exception
-                raise
+                raise AssertionErrorException(str(exc)) from exc
 
         return ResponseMatch(data, matched, groupdict, match)
 
@@ -804,7 +828,7 @@ class CliCommandSession(CommandSession):
         Run a command and return response to user
         """
         if not self._connected:
-            raise RuntimeError(
+            raise RuntimeErrorException(
                 "Not Connected", f"status: {self.exit_status!r}", self.key
             )
 
@@ -845,7 +869,9 @@ class CliCommandSession(CommandSession):
             except asyncio.TimeoutError:
                 self.logger.error("Timeout waiting for command response")
                 data = await self._stream_reader.drain()
-                raise RuntimeError("Command Response Timeout", data[-200:])
+                raise CommandExecutionTimeoutErrorException(
+                    "Command Response Timeout", data[-200:]
+                )
 
         return b"\n".join(output).rstrip()
 
