@@ -20,6 +20,11 @@ from typing import (
     Union,
 )
 
+from fbnet.command_runner.exceptions import (
+    PermissionErrorException,
+    RuntimeErrorException,
+)
+
 from .command_session import SSHCommandSession
 from .options import Option
 
@@ -267,7 +272,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
         elif res.groupdict.get("login"):
             if username_tried:
-                raise PermissionError(
+                raise PermissionErrorException(
                     "Login failure, possibly incorrect username or password, "
                     "or device refuses to login."
                 )
@@ -292,7 +297,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
         elif res.groupdict.get("passwd"):
             if pwd_tried:
-                raise PermissionError(
+                raise PermissionErrorException(
                     "Login failure, possibly incorrect username or password, "
                     "or device refuses to login."
                 )
@@ -300,7 +305,7 @@ class ConsoleCommandSession(SSHCommandSession):
                 # passwd information not available
                 # Likely we have alreay sent the password. Bail out instead
                 # of getting stuck in a loop.
-                raise RuntimeError("Failed to login: Missing password")
+                raise RuntimeErrorException("Failed to login: Missing password")
             self.send(self._password)
             return await self._try_login(
                 username_tried=username_tried,
@@ -320,7 +325,7 @@ class ConsoleCommandSession(SSHCommandSession):
             return self._send_newline()
 
         else:
-            raise RuntimeError("Matched no group: %s" % (res.groupdict))
+            raise RuntimeErrorException("Matched no group: %s" % (res.groupdict))
 
     async def _get_response(self, timeout: int) -> "ResponseMatch":
         # A small delay to avoid having to match extraneous input
