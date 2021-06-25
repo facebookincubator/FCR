@@ -27,6 +27,9 @@ enum FcrErrorCode {
   // NOT_IMPLEMENTED_ERROR: for built-in
   // NotImplementedError
   NOT_IMPLEMENTED_ERROR = 7,
+  // PARSING_ERROR: error with parsing
+  // requests and responses
+  PARSING_ERROR = 8,
 
   // 100-199: User error
   // VALIDATION_ERROR: invalid inputs
@@ -43,6 +46,10 @@ enum FcrErrorCode {
   // 200-299: Device error
   // DEVICE_ERROR: for general device-related errors
   DEVICE_ERROR = 200,
+  // COMMAND_EXECUTION_ERROR: device has
+  // has already received the command
+  // but error when trying to execute it
+  COMMAND_EXECUTION_ERROR = 201,
 
   // 300-399: Network error
   // CONNECTION_ERROR: for general network-related
