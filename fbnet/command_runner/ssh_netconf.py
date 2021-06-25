@@ -12,6 +12,11 @@ import typing
 
 from fbnet.command_runner.command_session import ResponseMatch, SSHCommandSession
 from fbnet.command_runner.counters import Counters
+from fbnet.command_runner.exceptions import (
+    ValidationErrorException,
+    CommandExecutionTimeoutErrorException,
+    UnsupportedDeviceErrorException,
+)
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import CommandResult
 
 from .utils import construct_netconf_capability_set
@@ -106,7 +111,7 @@ class SSHNetconf(SSHCommandSession):
         ):
             # Device does not share common capability with us, terminate the connection
             super().close()
-            raise ConnectionError(
+            raise UnsupportedDeviceErrorException(
                 "Remote host and FCR do not share common Netconf base capabilities!\n"
                 f"Current FCR supported Netconf base capabilities: {local_netconf_base_capabilities_set}"
             )
@@ -130,7 +135,9 @@ class SSHNetconf(SSHCommandSession):
         except asyncio.TimeoutError:
             self.logger.error("Timeout waiting for command response")
             data = await self._stream_reader.drain()
-            raise RuntimeError("Command Response Timeout", data[-200:])
+            raise CommandExecutionTimeoutErrorException(
+                "Command Response Timeout", data[-200:]
+            )
 
     # pyre-fixme: Inconsistent return type
     async def _connect(
@@ -147,8 +154,8 @@ class SSHNetconf(SSHCommandSession):
         if not subsystem:
             command = device.session_data.exec_command if device.session_data else None
             if not command:
-                raise RuntimeError(
-                    "either subsystem or exce_command must be specified "
+                raise ValidationErrorException(
+                    "either subsystem or exec_command must be specified "
                     "for netconf session"
                 )
         # pyre-fixme: Inconsistent return type

@@ -9,26 +9,46 @@ namespace py.asyncio fbnet.command_runner_asyncio.CommandRunner
 
 enum FcrErrorCode {
   /* Error Codes */
-  // 1-99: FCR error
+  // UNKNOWN: default, for all unidentifed exceptions
   UNKNOWN = 1,
+  // RUNTIME_ERROR: for built-in RuntimeError
   RUNTIME_ERROR = 2,
+  // ASSERTION_ERROR: for built-in AssertionError
   ASSERTION_ERROR = 3,
+  // LOOKUP_ERROR: for built-in LookupError
+  // and errors that inherit from it
   LOOKUP_ERROR = 4,
+  // STREAM_READER_ERROR: for errors related
+  // to asyncio.StreamReader
   STREAM_READER_ERROR = 5,
+  // COMMAND_EXECUTION_TIMEOUT_ERROR: FCR timeout
+  // when executing command
   COMMAND_EXECUTION_TIMEOUT_ERROR = 6,
+  // NOT_IMPLEMENTED_ERROR: for built-in
+  // NotImplementedError
   NOT_IMPLEMENTED_ERROR = 7,
 
   // 100-199: User error
+  // VALIDATION_ERROR: invalid inputs
   VALIDATION_ERROR = 100,
+  // PERMISSION_ERROR: invalid credentials or
+  // authentication
   PERMISSION_ERROR = 101,
+  // VALUE_ERROR: invalid value type
   VALUE_ERROR = 102,
+  // UNSUPPORTED_DEVICE_ERROR: user
+  // inputs unsupported device
   UNSUPPORTED_DEVICE_ERROR = 103,
 
   // 200-299: Device error
+  // DEVICE_ERROR: for general device-related errors
   DEVICE_ERROR = 200,
 
   // 300-399: Network error
+  // CONNECTION_ERROR: for general network-related
+  // connection errors
   CONNECTION_ERROR = 300,
+  // CONNECTION_TIMEOUT_ERROR: connection times out
   CONNECTION_TIMEOUT_ERROR = 301,
 }
 
