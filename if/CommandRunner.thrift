@@ -42,6 +42,9 @@ enum FcrErrorCode {
   // UNSUPPORTED_DEVICE_ERROR: user
   // inputs unsupported device
   UNSUPPORTED_DEVICE_ERROR = 103,
+  // UNSUPPORTED_COMMAND_ERROR: user
+  // inputs unsupported command
+  UNSUPPORTED_COMMAND_ERROR = 104,
 
   // 200-299: Device error
   // DEVICE_ERROR: for general device-related errors

@@ -53,6 +53,10 @@ class UnsupportedDeviceErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.UNSUPPORTED_DEVICE_ERROR
 
 
+class UnsupportedCommandErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.UNSUPPORTED_COMMAND_ERROR
+
+
 class RuntimeErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.RUNTIME_ERROR
 
@@ -79,6 +83,10 @@ class NotImplementedErrorException(FcrBaseException):
 
 class DeviceErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.DEVICE_ERROR
+
+
+class CommandExecutionErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.COMMAND_EXECUTION_ERROR
 
 
 class ConnectionErrorException(FcrBaseException):
