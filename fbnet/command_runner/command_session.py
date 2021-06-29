@@ -306,17 +306,16 @@ class CommandSession(ServiceObj):
         Contains original exception's message plus additional messages.
         """
         peer_info = self.get_peer_info()
-        msg = f"Failed (session: {self.get_session_name()}, peer: {peer_info}): "
-
-        if isinstance(exc, FcrBaseException):
-            msg += f"{exc!s}"
-        else:
-            msg += f"{exc!r}"
+        msg = f"Failed (session: {self.get_session_name()}, peer: {peer_info})"
 
         if isinstance(peer_info, PeerInfo) and not peer_info.ip_is_pingable:
             msg += ", IP used in this connection is not pingable according to NetSonar"
 
-        return type(exc)(msg)
+        # Append message as new arg instead of constructing new exception
+        # to account for exceptions having different required args
+        exc.args = exc.args + (msg,)
+
+        return exc
 
     @classmethod
     def get(cls, session_id: int, client_ip: str, client_port: int) -> "CommandSession":

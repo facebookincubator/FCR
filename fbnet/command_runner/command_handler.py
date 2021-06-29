@@ -42,11 +42,14 @@ def _append_debug_info_to_exception(fn):
                 )
                 raise ex
             else:
-                raise type(ex)(
-                    await self.add_debug_info_to_error_message(
-                        error_msg=str(ex), uuid=uuid
-                    )
-                ).with_traceback(sys.exc_info()[2])
+                # Don't pass in ex.message to debug info to avoid duplicate message
+                debug_info = await self.add_debug_info_to_error_message(
+                    error_msg="", uuid=uuid
+                )
+                # Append message as new arg instead of constructing new exception
+                # to account for exceptions having different required args
+                ex.args = ex.args + (debug_info,)
+                raise ex.with_traceback(sys.exc_info()[2])
 
     return wrapper
 
@@ -175,7 +178,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         """Method to set the class variable _bulk_session_count"""
         cls._bulk_session_count = new_count
 
-    async def add_debug_info_to_error_message(self, error_msg, uuid):
+    async def add_debug_info_to_error_message(self, uuid, error_msg=None):
+        if not error_msg:
+            return f"(DebugInfo: thrift_uuid={uuid})"
         return f"{error_msg} (DebugInfo: thrift_uuid={uuid})"
 
     @ensure_thrift_exception
@@ -244,7 +249,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                     await asyncio.sleep(delay)
                     retry_count += 1
                 except Exception as e:
-                    raise type(e)(f"bulk_run_remote failed: {e!s}") from e
+                    # Append message as new arg instead of constructing new exception
+                    # to account for exceptions having different required args
+                    e.args = e.args + ("bulk_run_remote failed",)
+                    raise e
 
         # Split the request into chunks and run them on remote hosts
         tasks = [
@@ -352,7 +360,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             session = CommandSession.get(session.id, client_ip, client_port)
             await session.close()
         except Exception as e:
-            raise type(e)(f"close_session failed: {e!s}") from e
+            # Append message as new arg instead of constructing new exception
+            # to account for exceptions having different required args
+            e.args = e.args + ("close_session failed",)
+            raise e
 
     @ensure_thrift_exception
     @_append_debug_info_to_exception
@@ -420,7 +431,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 id=session.id, name=session.hostname, hostname=device.hostname
             )
         except Exception as e:
-            raise type(e)(f"open_session failed: {e!s}") from e
+            # Append message as new arg instead of constructing new exception
+            # to account for exceptions having different required args
+            e.args = e.args + ("open_session failed",)
+            raise e
 
     async def _run_session(
         self, tsession, command, timeout, client_ip, client_port, uuid, prompt_re=None
@@ -429,7 +443,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             session = CommandSession.get(tsession.id, client_ip, client_port)
             return await self._run_command(session, command, timeout, uuid, prompt_re)
         except Exception as e:
-            raise type(e)(f"run_session failed: {e!s}") from e
+            # Append message as new arg instead of constructing new exception
+            # to account for exceptions having different required args
+            e.args = e.args + ("run_session failed",)
+            raise e
 
     def _get_result_key(self, device):
         # TODO: just returning the hostname for now. Some additional processing

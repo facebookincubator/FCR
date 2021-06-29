@@ -70,7 +70,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertEqual(exc.exception.code, ttypes.FcrErrorCode.LOOKUP_ERROR)
-        self.assertIn("('Device not found', 'test-dev-100')", exc.exception.message)
+        self.assertIn("'Device not found', 'test-dev-100'", exc.exception.message)
 
     @async_test
     async def test_run_connect_timeout(self) -> None:
@@ -147,9 +147,12 @@ class TestCommandHandler(AsyncTestCase):
             exc.exception.code, ttypes.FcrErrorCode.COMMAND_EXECUTION_TIMEOUT_ERROR
         )
         self.assertIn(
-            "Failed (session: MockCommandSession, peer: (test-ip, True, 22)): "
-            "('Command Response Timeout', "
-            "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>')",
+            "'Command Response Timeout', "
+            "b'user prompt test\\nTest for user prompts\\n<<<User Magic Prompt>>>'",
+            exc.exception.message,
+        )
+        self.assertIn(
+            "Failed (session: MockCommandSession, peer: (test-ip, True, 22))",
             exc.exception.message,
         )
 
@@ -175,7 +178,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertEqual(exc.exception.code, ttypes.FcrErrorCode.LOOKUP_ERROR)
-        self.assertIn("open_session failed:", exc.exception.message)
+        self.assertIn("open_session failed", exc.exception.message)
         self.assertIn("Device not found", exc.exception.message)
         self.assertIn("test-dev-10", exc.exception.message)
 
@@ -193,7 +196,7 @@ class TestCommandHandler(AsyncTestCase):
         self.assertEqual(
             exc.exception.code, ttypes.FcrErrorCode.CONNECTION_TIMEOUT_ERROR
         )
-        self.assertIn("open_session failed:", exc.exception.message)
+        self.assertIn("open_session failed", exc.exception.message)
         self.assertIn("Timeout during connection setup", exc.exception.message)
 
     @async_test
@@ -223,7 +226,7 @@ class TestCommandHandler(AsyncTestCase):
             )
 
         self.assertEqual(exc.exception.code, ttypes.FcrErrorCode.LOOKUP_ERROR)
-        self.assertIn("run_session failed:", exc.exception.message)
+        self.assertIn("run_session failed", exc.exception.message)
         self.assertIn(
             "'Session not found', (1234, '127.0.0.1', 5000)", exc.exception.message
         )
@@ -244,13 +247,10 @@ class TestCommandHandler(AsyncTestCase):
         self.assertEqual(
             exc.exception.code, ttypes.FcrErrorCode.COMMAND_EXECUTION_TIMEOUT_ERROR
         )
+        self.assertIn("run_session failed", exc.exception.message)
+        self.assertIn("Command Response Timeout", exc.exception.message)
         self.assertIn(
-            "run_session failed: ('%s', b'%s')"
-            % (
-                "Command Response Timeout",
-                "command timeout\\nMock response for command timeout",
-            ),
-            exc.exception.message,
+            "command timeout\\nMock response for command timeout", exc.exception.message
         )
 
     @async_test
@@ -271,9 +271,9 @@ class TestCommandHandler(AsyncTestCase):
             await self.cmd_handler.close_session(session, client_ip, client_port, uuid)
 
         self.assertEqual(exc.exception.code, ttypes.FcrErrorCode.LOOKUP_ERROR)
-        self.assertIn("close_session failed:", exc.exception.message)
+        self.assertIn("close_session failed", exc.exception.message)
         self.assertIn(
-            "('Session not found', (1234, '127.0.0.1', 5000))", exc.exception.message
+            "'Session not found', (1234, '127.0.0.1', 5000)", exc.exception.message
         )
 
     @async_test
@@ -305,7 +305,7 @@ class TestCommandHandler(AsyncTestCase):
                     "code=%s" % ttypes.FcrErrorCode.LOOKUP_ERROR,
                     result.status,
                 )
-                self.assertIn("('Device not found', 'test-dev-0')", result.status)
+                self.assertIn("'Device not found', 'test-dev-0'", result.status)
                 continue
             for result in all_results[host]:
                 self.assert_command_result(result)
@@ -331,7 +331,7 @@ class TestCommandHandler(AsyncTestCase):
                     "code=%s" % ttypes.FcrErrorCode.LOOKUP_ERROR,
                     result.status,
                 )
-                self.assertIn("('Device not found', 'test-dev-0')", result.status)
+                self.assertIn("'Device not found', 'test-dev-0'", result.status)
                 continue
             for result in all_results[host]:
                 self.assert_command_result(result)
@@ -358,7 +358,7 @@ class TestCommandHandler(AsyncTestCase):
                     "code=%s" % ttypes.FcrErrorCode.LOOKUP_ERROR,
                     result.status,
                 )
-                self.assertIn("('Device not found', 'test-dev-0')", result.status)
+                self.assertIn("'Device not found', 'test-dev-0'", result.status)
                 continue
             for result in all_results[host]:
                 self.assertIn(
@@ -458,13 +458,14 @@ class TestCommandHandler(AsyncTestCase):
                 result.output, "$ show version\nMock response for show version"
             )
         elif result.command == "command timeout\n":
-            status_fmt = (
-                "Failed (session: MockCommandSession, peer: "
-                "(test-ip 22)): ('{0}', b'{2}\\nMock response for {2}')"
-            )
-            self.assertEqual(
-                result.status,
+            status_fmt = "'{0}', b'{2}\\nMock response for {2}'"
+            self.assertIn(
                 status_fmt.format("Command Response Timeout", "command timeout"),
+                result.status,
+            )
+            self.assertIn(
+                "Failed (session: MockCommandSession, peer: " "(test-ip 22))",
+                result.status,
             )
             self.assertIn(
                 "code=%s" % ttypes.FcrErrorCode.COMMAND_EXECUTION_TIMEOUT_ERROR,
