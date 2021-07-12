@@ -236,6 +236,10 @@ class CommandSession(ServiceObj):
         self._in_use_count: int = 0
         self._open_time_ms: int = 0
 
+        # captures external communication time (e.g. establishing SSH connection,
+        # waiting for device to feed bytes to the stream, etc.)
+        self._external_communication_time_ms: float = 0
+
     def get_session_name(self) -> str:
         return self.objname
 
@@ -376,6 +380,10 @@ class CommandSession(ServiceObj):
     @property
     def exit_status(self) -> int:
         return self._exit_status
+
+    @property
+    def external_communication_time_ms(self) -> float:
+        return self._external_communication_time_ms
 
     async def _create_connection(self) -> None:
         await self.connect()
