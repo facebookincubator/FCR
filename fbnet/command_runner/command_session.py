@@ -238,7 +238,7 @@ class CommandSession(ServiceObj):
 
         # captures external communication time (e.g. establishing SSH connection,
         # waiting for device to feed bytes to the stream, etc.)
-        self._external_communication_time_ms: float = 0
+        self._external_communication_time_ms: float = 0.0
 
     def get_session_name(self) -> str:
         return self.objname
@@ -384,6 +384,12 @@ class CommandSession(ServiceObj):
     @property
     def external_communication_time_ms(self) -> float:
         return self._external_communication_time_ms
+
+    def reset_external_communication_time_ms(self) -> None:
+        self._external_communication_time_ms = 0.0
+
+    def increment_external_communication_time_ms(self, time_ms: float) -> None:
+        self._external_communication_time_ms += time_ms
 
     async def _create_connection(self) -> None:
         await self.connect()
