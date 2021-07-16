@@ -358,6 +358,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     async def close_session(self, session, client_ip, client_port, uuid):
         try:
             session = CommandSession.get(session.id, client_ip, client_port)
+            # Reset external communication time field so we don't include
+            # the time from a previous API call
+            session.reset_external_communication_time_ms()
             await session.close()
         except Exception as e:
             # Append message as new arg instead of constructing new exception
@@ -441,6 +444,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     ):
         try:
             session = CommandSession.get(tsession.id, client_ip, client_port)
+            # Reset external communication time field so we don't include
+            # the time from a previous API call
+            session.reset_external_communication_time_ms()
             return await self._run_command(session, command, timeout, uuid, prompt_re)
         except Exception as e:
             # Append message as new arg instead of constructing new exception

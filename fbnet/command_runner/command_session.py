@@ -531,10 +531,28 @@ class CommandStreamReader(asyncio.StreamReader):
     def __init__(self, session: CommandSession, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._session = session
+        self._last_feed_data_call_time_s: float = 0.0
 
     @property
     def logger(self) -> LogAdapter:
         return self._session.logger
+
+    def feed_data(self, data: bytes) -> None:
+        feed_data_call_time_s = time.perf_counter()
+
+        # only increment external time if there was a last call time & session's cmd_stream not None
+        # (i.e. _connect done, so not simultaneously capturing session connection time in _connect)
+        if self._last_feed_data_call_time_s and self._session._cmd_stream:
+            self._session.increment_external_communication_time_ms(
+                (feed_data_call_time_s - self._last_feed_data_call_time_s) * 1000
+            )
+
+        # only update last call time if cmd_stream not None (i.e. _connect done)
+        # to prevent overlapping captured time with _connect (which may also call feed_data)
+        if self._session._cmd_stream:
+            self._last_feed_data_call_time_s = feed_data_call_time_s
+
+        return super().feed_data(data)
 
     async def wait_for(
         self, predicate: typing.Callable, timeout: typing.Optional[int] = None
@@ -550,6 +568,9 @@ class CommandStreamReader(asyncio.StreamReader):
         res = predicate(self._buffer)  # pyre-ignore
 
         start_ts = time.time()
+        # Set an initial time so that first call to feed_data has a
+        # reference from which to capture how much time has passed
+        self._last_feed_data_call_time_s = time.perf_counter()
 
         while res is None:
             now = time.time()
@@ -993,6 +1014,8 @@ class SSHCommandSession(CliCommandSession):
 
         self.logger.info("Connecting to: %s: %d", host, port)
 
+        open_connection_time_s = time.perf_counter()
+
         # known_hosts is set to None to disable the host verifications. Without
         # this the connection setup fails for some devices
         conn, _ = await asyncssh.create_connection(
@@ -1013,6 +1036,10 @@ class SSHCommandSession(CliCommandSession):
             command=exec_command,
         )
         self._chan = chan
+        end_connection_time_s = time.perf_counter()
+        self.increment_external_communication_time_ms(
+            (end_connection_time_s - open_connection_time_s) * 1000
+        )
         return cmd_stream
 
     async def _close(self) -> None:
