@@ -38,6 +38,13 @@ class GlobalNamespace:
     # the call chain can pick it up for free.
     _request_uuid = contextvars.ContextVar("request_uuid", default="N/A")
 
+    # API related context variable
+    # This metric captures the external communication time that FCR spends for one API request,
+    # including establishing connection, waiting for device to feed bytes to stream, etc
+    _api_external_communication_time_ms = contextvars.ContextVar(
+        "api_external_communication_time_ms", default=0.0
+    )
+
     @classmethod
     def set_request_uuid(cls, uuid: str) -> None:
         """Store uuid as thread local data"""
@@ -46,3 +53,13 @@ class GlobalNamespace:
     @classmethod
     def get_request_uuid(cls) -> str:
         return cls._request_uuid.get()
+
+    @classmethod
+    def set_api_external_communication_time_ms(
+        cls, api_external_communication_time_ms: float
+    ) -> None:
+        cls._api_external_communication_time_ms.set(api_external_communication_time_ms)
+
+    @classmethod
+    def get_api_external_communication_time_ms(cls) -> float:
+        return cls._api_external_communication_time_ms.get()

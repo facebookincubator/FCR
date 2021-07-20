@@ -11,6 +11,8 @@ import inspect
 import random
 import re
 import sys
+import typing
+from dataclasses import dataclass
 from functools import wraps
 from itertools import islice
 from uuid import uuid4
@@ -25,6 +27,22 @@ from .exceptions import ensure_thrift_exception, convert_to_fcr_exception
 from .global_namespace import GlobalNamespace
 from .options import Option
 from .utils import input_fields_validator
+
+
+@dataclass(frozen=True)
+class DeviceResult:
+    """
+    Class for passing information received after sending commands to device
+    Includes CommandResult(s), external communication time, and any raised exceptions
+    (remains None for exceptions that are returned instead)
+    """
+
+    device_response: typing.Union[
+        typing.List[typing.Optional[ttypes.CommandResult]],
+        typing.Optional[ttypes.CommandResult],
+    ] = None
+    external_communication_time_ms: float = 0.0
+    exception: typing.Optional[Exception] = None
 
 
 def _append_debug_info_to_exception(fn):
@@ -189,11 +207,26 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     @_ensure_uuid
     async def run(
         self, command, device, timeout, open_timeout, client_ip, client_port, uuid
-    ):
+    ) -> ttypes.CommandResult:
         result = await self._run_commands(
             [command], device, timeout, open_timeout, client_ip, client_port, uuid
         )
-        return result[0]
+
+        GlobalNamespace.set_api_external_communication_time_ms(
+            GlobalNamespace.get_api_external_communication_time_ms()
+            + result.external_communication_time_ms
+        )
+
+        # Raise exception if needed here since _run_commands does not raise
+        # and exceptions are not returned
+        if isinstance(result.exception, Exception):
+            raise result.exception
+
+        cmd_result = result.device_response
+        if isinstance(cmd_result, list):
+            cmd_result = result.device_response[0]  # pyre-ignore checked is list
+
+        return cmd_result
 
     def _bulk_failure(self, device_to_commands, message):
         def command_failures(cmds):
@@ -215,7 +248,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     @_ensure_uuid
     async def bulk_run(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
-    ):
+    ) -> typing.Dict[str, typing.List[ttypes.CommandResult]]:
         if (len(device_to_commands) < self.LB_THRESHOLD) and (
             self._bulk_session_count < self.BULK_SESSION_LIMIT
         ):
@@ -279,7 +312,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     @_ensure_uuid
     async def _bulk_run_local(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
-    ):
+    ) -> typing.Dict[str, typing.List[ttypes.CommandResult]]:
         devices = sorted(device_to_commands.keys(), key=lambda d: d.hostname)
 
         session_count = self._bulk_session_count
@@ -291,7 +324,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
         self._set_bulk_session_count(self._bulk_session_count + len(devices))
 
-        async def _run_one_device(device):
+        async def _run_one_device(device) -> DeviceResult:
             # Instead of running all commands at once, stagger the commands to
             # distribute the load
             delay = random.uniform(0, self.BULK_RUN_JITTER)
@@ -307,17 +340,33 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 return_exceptions=True,
             )
 
+        external_communication_time_ms_list = []
         try:
             commands = []
             for device in devices:
                 commands.append(_run_one_device(device))
 
             # Run commands in parallel
-            cmd_results = await asyncio.gather(
+            results: typing.List[DeviceResult] = await asyncio.gather(
                 *commands, loop=self.loop, return_exceptions=True
             )
+
+            # pyre-ignore: _run_commands always returns list of CommandResults
+            # when return_exceptions is True
+            cmd_results: typing.List[typing.List[ttypes.CommandResult]] = [
+                result.device_response for result in results
+            ]
+
+            # Get the external communication time to save later in finally block
+            external_communication_time_ms_list = [
+                result.external_communication_time_ms for result in results
+            ]
         finally:
             self._set_bulk_session_count(self._bulk_session_count - len(devices))
+            GlobalNamespace.set_api_external_communication_time_ms(
+                GlobalNamespace.get_api_external_communication_time_ms()
+                + sum(external_communication_time_ms_list)
+            )
 
         return {
             self._get_result_key(dev): res for dev, res in zip(devices, cmd_results)
@@ -356,17 +405,24 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     @_append_debug_info_to_exception
     @_ensure_uuid
     async def close_session(self, session, client_ip, client_port, uuid):
+        closed_session = None
         try:
-            session = CommandSession.get(session.id, client_ip, client_port)
+            closed_session = CommandSession.get(session.id, client_ip, client_port)
             # Reset external communication time field so we don't include
             # the time from a previous API call
-            session.reset_external_communication_time_ms()
-            await session.close()
+            closed_session.reset_external_communication_time_ms()
+            await closed_session.close()
         except Exception as e:
             # Append message as new arg instead of constructing new exception
             # to account for exceptions having different required args
             e.args = e.args + ("close_session failed",)
             raise e
+        finally:
+            if closed_session:
+                GlobalNamespace.set_api_external_communication_time_ms(
+                    GlobalNamespace.get_api_external_communication_time_ms()
+                    + closed_session.external_communication_time_ms
+                )
 
     @ensure_thrift_exception
     @_append_debug_info_to_exception
@@ -424,6 +480,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raw_session=raw_session,
         )
 
+        session = None
         try:
             devinfo = await self._lookup_device(device)
             session = await devinfo.setup_session(
@@ -438,10 +495,18 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             # to account for exceptions having different required args
             e.args = e.args + ("open_session failed",)
             raise e
+        finally:
+            if session:
+                GlobalNamespace.set_api_external_communication_time_ms(
+                    GlobalNamespace.get_api_external_communication_time_ms()
+                    + session.external_communication_time_ms
+                )
 
     async def _run_session(
         self, tsession, command, timeout, client_ip, client_port, uuid, prompt_re=None
     ):
+        session = None
+        external_communication_time_ms = 0.0
         try:
             session = CommandSession.get(tsession.id, client_ip, client_port)
             # Reset external communication time field so we don't include
@@ -453,6 +518,14 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             # to account for exceptions having different required args
             e.args = e.args + ("run_session failed",)
             raise e
+        finally:
+            if session:
+                external_communication_time_ms = session.external_communication_time_ms
+
+            GlobalNamespace.set_api_external_communication_time_ms(
+                GlobalNamespace.get_api_external_communication_time_ms()
+                + external_communication_time_ms
+            )
 
     def _get_result_key(self, device):
         # TODO: just returning the hostname for now. Some additional processing
@@ -480,7 +553,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         client_port,
         uuid,
         return_exceptions=False,
-    ):
+    ) -> DeviceResult:
 
         options = self._get_options(
             device, client_ip, client_port, open_timeout, timeout
@@ -494,7 +567,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         command = commands[0]
         devinfo = None
         session = None
-
+        results = []
+        external_communication_time_ms = 0.0
+        exc = None
         try:
             devinfo = await self._lookup_device(device)
 
@@ -502,12 +577,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 self.service, device, options, loop=self.loop
             ) as session:
 
-                results = []
                 for command in commands:
                     result = await self._run_command(session, command, timeout, uuid)
                     results.append(result)
-
-                return results
 
         except Exception as e:
             await self._record_error(e, command, uuid, options, devinfo, session)
@@ -519,12 +591,22 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 e.message = await self.add_debug_info_to_error_message(  # noqa
                     error_msg=e.message, uuid=uuid  # noqa
                 )
-                return [
+                results = [
                     ttypes.CommandResult(output="", status="%r" % e, command=command)
                 ]
             else:
-                # raise from the original place so we have full stacktrace
-                raise e
+                # save exc from the original place so we have full stacktrace
+                # when we raise in API level later
+                exc = e
+
+        if session:
+            external_communication_time_ms = session.external_communication_time_ms
+
+        return DeviceResult(
+            device_response=results,
+            external_communication_time_ms=external_communication_time_ms,
+            exception=exc,
+        )
 
     def _chunked_dict(self, data, chunk_size):
         """split the dict into smaller dicts"""
