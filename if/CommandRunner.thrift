@@ -30,6 +30,7 @@ enum FcrErrorCode {
   // PARSING_ERROR: error with parsing
   // requests and responses
   PARSING_ERROR = 8,
+  // Error code 9 is in use
 
   // 100-199: User error
   // VALIDATION_ERROR: invalid inputs
@@ -60,6 +61,7 @@ enum FcrErrorCode {
   CONNECTION_ERROR = 300,
   // CONNECTION_TIMEOUT_ERROR: connection times out
   CONNECTION_TIMEOUT_ERROR = 301,
+// Error code 302 and 303 is in use
 }
 
 // This exception is deprecated; raise a SessionException instead
