@@ -9,6 +9,7 @@
 from functools import wraps
 from typing import ClassVar, Callable, Any, TypeVar, cast
 
+import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes as fcr_ttypes
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import FcrErrorCode
 
@@ -115,6 +116,8 @@ def convert_to_fcr_exception(e: Exception) -> FcrBaseException:
         return LookupErrorException(str(e))
     elif isinstance(e, NotImplementedError):
         return NotImplementedErrorException(str(e))
+    elif isinstance(e, asyncssh.misc.DisconnectError):
+        return ConnectionErrorException(str(e))
     elif isinstance(e, RuntimeError):
         # keep RuntimeError as last elif case to avoid interfering
         # with conversion of other RuntimeError-derived exceptions

@@ -8,6 +8,7 @@
 
 from typing import List, Type, Dict
 
+import asyncssh
 from fbnet.command_runner.exceptions import (
     FcrBaseException,
     UnknownException,
@@ -57,14 +58,20 @@ class ExceptionTest(AsyncTestCase):
     ]
 
     # Other non-FcrBaseException exceptions that FCR knows about
+    # Preconstruct exception with args since different exceptions have different args
     KNOWN_EXCEPTIONS: Dict[Type[Exception], FcrErrorCode] = {
-        PermissionError: FcrErrorCode.PERMISSION_ERROR,
-        ValueError: FcrErrorCode.VALUE_ERROR,
-        RuntimeError: FcrErrorCode.RUNTIME_ERROR,
-        AssertionError: FcrErrorCode.ASSERTION_ERROR,
-        LookupError: FcrErrorCode.LOOKUP_ERROR,
-        KeyError: FcrErrorCode.LOOKUP_ERROR,
-        NotImplementedError: FcrErrorCode.NOT_IMPLEMENTED_ERROR,
+        PermissionError("This is a known exception!"): FcrErrorCode.PERMISSION_ERROR,
+        ValueError("This is a known exception!"): FcrErrorCode.VALUE_ERROR,
+        RuntimeError("This is a known exception!"): FcrErrorCode.RUNTIME_ERROR,
+        AssertionError("This is a known exception!"): FcrErrorCode.ASSERTION_ERROR,
+        LookupError("This is a known exception!"): FcrErrorCode.LOOKUP_ERROR,
+        KeyError("This is a known exception!"): FcrErrorCode.LOOKUP_ERROR,
+        NotImplementedError(
+            "This is a known exception!"
+        ): FcrErrorCode.NOT_IMPLEMENTED_ERROR,
+        asyncssh.misc.DisconnectError(
+            code=0, reason="This is a known exception!"
+        ): FcrErrorCode.CONNECTION_ERROR,
     }
 
     @async_test
@@ -102,12 +109,11 @@ class ExceptionTest(AsyncTestCase):
             self.assertEqual(str(exc), str(converted_exc))
 
         # Test that known exception types are converted correctly
-        for exception_type in self.KNOWN_EXCEPTIONS:
-            exc = exception_type(exc_msg)
+        for exc in self.KNOWN_EXCEPTIONS:
             converted_exc = convert_to_fcr_exception(exc)
 
             self.assertIsInstance(converted_exc, FcrBaseException)
-            self.assertEqual(self.KNOWN_EXCEPTIONS[exception_type], converted_exc._CODE)
+            self.assertEqual(self.KNOWN_EXCEPTIONS[exc], converted_exc._CODE)
             self.assertEqual(str(exc), str(converted_exc))
 
         # Test that unknown Exceptions are converted correctly
@@ -157,16 +163,14 @@ class ExceptionTest(AsyncTestCase):
             self.assertEqual(str(exc), converted_exc.message)
 
         # Test that all other known Exceptions are converted
-        for exception_type in self.KNOWN_EXCEPTIONS.keys():
-            exc = exception_type("This is a known exception!")
-
+        for exc in self.KNOWN_EXCEPTIONS:
             # Make sure that the exception is Thrift-defined now
             with self.assertRaises(fcr_ttypes.SessionException) as context:
                 res = await test_raise_exception(self, exc=exc, return_msg=return_msg)
 
             converted_exc = context.exception
             self.assertIsInstance(converted_exc, fcr_ttypes.SessionException)
-            self.assertEqual(self.KNOWN_EXCEPTIONS[exception_type], converted_exc.code)
+            self.assertEqual(self.KNOWN_EXCEPTIONS[exc], converted_exc.code)
             self.assertEqual(str(exc), converted_exc.message)
 
         # Test that all unknown Exceptions are converted
