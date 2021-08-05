@@ -9,6 +9,7 @@
 from typing import TYPE_CHECKING, Union
 
 from .base_service import PeriodicServiceTask
+from .exceptions import LookupErrorException, NotImplementedErrorException
 from .options import Option
 
 
@@ -77,9 +78,11 @@ class BaseDeviceDB(PeriodicServiceTask):
         """
         Fetch device data
 
-        Override this get the device information from your backend systems
+        Override this to get the device information from your backend systems
         """
-        raise NotImplementedError("Please implement this get host information")
+        raise NotImplementedErrorException(
+            "Please implement this to get host information"
+        )
 
     async def wait_for_data(self):
         """Wait for the data to be fetched"""
@@ -104,7 +107,9 @@ class BaseDeviceDB(PeriodicServiceTask):
             return self._devices.get(device.hostname)
 
         # still not able to find device, raise an exeception
-        raise KeyError("Device not found", device.hostname)
+        raise LookupErrorException("Device not found", device.hostname)
 
     def is_pingable(self, ip: Union[str, "DeviceIP"]) -> bool:
-        raise NotImplementedError("Please implement this to check if an ip is pingable")
+        raise NotImplementedErrorException(
+            "Please implement this to check if an ip is pingable"
+        )

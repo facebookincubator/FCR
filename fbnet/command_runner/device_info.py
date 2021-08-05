@@ -12,6 +12,7 @@ from typing import NamedTuple
 
 from .base_service import ServiceObj
 from .console_session import ConsoleCommandSession
+from .exceptions import LookupErrorException
 
 
 CommandInfo = namedtuple("CommandInfo", "cmd precmd prompt_re")
@@ -141,13 +142,13 @@ class DeviceInfo(ServiceObj):
         # No valid MGMT IPs were found when user specifies use_mgmt_ip, raise
         # LookupError
         if use_mgmt_ip:
-            raise LookupError(
+            raise LookupErrorException(
                 "User has set 'mgmt_ip=True' in the request but no mgmt ip is "
                 f"found for {self._hostname}"
             )
 
         # None of the IPs is valid, raise LookupError
-        raise LookupError(
+        raise LookupErrorException(
             f"No Valid IP address was found for the device {self._hostname}"
         )
 
