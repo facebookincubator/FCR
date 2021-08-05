@@ -11,6 +11,8 @@ import asyncio
 import logging
 from enum import Enum
 
+from fbnet.command_runner.exceptions import NotImplementedErrorException
+
 
 class State(Enum):
 
@@ -150,7 +152,7 @@ class ServiceTask(ServiceObj):
         """
         Services must provide this implementation
         """
-        raise NotImplementedError("run")
+        raise NotImplementedErrorException("run")
 
     async def cleanup(self):
         """

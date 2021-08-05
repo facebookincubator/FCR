@@ -16,6 +16,11 @@ from fbnet.command_runner_asyncio.CommandRunner.Command import Client as FcrClie
 from .base_service import ServiceObjMeta, ServiceTask
 from .command_server import CommandServer
 from .command_session import CommandSession
+from .exceptions import (
+    LookupErrorException,
+    ValueErrorException,
+    NotImplementedErrorException,
+)
 from .options import Option
 from .thrift_client import AsyncioThriftClient
 
@@ -104,7 +109,7 @@ class FcrServiceBase:
 
     def add_task(self, key, task):
         if key in self._tasks:
-            raise KeyError(f"Duplicated key: {key}")
+            raise LookupErrorException(f"Duplicated key: {key}")
         self._tasks[key] = task
 
     def start(self):
@@ -159,7 +164,7 @@ class FcrServiceBase:
         level = getattr(logging, self.LOG_LEVEL.upper(), None)
 
         if not isinstance(level, int):
-            raise ValueError("Invalid log level: %s" % self.LOG_LEVEL)
+            raise ValueErrorException("Invalid log level: %s" % self.LOG_LEVEL)
 
         logging.basicConfig(level=level)
 
@@ -196,4 +201,4 @@ class FcrServiceBase:
 
     def get_http_proxy_url(self, host):
         """build a url for http proxy"""
-        raise NotImplementedError("Proxy support not implemented")
+        raise NotImplementedErrorException("Proxy support not implemented")
