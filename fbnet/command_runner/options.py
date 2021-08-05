@@ -11,6 +11,8 @@ import argparse
 from argparse import HelpFormatter
 from operator import attrgetter
 
+from fbnet.command_runner.exceptions import AttributeErrorException
+
 
 class SortingHelpFormatter(HelpFormatter):
     def add_arguments(self, actions):
@@ -39,4 +41,4 @@ class Option:
 
     def __set__(self, instance, value):
         """Options are immutable and can't be set"""
-        raise AttributeError()
+        raise AttributeErrorException()

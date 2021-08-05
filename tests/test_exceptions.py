@@ -24,6 +24,8 @@ from fbnet.command_runner.exceptions import (
     CommandExecutionTimeoutErrorException,
     NotImplementedErrorException,
     TypeErrorException,
+    AttributeErrorException,
+    TimeoutErrorException,
     DeviceErrorException,
     CommandExecutionErrorException,
     ConnectionErrorException,
@@ -53,6 +55,8 @@ class ExceptionTest(AsyncTestCase):
         CommandExecutionTimeoutErrorException,
         NotImplementedErrorException,
         TypeErrorException,
+        AttributeErrorException,
+        TimeoutErrorException,
         DeviceErrorException,
         CommandExecutionErrorException,
         ConnectionErrorException,
@@ -75,6 +79,8 @@ class ExceptionTest(AsyncTestCase):
             code=0, reason="This is a known exception!"
         ): FcrErrorCode.CONNECTION_ERROR,
         TypeError("This is a known exception!"): FcrErrorCode.TYPE_ERROR,
+        AttributeError("This is a known exception!"): FcrErrorCode.ATTRIBUTE_ERROR,
+        TimeoutError("This is a known exception!"): FcrErrorCode.TIMEOUT_ERROR,
     }
 
     @async_test

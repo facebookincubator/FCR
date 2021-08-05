@@ -37,6 +37,12 @@ enum FcrErrorCode {
   // TYPE_ERROR: for built-in TypeError and when
   // operation applied to unsupported object type
   TYPE_ERROR = 11,
+  // ATTRIBUTE_ERROR: for built-in AttributeError and
+  // when attribute reference or assignment fails
+  ATTRIBUTE_ERROR = 12,
+  // TIMEOUT_ERROR: for built-in TimeoutError and
+  // when a function timed out at the system level
+  TIMEOUT_ERROR = 13,
 
   // 100-199: User error
   // VALIDATION_ERROR: invalid inputs
