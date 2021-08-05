@@ -82,6 +82,10 @@ class NotImplementedErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.NOT_IMPLEMENTED_ERROR
 
 
+class TypeErrorException(FcrBaseException):
+    _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.TYPE_ERROR
+
+
 class DeviceErrorException(FcrBaseException):
     _CODE: ClassVar[FcrErrorCode] = FcrErrorCode.DEVICE_ERROR
 
@@ -118,6 +122,8 @@ def convert_to_fcr_exception(e: Exception) -> FcrBaseException:
         return NotImplementedErrorException(str(e))
     elif isinstance(e, asyncssh.misc.DisconnectError):
         return ConnectionErrorException(str(e))
+    elif isinstance(e, TypeError):
+        return TypeErrorException(str(e))
     elif isinstance(e, RuntimeError):
         # keep RuntimeError as last elif case to avoid interfering
         # with conversion of other RuntimeError-derived exceptions

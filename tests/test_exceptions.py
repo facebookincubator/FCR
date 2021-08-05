@@ -23,6 +23,7 @@ from fbnet.command_runner.exceptions import (
     StreamReaderErrorException,
     CommandExecutionTimeoutErrorException,
     NotImplementedErrorException,
+    TypeErrorException,
     DeviceErrorException,
     CommandExecutionErrorException,
     ConnectionErrorException,
@@ -51,6 +52,7 @@ class ExceptionTest(AsyncTestCase):
         StreamReaderErrorException,
         CommandExecutionTimeoutErrorException,
         NotImplementedErrorException,
+        TypeErrorException,
         DeviceErrorException,
         CommandExecutionErrorException,
         ConnectionErrorException,
@@ -72,6 +74,7 @@ class ExceptionTest(AsyncTestCase):
         asyncssh.misc.DisconnectError(
             code=0, reason="This is a known exception!"
         ): FcrErrorCode.CONNECTION_ERROR,
+        TypeError("This is a known exception!"): FcrErrorCode.TYPE_ERROR,
     }
 
     @async_test
@@ -111,7 +114,6 @@ class ExceptionTest(AsyncTestCase):
         # Test that known exception types are converted correctly
         for exc in self.KNOWN_EXCEPTIONS:
             converted_exc = convert_to_fcr_exception(exc)
-
             self.assertIsInstance(converted_exc, FcrBaseException)
             self.assertEqual(self.KNOWN_EXCEPTIONS[exc], converted_exc._CODE)
             self.assertEqual(str(exc), str(converted_exc))
@@ -138,7 +140,6 @@ class ExceptionTest(AsyncTestCase):
         @ensure_thrift_exception
         async def test_raise_exception(self, exc: Exception, return_msg: str) -> str:
             raise exc
-            return return_msg
 
         return_msg = "A returned string"
 

@@ -31,6 +31,12 @@ enum FcrErrorCode {
   // requests and responses
   PARSING_ERROR = 8,
   // Error code 9 is in use
+  // VALUE_ERROR: for built-in ValueError and when
+  // argument has right type but invalid value
+  VALUE_ERROR = 10,
+  // TYPE_ERROR: for built-in TypeError and when
+  // operation applied to unsupported object type
+  TYPE_ERROR = 11,
 
   // 100-199: User error
   // VALIDATION_ERROR: invalid inputs
@@ -38,8 +44,6 @@ enum FcrErrorCode {
   // PERMISSION_ERROR: invalid credentials or
   // authentication
   PERMISSION_ERROR = 101,
-  // VALUE_ERROR: invalid value type
-  VALUE_ERROR = 102,
   // UNSUPPORTED_DEVICE_ERROR: user
   // inputs unsupported device
   UNSUPPORTED_DEVICE_ERROR = 103,
