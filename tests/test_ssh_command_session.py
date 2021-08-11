@@ -60,9 +60,7 @@ class SSHCommandSessionTest(AsyncTestCase):
         session._stream_reader = AsyncMock(spec=CommandStreamReader)
         session._stream_writer = Mock(spec=asyncio.StreamWriter)
 
-        session.increment_external_communication_time_ms = Mock(
-            wraps=session.increment_external_communication_time_ms
-        )
+        session._captured_time_ms = Mock(wraps=session.captured_time_ms)
 
         mock_response = b"run_command response"
         session.run_command = AsyncMock(return_value=mock_response)
@@ -121,31 +119,31 @@ class SSHCommandSessionTest(AsyncTestCase):
         # External communication time is updated once during connect()
         self.assertTrue(session._connected)
         self.assertEqual(
-            session.increment_external_communication_time_ms.call_count,
+            session.captured_time_ms.increment_external_communication_time_ms.call_count,
             1,
         )
 
         # Reset mocks to specifically test that any feed_data calls
         # in _setup_connection() also increment time
         session._stream_reader.reset_mock()
-        session.increment_external_communication_time_ms.reset_mock()
+        session.captured_time_ms.reset_mock()
         await session._setup_connection()
         self.assertEqual(
-            session.increment_external_communication_time_ms.call_count,
+            session.captured_time_ms.increment_external_communication_time_ms.call_count,
             session._stream_reader.feed_data.call_count,
         )
 
         # Reset time and mocks to reset the call count of feed_data and
         # simulate making a second API call with the same session
-        session.reset_external_communication_time_ms()
+        session.captured_time_ms.reset_time()
         session._stream_reader.reset_mock()
-        session.increment_external_communication_time_ms.reset_mock()
+        session.captured_time_ms.reset_mock()
 
         res = await session.run_command(b"test1\n")
         self.assertEqual(res, b"run_command response")
 
         self.assertEqual(
-            session.increment_external_communication_time_ms.call_count,
+            session.captured_time_ms.increment_external_communication_time_ms.call_count,
             session._stream_reader.feed_data.call_count,
         )
 
@@ -186,7 +184,7 @@ class SSHCommandSessionTest(AsyncTestCase):
 
         self.assertTrue(session._connected)
         self.assertEqual(
-            session.increment_external_communication_time_ms.call_count,
+            session.captured_time_ms.increment_external_communication_time_ms.call_count,
             1,
         )
 
@@ -201,6 +199,6 @@ class SSHCommandSessionTest(AsyncTestCase):
         # External communication time is updated for each feed_data call
         # plus once during connect()
         self.assertEqual(
-            session.increment_external_communication_time_ms.call_count,
+            session.captured_time_ms.increment_external_communication_time_ms.call_count,
             session._stream_reader.feed_data.call_count + 1,
         )

@@ -8,6 +8,8 @@
 
 import contextvars
 
+from fbnet.command_runner.command_session import CapturedTimeMS
+
 
 class GlobalNamespace:
     """
@@ -39,10 +41,11 @@ class GlobalNamespace:
     _request_uuid = contextvars.ContextVar("request_uuid", default="N/A")
 
     # API related context variable
-    # This metric captures the external communication time that FCR spends for one API request,
-    # including establishing connection, waiting for device to feed bytes to stream, etc
-    _api_external_communication_time_ms = contextvars.ContextVar(
-        "api_external_communication_time_ms", default=0.0
+    # This metric captures the various communication/processing times that FCR spends for one API request,
+    # such as external communication time (which includes establishing connection, waiting for device
+    # to feed bytes to stream, etc)
+    _api_captured_time_ms = contextvars.ContextVar(
+        "api_captured_time_ms", default=CapturedTimeMS()
     )
 
     @classmethod
@@ -55,11 +58,9 @@ class GlobalNamespace:
         return cls._request_uuid.get()
 
     @classmethod
-    def set_api_external_communication_time_ms(
-        cls, api_external_communication_time_ms: float
-    ) -> None:
-        cls._api_external_communication_time_ms.set(api_external_communication_time_ms)
+    def set_api_captured_time_ms(cls, api_captured_time_ms: CapturedTimeMS) -> None:
+        cls._api_captured_time_ms.set(api_captured_time_ms)
 
     @classmethod
-    def get_api_external_communication_time_ms(cls) -> float:
-        return cls._api_external_communication_time_ms.get()
+    def get_api_captured_time_ms(cls) -> CapturedTimeMS:
+        return cls._api_captured_time_ms.get()

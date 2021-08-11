@@ -269,9 +269,9 @@ class CommandSession(ServiceObj):
         self._in_use_count: int = 0
         self._open_time_ms: int = 0
 
-        # captures external communication time (e.g. establishing SSH connection,
-        # waiting for device to feed bytes to the stream, etc.)
-        self._external_communication_time_ms: float = 0.0
+        # captures various types of communication and processing times
+        # including external communication time
+        self._captured_time_ms: CapturedTimeMS = CapturedTimeMS()
 
     def get_session_name(self) -> str:
         return self.objname
@@ -415,14 +415,8 @@ class CommandSession(ServiceObj):
         return self._exit_status
 
     @property
-    def external_communication_time_ms(self) -> float:
-        return self._external_communication_time_ms
-
-    def reset_external_communication_time_ms(self) -> None:
-        self._external_communication_time_ms = 0.0
-
-    def increment_external_communication_time_ms(self, time_ms: float) -> None:
-        self._external_communication_time_ms += time_ms
+    def captured_time_ms(self) -> CapturedTimeMS:
+        return self._captured_time_ms
 
     async def _create_connection(self) -> None:
         await self.connect()
@@ -576,7 +570,7 @@ class CommandStreamReader(asyncio.StreamReader):
         # only increment external time if there was a last call time & session's cmd_stream not None
         # (i.e. _connect done, so not simultaneously capturing session connection time in _connect)
         if self._last_feed_data_call_time_s and self._session._cmd_stream:
-            self._session.increment_external_communication_time_ms(
+            self._session.captured_time_ms.increment_external_communication_time_ms(
                 (feed_data_call_time_s - self._last_feed_data_call_time_s) * 1000
             )
 
@@ -1076,7 +1070,7 @@ class SSHCommandSession(CliCommandSession):
         )
         self._chan = chan
         end_connection_time_s = time.perf_counter()
-        self.increment_external_communication_time_ms(
+        self.captured_time_ms.increment_external_communication_time_ms(
             (end_connection_time_s - open_connection_time_s) * 1000
         )
         return cmd_stream

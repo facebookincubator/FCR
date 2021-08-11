@@ -7,6 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import asyncio
+import functools
 import inspect
 import random
 import re
@@ -21,7 +22,7 @@ from fb303_asyncio.FacebookBase import FacebookBase
 from fbnet.command_runner_asyncio.CommandRunner import constants, ttypes
 from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
 
-from .command_session import CommandSession
+from .command_session import CommandSession, CapturedTimeMS
 from .counters import Counters
 from .exceptions import ensure_thrift_exception, convert_to_fcr_exception
 from .global_namespace import GlobalNamespace
@@ -33,7 +34,7 @@ from .utils import input_fields_validator
 class DeviceResult:
     """
     Class for passing information received after sending commands to device
-    Includes CommandResult(s), external communication time, and any raised exceptions
+    Includes CommandResult(s), captured communication/processing time, and any raised exceptions
     (remains None for exceptions that are returned instead)
     """
 
@@ -41,7 +42,7 @@ class DeviceResult:
         typing.List[typing.Optional[ttypes.CommandResult]],
         typing.Optional[ttypes.CommandResult],
     ] = None
-    external_communication_time_ms: float = 0.0
+    captured_time_ms: CapturedTimeMS = CapturedTimeMS()
     exception: typing.Optional[Exception] = None
 
 
@@ -212,9 +213,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             [command], device, timeout, open_timeout, client_ip, client_port, uuid
         )
 
-        GlobalNamespace.set_api_external_communication_time_ms(
-            GlobalNamespace.get_api_external_communication_time_ms()
-            + result.external_communication_time_ms
+        GlobalNamespace.set_api_captured_time_ms(
+            GlobalNamespace.get_api_captured_time_ms() + result.captured_time_ms
         )
 
         # Raise exception if needed here since _run_commands does not raise
@@ -340,7 +340,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 return_exceptions=True,
             )
 
-        external_communication_time_ms_list = []
+        captured_time_ms_list = []
         try:
             commands = []
             for device in devices:
@@ -357,15 +357,17 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 result.device_response for result in results
             ]
 
-            # Get the external communication time to save later in finally block
-            external_communication_time_ms_list = [
-                result.external_communication_time_ms for result in results
-            ]
+            # Get the captured communication/processing time to save later in finally block
+            captured_time_ms_list = [result.captured_time_ms for result in results]
         finally:
             self._set_bulk_session_count(self._bulk_session_count - len(devices))
-            GlobalNamespace.set_api_external_communication_time_ms(
-                GlobalNamespace.get_api_external_communication_time_ms()
-                + sum(external_communication_time_ms_list)
+
+            GlobalNamespace.set_api_captured_time_ms(
+                functools.reduce(
+                    CapturedTimeMS.__add__,
+                    [GlobalNamespace.get_api_captured_time_ms()]
+                    + captured_time_ms_list,
+                )
             )
 
         return {
@@ -408,9 +410,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         closed_session = None
         try:
             closed_session = CommandSession.get(session.id, client_ip, client_port)
-            # Reset external communication time field so we don't include
+            # Reset captured time field so we don't include
             # the time from a previous API call
-            closed_session.reset_external_communication_time_ms()
+            closed_session.captured_time_ms.reset_time()
             await closed_session.close()
         except Exception as e:
             # Append message as new arg instead of constructing new exception
@@ -419,9 +421,9 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raise e
         finally:
             if closed_session:
-                GlobalNamespace.set_api_external_communication_time_ms(
-                    GlobalNamespace.get_api_external_communication_time_ms()
-                    + closed_session.external_communication_time_ms
+                GlobalNamespace.set_api_captured_time_ms(
+                    GlobalNamespace.get_api_captured_time_ms()
+                    + closed_session.captured_time_ms
                 )
 
     @ensure_thrift_exception
@@ -497,21 +499,21 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raise e
         finally:
             if session:
-                GlobalNamespace.set_api_external_communication_time_ms(
-                    GlobalNamespace.get_api_external_communication_time_ms()
-                    + session.external_communication_time_ms
+                GlobalNamespace.set_api_captured_time_ms(
+                    GlobalNamespace.get_api_captured_time_ms()
+                    + session.captured_time_ms
                 )
 
     async def _run_session(
         self, tsession, command, timeout, client_ip, client_port, uuid, prompt_re=None
     ):
         session = None
-        external_communication_time_ms = 0.0
+        captured_time_ms = CapturedTimeMS()
         try:
             session = CommandSession.get(tsession.id, client_ip, client_port)
-            # Reset external communication time field so we don't include
+            # Reset captured time field so we don't include
             # the time from a previous API call
-            session.reset_external_communication_time_ms()
+            session.captured_time_ms.reset_time()
             return await self._run_command(session, command, timeout, uuid, prompt_re)
         except Exception as e:
             # Append message as new arg instead of constructing new exception
@@ -520,11 +522,10 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
             raise e
         finally:
             if session:
-                external_communication_time_ms = session.external_communication_time_ms
+                captured_time_ms = session.captured_time_ms
 
-            GlobalNamespace.set_api_external_communication_time_ms(
-                GlobalNamespace.get_api_external_communication_time_ms()
-                + external_communication_time_ms
+            GlobalNamespace.set_api_captured_time_ms(
+                GlobalNamespace.get_api_captured_time_ms() + captured_time_ms
             )
 
     def _get_result_key(self, device):
@@ -568,7 +569,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         devinfo = None
         session = None
         results = []
-        external_communication_time_ms = 0.0
+        captured_time_ms = CapturedTimeMS()
         exc = None
         try:
             devinfo = await self._lookup_device(device)
@@ -600,11 +601,11 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                 exc = e
 
         if session:
-            external_communication_time_ms = session.external_communication_time_ms
+            captured_time_ms = session.captured_time_ms
 
         return DeviceResult(
             device_response=results,
-            external_communication_time_ms=external_communication_time_ms,
+            captured_time_ms=captured_time_ms,
             exception=exc,
         )
 
