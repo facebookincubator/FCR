@@ -547,8 +547,10 @@ class CommandStreamReader(asyncio.StreamReader):
                 (feed_data_call_time_s - self._last_feed_data_call_time_s) * 1000
             )
 
-        # only update last call time if cmd_stream not None (i.e. _connect done)
-        # to prevent overlapping captured time with _connect (which may also call feed_data)
+        # Only update last call time if cmd_stream not None (i.e. _connect done)
+        # to prevent overlapping captured time with _connect (which may also call feed_data).
+        # If feed_data is called for the first time without going through wait_for,
+        # this will also start capturing the time for those non-wait_for feed_data calls.
         if self._session._cmd_stream:
             self._last_feed_data_call_time_s = feed_data_call_time_s
 
@@ -616,6 +618,10 @@ class CommandStreamReader(asyncio.StreamReader):
             res = predicate(self._buffer)
 
         self.logger.debug("match found at: %s", res)
+
+        # Reset last_feed_data_call_time_s to 0.0 so that in case of a later call to feed_data
+        # that doesn't go through wait_for, we don't accidentally capture the time from now until then
+        self._last_feed_data_call_time_s = 0.0
 
         return res
 
