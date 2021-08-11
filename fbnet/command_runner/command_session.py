@@ -13,6 +13,7 @@ import re
 import time
 import typing
 from collections import namedtuple
+from dataclasses import dataclass
 from functools import wraps
 
 import asyncssh
@@ -53,6 +54,38 @@ class PeerInfo(typing.NamedTuple):
 
     def __str__(self) -> str:
         return f"({self.ip}, {self.ip_is_pingable}, {self.port})"
+
+
+@dataclass(frozen=False)
+class CapturedTimeMS:
+    """
+    Class for capturing different types of communication and processing times (in ms)
+    during an API call. Currently includes external communication time.
+    Add additional types of captured time as fields as needed along with
+    their relevant increment methods
+    """
+
+    # captures external communication time (e.g. establishing SSH connection,
+    # waiting for device to feed bytes to the stream, etc.)
+    external_communication_time_ms: float = 0.0
+
+    def __add__(self, other):
+        return CapturedTimeMS(
+            external_communication_time_ms=self.external_communication_time_ms
+            + other.external_communication_time_ms
+        )
+
+    def __radd__(self, other):
+        raise RuntimeErrorException("Can only add CapturedTimeMS objects together")
+
+    def reset_time(self) -> None:
+        """
+        Resets all captured time to 0.0. Any new added fields must be reset in this method.
+        """
+        self.external_communication_time_ms = 0.0
+
+    def increment_external_communication_time_ms(self, time_ms: float) -> None:
+        self.external_communication_time_ms += time_ms
 
 
 class LogAdapter(logging.LoggerAdapter):
