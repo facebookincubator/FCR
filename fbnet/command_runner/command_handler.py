@@ -325,6 +325,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         self._set_bulk_session_count(self._bulk_session_count + len(devices))
 
         async def _run_one_device(device) -> DeviceResult:
+            if not device_to_commands[device]:
+                return DeviceResult(device_response=[])
             # Instead of running all commands at once, stagger the commands to
             # distribute the load
             delay = random.uniform(0, self.BULK_RUN_JITTER)
