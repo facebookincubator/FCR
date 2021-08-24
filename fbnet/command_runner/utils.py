@@ -123,7 +123,7 @@ def construct_netconf_capability_set(
             continue
         elif re.search(
             _NETCONF_BASE_CAPABILITY_REGEX,
-            capability.text,  # pyre-ignore
+            capability.text,
             re.IGNORECASE,
         ):
             capabilities.add(capability.text)

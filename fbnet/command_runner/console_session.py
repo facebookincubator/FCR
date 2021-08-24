@@ -395,16 +395,15 @@ class ConsoleCommandSession(SSHCommandSession):
         vendor_interact_prompts = self._DEFAULT_CONSOLE_PROMPTS
         if (
             self._CONFIG_INTERACT_PROMPTS_RE_DICT
-            and self._devinfo.vendor_name.encode("utf8")  # pyre-ignore
+            and self._devinfo.vendor_name.encode("utf8")
             in self._CONFIG_INTERACT_PROMPTS_RE_DICT
         ):
-            vendor_interact_prompts = (
-                self._CONFIG_INTERACT_PROMPTS_RE_DICT.get(  # pyre-ignore
-                    self._devinfo.vendor_name.encode("utf8")
-                )
+            vendor_interact_prompts = self._CONFIG_INTERACT_PROMPTS_RE_DICT.get(
+                self._devinfo.vendor_name.encode("utf8")
             )
         interact_prompts = [
             b"(?P<%s>%s)" % (group, regex)
+            # pyre-fixme[16]: `Optional` has no attribute `items`.
             for group, regex in vendor_interact_prompts.items()
         ]
         interact_prompts_re = b"|".join(interact_prompts)
