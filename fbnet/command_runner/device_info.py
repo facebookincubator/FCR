@@ -111,7 +111,7 @@ class DeviceInfo(ServiceObj):
             return IPInfo(ip_address, self.check_ip(ip_address))
 
         # Return the first pingable IP
-        use_mgmt_ip = options.get("mgmt_ip")
+        use_mgmt_ip = options.get("mgmt_ip", False)
         if use_mgmt_ip:
             self.inc_counter("device_info.mgmt_ip")
         for ip in self._pref_ips:
