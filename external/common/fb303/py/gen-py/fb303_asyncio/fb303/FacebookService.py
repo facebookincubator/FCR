@@ -103,16 +103,6 @@ class Iface:
     """
     pass
 
-  def getCpuProfile(self, profileDurationInSec=None):
-    """
-    Returns a CPU profile over the given time interval (client and server
-    must agree on the profile format).
-
-    Parameters:
-     - profileDurationInSec
-    """
-    pass
-
   def aliveSince(self, ):
     """
     Returns the unix time that the server has been running since
@@ -198,16 +188,6 @@ class ContextIface:
   def getOptions(self, handler_ctx, ):
     """
     Gets all options
-    """
-    pass
-
-  def getCpuProfile(self, handler_ctx, profileDurationInSec=None):
-    """
-    Returns a CPU profile over the given time interval (client and server
-    must agree on the profile format).
-
-    Parameters:
-     - profileDurationInSec
     """
     pass
 
@@ -1795,193 +1775,6 @@ def getOptions_result__init__(self, success=None,):
 
 getOptions_result.__init__ = getOptions_result__init__
 
-class getCpuProfile_args:
-  """
-  Attributes:
-   - profileDurationInSec
-  """
-
-  thrift_spec = None
-  thrift_field_annotations = None
-  thrift_struct_annotations = None
-  __init__ = None
-  @staticmethod
-  def isUnion():
-    return False
-
-  def read(self, iprot):
-    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocol) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
-      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
-      self.checkRequired()
-      return
-    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocol) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
-      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
-      self.checkRequired()
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.I32:
-          self.profileDurationInSec = iprot.readI32()
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-    self.checkRequired()
-
-  def checkRequired(self):
-    return
-
-  def write(self, oprot):
-    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocol) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
-      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
-      return
-    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocol) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
-      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
-      return
-    oprot.writeStructBegin('getCpuProfile_args')
-    if self.profileDurationInSec != None:
-      oprot.writeFieldBegin('profileDurationInSec', TType.I32, 1)
-      oprot.writeI32(self.profileDurationInSec)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def __repr__(self):
-    L = []
-    padding = ' ' * 4
-    value = pprint.pformat(self.profileDurationInSec, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    profileDurationInSec=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
-
-  def __eq__(self, other):
-    if not isinstance(other, self.__class__):
-      return False
-
-    return self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-  # Override the __hash__ function for Python3 - t10434117
-  if not six.PY2:
-    __hash__ = object.__hash__
-
-all_structs.append(getCpuProfile_args)
-getCpuProfile_args.thrift_spec = (
-  None, # 0
-  (1, TType.I32, 'profileDurationInSec', None, None, 2, ), # 1
-)
-
-getCpuProfile_args.thrift_struct_annotations = {
-}
-getCpuProfile_args.thrift_field_annotations = {
-}
-
-def getCpuProfile_args__init__(self, profileDurationInSec=None,):
-  self.profileDurationInSec = profileDurationInSec
-
-getCpuProfile_args.__init__ = getCpuProfile_args__init__
-
-class getCpuProfile_result:
-  """
-  Attributes:
-   - success
-  """
-
-  thrift_spec = None
-  thrift_field_annotations = None
-  thrift_struct_annotations = None
-  __init__ = None
-  @staticmethod
-  def isUnion():
-    return False
-
-  def read(self, iprot):
-    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocol) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
-      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
-      self.checkRequired()
-      return
-    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocol) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
-      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
-      self.checkRequired()
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 0:
-        if ftype == TType.STRING:
-          self.success = iprot.readString().decode('utf-8') if UTF8STRINGS else iprot.readString()
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-    self.checkRequired()
-
-  def checkRequired(self):
-    return
-
-  def write(self, oprot):
-    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocol) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
-      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
-      return
-    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocol) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
-      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
-      return
-    oprot.writeStructBegin('getCpuProfile_result')
-    if self.success != None:
-      oprot.writeFieldBegin('success', TType.STRING, 0)
-      oprot.writeString(self.success.encode('utf-8')) if UTF8STRINGS and not isinstance(self.success, bytes) else oprot.writeString(self.success)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def __repr__(self):
-    L = []
-    padding = ' ' * 4
-    value = pprint.pformat(self.success, indent=0)
-    value = padding.join(value.splitlines(True))
-    L.append('    success=%s' % (value))
-    return "%s(\n%s)" % (self.__class__.__name__, ",\n".join(L))
-
-  def __eq__(self, other):
-    if not isinstance(other, self.__class__):
-      return False
-
-    return self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-  # Override the __hash__ function for Python3 - t10434117
-  if not six.PY2:
-    __hash__ = object.__hash__
-
-all_structs.append(getCpuProfile_result)
-getCpuProfile_result.thrift_spec = (
-  (0, TType.STRING, 'success', True, None, 2, ), # 0
-)
-
-getCpuProfile_result.thrift_struct_annotations = {
-}
-getCpuProfile_result.thrift_field_annotations = {
-}
-
-def getCpuProfile_result__init__(self, success=None,):
-  self.success = success
-
-getCpuProfile_result.__init__ = getCpuProfile_result__init__
-
 class aliveSince_args:
 
   thrift_spec = None
@@ -2631,47 +2424,6 @@ class Client(Iface):
     fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "getOptions failed: unknown result"))
     return
 
-  def getCpuProfile(self, profileDurationInSec=None):
-    """
-    Returns a CPU profile over the given time interval (client and server
-    must agree on the profile format).
-
-    Parameters:
-     - profileDurationInSec
-    """
-    self._seqid += 1
-    fut = self._futures[self._seqid] = asyncio.Future(loop=self._loop)
-    self.send_getCpuProfile(profileDurationInSec)
-    return fut
-
-  def send_getCpuProfile(self, profileDurationInSec=None):
-    self._oprot.writeMessageBegin('getCpuProfile', TMessageType.CALL, self._seqid)
-    args = getCpuProfile_args()
-    args.profileDurationInSec = profileDurationInSec
-    args.write(self._oprot)
-    self._oprot.writeMessageEnd()
-    self._oprot.trans.flush()
-
-  def recv_getCpuProfile(self, iprot, mtype, rseqid):
-    try:
-        fut = self._futures.pop(rseqid)
-    except KeyError:
-        return   # request timed out
-    if mtype == TMessageType.EXCEPTION:
-      x = TApplicationException()
-      x.read(iprot)
-      iprot.readMessageEnd()
-      fut.set_exception(x)
-      return
-    result = getCpuProfile_result()
-    result.read(iprot)
-    iprot.readMessageEnd()
-    if result.success != None:
-      fut.set_result(result.success)
-      return
-    fut.set_exception(TApplicationException(TApplicationException.MISSING_RESULT, "getCpuProfile failed: unknown result"))
-    return
-
   def aliveSince(self, ):
     """
     Returns the unix time that the server has been running since
@@ -2758,7 +2510,6 @@ class Processor(Iface, TProcessor):
     self._processMap["setOption"] = Processor.process_setOption
     self._processMap["getOption"] = Processor.process_getOption
     self._processMap["getOptions"] = Processor.process_getOptions
-    self._processMap["getCpuProfile"] = Processor.process_getCpuProfile
     self._processMap["aliveSince"] = Processor.process_aliveSince
     self._processMap["reinitialize"] = Processor.process_reinitialize
     self._processMap["shutdown"] = Processor.process_shutdown
@@ -2861,16 +2612,6 @@ class Processor(Iface, TProcessor):
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
     return fut
 
-  @process_method(getCpuProfile_args, oneway=False, asyncio=True)
-  def process_getCpuProfile(self, args, handler_ctx, seqid, oprot, fn_name):
-    result = getCpuProfile_result()
-    if should_run_on_thread(self._handler.getCpuProfile):
-      fut = self._loop.run_in_executor(None, self._handler.getCpuProfile, args.profileDurationInSec)
-    else:
-      fut = call_as_future(self._handler.getCpuProfile, self._loop, args.profileDurationInSec)
-    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
-    return fut
-
   @process_method(aliveSince_args, oneway=False, asyncio=True)
   def process_aliveSince(self, args, handler_ctx, seqid, oprot, fn_name):
     result = aliveSince_result()
@@ -2916,7 +2657,6 @@ class ContextProcessor(ContextIface, TProcessor):
     self._processMap["setOption"] = ContextProcessor.process_setOption
     self._processMap["getOption"] = ContextProcessor.process_getOption
     self._processMap["getOptions"] = ContextProcessor.process_getOptions
-    self._processMap["getCpuProfile"] = ContextProcessor.process_getCpuProfile
     self._processMap["aliveSince"] = ContextProcessor.process_aliveSince
     self._processMap["reinitialize"] = ContextProcessor.process_reinitialize
     self._processMap["shutdown"] = ContextProcessor.process_shutdown
@@ -3016,16 +2756,6 @@ class ContextProcessor(ContextIface, TProcessor):
       fut = self._loop.run_in_executor(None, self._handler.getOptions, handler_ctx)
     else:
       fut = call_as_future(self._handler.getOptions, self._loop, handler_ctx)
-    fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
-    return fut
-
-  @process_method(getCpuProfile_args, oneway=False, asyncio=True)
-  def process_getCpuProfile(self, args, handler_ctx, seqid, oprot, fn_name):
-    result = getCpuProfile_result()
-    if should_run_on_thread(self._handler.getCpuProfile):
-      fut = self._loop.run_in_executor(None, self._handler.getCpuProfile, handler_ctx, args.profileDurationInSec)
-    else:
-      fut = call_as_future(self._handler.getCpuProfile, self._loop, handler_ctx, args.profileDurationInSec)
     fut.add_done_callback(lambda f: write_results_after_future(result, self._event_handler, handler_ctx, seqid, oprot, fn_name, {}, f))
     return fut
 
