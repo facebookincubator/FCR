@@ -92,6 +92,7 @@ class LogAdapter(logging.LoggerAdapter):
     def process(
         self, msg: str, kwargs: typing.MutableMapping[str, typing.Any]
     ) -> typing.Tuple[typing.Any, typing.MutableMapping[str, typing.Any]]:
+        # pyre-fixme[16]: `object` has no attribute `id`.
         return f"[session_id={self.extra['session'].id}]: {msg}", kwargs
 
 
