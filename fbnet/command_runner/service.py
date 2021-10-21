@@ -176,7 +176,7 @@ class FcrServiceBase:
         """
         return data
 
-    def get_fcr_client(self, timeout=None):
+    async def get_fcr_client(self, timeout=None):
         """
         Get a FCR client for your service.
 

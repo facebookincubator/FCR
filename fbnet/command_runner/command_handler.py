@@ -628,7 +628,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         # Make sure we have a sane timeout value
         assert remote_timeout > 10, "timeout: '%d' value too low for bulk_run" % timeout
 
-        async with self._get_fcr_client(timeout=call_timeout) as client:
+        fcr_client = await self._get_fcr_client(timeout=call_timeout)
+        async with fcr_client as client:
             result = await client.bulk_run_local(
                 device_to_commands,
                 remote_timeout,
@@ -642,8 +643,8 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     async def _lookup_device(self, device):
         return await self.service.device_db.get(device)
 
-    def _get_fcr_client(self, timeout):
-        return self.service.get_fcr_client(timeout=timeout)
+    async def _get_fcr_client(self, timeout):
+        return await self.service.get_fcr_client(timeout=timeout)
 
     def _get_options(
         self,
