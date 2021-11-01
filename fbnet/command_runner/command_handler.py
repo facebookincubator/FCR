@@ -267,25 +267,28 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
                     return await self._bulk_run_remote(
                         chunk, timeout, open_timeout, client_ip, client_port, uuid
                     )
-                except ttypes.InstanceOverloaded as ioe:
-                    # Instance we ran the call on was overloaded. We can retry
-                    # the command again, hopefully on a different instance
-                    self.incrementCounter("bulk_run.remote.overload_error")
-                    self.logger.error("Instance Overloaded: %d: %s", retry_count, ioe)
-                    if retry_count > self.BULK_RETRY_LIMIT:
-                        # Fail the calls
-                        return self._bulk_failure(chunk, str(ioe))
-                    # Stagger the retries
-                    delay = random.uniform(
-                        self.BULK_RETRY_DELAY_MIN, self.BULK_RETRY_DELAY_MAX
-                    )
-                    await asyncio.sleep(delay)
-                    retry_count += 1
                 except Exception as e:
-                    # Append message as new arg instead of constructing new exception
-                    # to account for exceptions having different required args
-                    e.args = e.args + ("bulk_run_remote failed",)
-                    raise e
+                    if isinstance(e, ttypes.InstanceOverloaded):
+                        # Instance we ran the call on was overloaded. We can retry
+                        # the command again, hopefully on a different instance
+                        self.incrementCounter("bulk_run.remote.overload_error")
+                        self.logger.error("Instance Overloaded: %d: %s", retry_count, e)
+
+                    if (
+                        self._remote_task_should_retry(ex=e)
+                        and retry_count <= self.BULK_RETRY_LIMIT
+                    ):
+                        # Stagger the retries
+                        delay = random.uniform(
+                            self.BULK_RETRY_DELAY_MIN, self.BULK_RETRY_DELAY_MAX
+                        )
+                        await asyncio.sleep(delay)
+                        retry_count += 1
+                    else:
+                        # Append message as new arg instead of constructing new exception
+                        # to account for exceptions having different required args
+                        e.args = e.args + ("bulk_run_remote failed",)
+                        return self._bulk_failure(chunk, str(e))
 
         # Split the request into chunks and run them on remote hosts
         tasks = [
@@ -698,3 +701,17 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         to proper data store
         """
         pass
+
+    def _remote_task_should_retry(self, ex: Exception) -> bool:
+        """
+        The function that decides whether a remote task (fan out request) should or should not
+        retry
+        """
+
+        if not ex:
+            return False
+
+        if isinstance(ex, ttypes.InstanceOverloaded):
+            return True
+
+        return False
