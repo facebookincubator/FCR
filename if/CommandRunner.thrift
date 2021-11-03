@@ -220,6 +220,15 @@ struct Device {
   * 3. Set to empty string (= "") to forgo sending a clear_command in-between commands.
   */
   20: optional string clear_command;
+
+  /*
+  default do not fail over
+
+  If the first IP FCR chooses to connect to a device does not succeed in making
+  the connection, then failover to the other ips which FBNet has for the device
+  till a connection has been made or all IPs have been exhausted.
+  */
+  21: optional bool failover_to_backup_ips;
 }
 
 struct CommandResult {
