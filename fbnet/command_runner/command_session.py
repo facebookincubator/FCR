@@ -28,7 +28,6 @@ from fbnet.command_runner.exceptions import (
     ConnectionTimeoutErrorException,
 )
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
-from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionException
 
 from .base_service import PeriodicServiceTask, ServiceObj
 from .options import Option

@@ -6,15 +6,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import TYPE_CHECKING, Union
+import typing
 
 from .base_service import PeriodicServiceTask
 from .exceptions import LookupErrorException, NotImplementedErrorException
 from .options import Option
 
 
-if TYPE_CHECKING:
-    from .device_info import DeviceIP  # noqa: F401
+if typing.TYPE_CHECKING:
+    from fbnet.command_runner_asyncio.CommandRunner.ttypes import Device
+
+    from .device_info import DeviceIP, DeviceInfo
 
 
 class BaseDeviceDB(PeriodicServiceTask):
@@ -91,25 +93,31 @@ class BaseDeviceDB(PeriodicServiceTask):
             await self.wait()
         self.logger.info("Device data valid")
 
-    async def get(self, device, autofetch=True):
+    async def get(
+        self, device: typing.Union["Device", str], autofetch: bool = True
+    ) -> "DeviceInfo":
         """
         Get device information for a given device.
 
         * First we lookup in our local cache
-        * If not found then we will try to fetch the specific device from backend
-        """
-        if device.hostname not in self._devices and autofetch:
-            # Try to fetch the device info
-            await self._fetch_devices(hostname=device.hostname)
+        * If not found then we will try to fetch the specific device from backend if autofetch is true
 
-        if device.hostname in self._devices:
+        device parameter can be the hostname string or the Device struct
+        """
+
+        hostname = device if isinstance(device, str) else device.hostname
+        if hostname not in self._devices and autofetch:
+            # Try to fetch the device info
+            await self._fetch_devices(hostname=hostname)
+
+        if hostname in self._devices:
             # Found the device
-            return self._devices.get(device.hostname)
+            return self._devices.get(hostname)
 
         # still not able to find device, raise an exeception
-        raise LookupErrorException("Device not found", device.hostname)
+        raise LookupErrorException("Device not found", hostname)
 
-    def is_pingable(self, ip: Union[str, "DeviceIP"]) -> bool:
+    def is_pingable(self, ip: typing.Union[str, "DeviceIP"]) -> bool:
         raise NotImplementedErrorException(
             "Please implement this to check if an ip is pingable"
         )
