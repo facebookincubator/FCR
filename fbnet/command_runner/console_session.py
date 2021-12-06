@@ -9,6 +9,7 @@
 import asyncio
 import re
 from typing import (
+    List,
     TYPE_CHECKING,
     Any,
     AnyStr,
@@ -26,6 +27,7 @@ from fbnet.command_runner.exceptions import (
 )
 
 from .command_session import SSHCommandSession
+from .device_info import IPInfo
 from .options import Option
 
 
@@ -171,7 +173,7 @@ class ConsoleCommandSession(SSHCommandSession):
 
         return cls.get_default_console_prompt_re()
 
-    async def dest_info(self) -> Tuple[str, bool, int, str, str]:
+    async def dest_info(self) -> Tuple[List[IPInfo], int, str, str]:
         console = await self.get_console_info()
         self.logger.info(f"{str(console)}")
 
@@ -181,8 +183,7 @@ class ConsoleCommandSession(SSHCommandSession):
         is_pingable = True
 
         return (
-            console.server,
-            is_pingable,
+            [IPInfo(console.server, is_pingable)],
             console.port,
             self._username,
             self._password,

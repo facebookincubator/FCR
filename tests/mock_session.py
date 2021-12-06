@@ -10,6 +10,7 @@ import asyncio
 import typing
 
 from fbnet.command_runner import command_session
+from fbnet.command_runner.device_info import IPInfo
 
 if typing.TYPE_CHECKING:
     from fbnet.command_runner.counters import Counters
@@ -118,6 +119,9 @@ class MockCommandSession(command_session.CliCommandSession):
         )
 
     async def _connect(self) -> None:
+        self._extra_info["peer_list"] = command_session.PeerInfoList(
+            [IPInfo("test-ip", True)], 22
+        )
         self._extra_info["peer"] = command_session.PeerInfo("test-ip", True, 22)
         if self._mock_options.get("connect_drop", False):
             return

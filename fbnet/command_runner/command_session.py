@@ -10,11 +10,14 @@ import abc
 import asyncio
 import logging
 import re
+import sys
 import time
+import traceback
 import typing
 from collections import namedtuple
 from dataclasses import dataclass
 from functools import wraps
+from typing import List
 
 import asyncssh
 from fbnet.command_runner.exceptions import (
@@ -30,6 +33,7 @@ from fbnet.command_runner.exceptions import (
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 
 from .base_service import PeriodicServiceTask, ServiceObj
+from .device_info import IPInfo
 from .options import Option
 
 if typing.TYPE_CHECKING:
@@ -44,6 +48,14 @@ asyncssh.public_key.register_public_key_alg(b"rsa-sha2-256", asyncssh.rsa._RSAKe
 log = logging.getLogger("fcr.CommandSession")
 
 ResponseMatch = namedtuple("ResponseMatch", ["data", "matched", "groupdict", "match"])
+
+
+class PeerInfoList(typing.NamedTuple):
+    ip_list: typing.Optional[List[IPInfo]] = []
+    port: typing.Optional[typing.Union[int, str]] = None
+
+    def __str__(self) -> str:
+        return f"({self.ip_list}, {self.port})"
 
 
 class PeerInfo(typing.NamedTuple):
@@ -235,14 +247,16 @@ class CommandSession(ServiceObj):
 
         self._opts = options
 
-        device = self._opts.get("device")
+        self.device = self._opts.get("device")
         self._extra_options = (
-            device and device.session_data and device.session_data.extra_options
+            self.device
+            and self.device.session_data
+            and self.device.session_data.extra_options
         ) or {}
 
         self._hostname = devinfo.hostname
         self._pre_setup_commands: typing.List[str] = (
-            (device.pre_setup_commands or []) if device else []
+            (self.device.pre_setup_commands or []) if self.device else []
         )
 
         self._extra_info = {}
@@ -278,6 +292,9 @@ class CommandSession(ServiceObj):
 
     def get_peer_info(self) -> typing.Optional[PeerInfo]:
         return self._extra_info.get("peer")
+
+    def get_peer_info_list(self) -> typing.Optional[PeerInfoList]:
+        return self._extra_info.get("peer_list")
 
     def create_logger(self) -> LogAdapter:
         logger = logging.getLogger(
@@ -1005,12 +1022,12 @@ class SSHCommandSession(CliCommandSession):
     def _client_factory(self) -> SSHCommandClient:
         return SSHCommandClient(self)
 
-    async def dest_info(self) -> typing.Tuple[str, bool, int, str, str]:
-        ip, ip_is_pingable = self._devinfo.get_ip(self._opts)
+    async def dest_info(self) -> typing.Tuple[List[IPInfo], int, str, str]:
+        ip_list = self._devinfo.get_ip(self._opts)
         port = int(
             self._extra_options.get("port") or self._devinfo.vendor_data.get_port()
         )
-        return (ip, ip_is_pingable, port, self._username, self._password)
+        return (ip_list, port, self._username, self._password)
 
     # pyre-fixme: Inconsistent override
     async def _connect(
@@ -1035,9 +1052,65 @@ class SSHCommandSession(CliCommandSession):
 
         see sec 6.5 https://tools.ietf.org/html/rfc4254 for more details
         """
-        ip, ip_is_pingable, port, user, passwd = await self.dest_info()
-        self._extra_info["peer"] = PeerInfo(ip, ip_is_pingable, port)
+        ip_list, port, user, passwd = await self.dest_info()
+        self.logger.debug(f"Order in which ips will be tried: {ip_list}")
+        self._extra_info["peer_list"] = PeerInfoList(ip_list, port)
+        if self.device and not self.device.failover_to_backup_ips:
+            # Use the first IP in the list if failover is not enabled
+            ip, ip_is_pingable = ip_list[0]
+            try:
+                return await self._connect_to_ip(
+                    ip,
+                    port,
+                    user,
+                    passwd,
+                    subsystem,
+                    exec_command,
+                )
+            finally:
+                self._extra_info["peer"] = PeerInfo(ip, ip_is_pingable, port)
 
+        ips_tried = []
+        for index, (ip, ip_is_pingable) in enumerate(ip_list):
+            try:
+                return await self._connect_to_ip(
+                    ip,
+                    port,
+                    user,
+                    passwd,
+                    subsystem,
+                    exec_command,
+                )
+            except Exception as e:
+                self.logger.exception(f"Connection to {ip} failed")
+                ips_tried.append(ip)
+                # Raise the last exception in the iteration
+                if index == len(ip_list) - 1:
+                    msg = f"IPs that failed to connect: {ips_tried}"
+                    # Gather the information from the original exception:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    traceback_string = "".join(
+                        traceback.format_exception(exc_type, exc_value, exc_traceback)
+                    )
+                    # Re-raise a new exception of the same class as the original one,
+                    # using custom message and the original traceback:
+                    raise type(e)(f"{msg}:{traceback_string}")
+            finally:
+                self._extra_info["peer"] = PeerInfo(ip, ip_is_pingable, port)
+
+        raise LookupErrorException(
+            f"No Valid IP address was found for the device {self._hostname}: {ip_list}"
+        )
+
+    async def _connect_to_ip(
+        self,
+        ip: str,
+        port: int,
+        user: str,
+        passwd: str,
+        subsystem: typing.Optional[str] = None,
+        exec_command: typing.Optional[str] = None,
+    ) -> asyncssh.SSHTCPSession:
         if self._devinfo.proxy_required(ip):
             host = self.service.get_http_proxy_url(ip)
         elif self._devinfo.should_nat(ip):
