@@ -840,7 +840,7 @@ class CliCommandSession(CommandSession):
         )
 
     async def _wait_response(
-        self, cmd: bytes, prompt_re: typing.Pattern, timeout: int
+        self, prompt_re: typing.Pattern, timeout: int
     ) -> ResponseMatch:
         """
         Wait for command response from the device
@@ -945,7 +945,7 @@ class CliCommandSession(CommandSession):
                 prompt = prompt_re or cmdinfo.prompt_re
                 cmd_timeout = timeout or self._devinfo.vendor_data.cmd_timeout_sec
                 resp = await asyncio.wait_for(
-                    self._wait_response(command, prompt, cmd_timeout),
+                    self._wait_response(prompt, cmd_timeout),
                     cmd_timeout,
                     loop=self._loop,
                 )
