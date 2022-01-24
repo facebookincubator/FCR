@@ -8,7 +8,7 @@
 
 import re
 from collections import namedtuple
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Optional, Pattern
 
 from .base_service import ServiceObj
 from .exceptions import LookupErrorException
@@ -189,11 +189,13 @@ class DeviceInfo(ServiceObj):
         return self._alias
 
     @property
-    def prompt_re(self):
+    def prompt_re(self) -> Pattern:
         return self._vendor_data.get_prompt_re()
 
-    def get_prompt_re(self, trailer=None):
-        return self._vendor_data.get_prompt_re(trailer)
+    def get_prompt_re(
+        self, end_of_line: bool = True, trailer: Optional[bytes] = None
+    ) -> Pattern:
+        return self._vendor_data.get_prompt_re(end_of_line=end_of_line, trailer=trailer)
 
     def _is_question(self, cmd):
         return cmd.endswith(b"?")
@@ -239,7 +241,7 @@ class DeviceInfo(ServiceObj):
                 # Normal command
                 cmd = cmd + b"\n"  # Add newline
 
-            prompt_rex = self.get_prompt_re(trailer)
+            prompt_rex = self.get_prompt_re(trailer=trailer)
 
         # Send a NACK to clear the current command line
         precmd = self._vendor_data.clear_command

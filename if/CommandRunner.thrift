@@ -162,6 +162,9 @@ struct SessionData {
   2: optional string exec_command;
   // Extra options that supported by the given session type. For example,
   //  - The following session support extra_options={'port': PORT}: SSH, NETCONF
+  //  - split_single_command_by_line is a choice of 'yes', 'no'. Default is 'yes'
+  //    If this option is set to 'no', FCR will send the command string to the device at once, without
+  //    splitting the command by line and send sub-commands one by one
   3: optional map<string, string> extra_options;
 }
 

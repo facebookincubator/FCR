@@ -567,40 +567,154 @@ class CommandStreamReader(asyncio.StreamReader):
 
     Extends the asyncio.StreamReader and adds support for waiting for regex
     match on received data
+
+    This class maintains two buffers to support response regex matching:
+    - Primary buffer (self._buffer) is the buffer that the transport directly writes to
+    - Secondary buffer (self._secondary_buffer) is the buffer that this class maintains
+      for processing the bytes from primary buffer
+
+    When FCR sends mutliple commands as one string to the device, for example:
+        "show version\nshow version\n..."
+    The primary buffer will be filled with response from potentially multiple commands,
+    then we fulfill the secondary buffer one line at a time from the primary buffer and perform
+    regex matching in between of each fulfillment, this will ensure that the regex provided by user
+    does not match multiple prompts from the primary buffer
+
+    The secondary buffer mechanism will only be activated when single_command is set to false when
+    calling readuntil_re
     """
 
-    QUICK_COMMAND_RUNTIME = 1
-    COMMAND_DATA_TIMEOUT = 1
+    QUICK_COMMAND_RUNTIME: typing.ClassVar[int] = 1
+    COMMAND_DATA_TIMEOUT: typing.ClassVar[int] = 1
 
-    def __init__(self, session: CommandSession, *args, **kwargs) -> None:
+    _NEW_LINE_REGEX_PATTERN: typing.ClassVar[typing.Pattern] = re.compile(
+        b"[\n\r]+", re.M
+    )
+
+    def __init__(self, session, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._session = session
-        self._last_feed_data_call_time_s: float = 0.0
+        self._secondary_buffer = bytearray()
 
     @property
-    def logger(self) -> LogAdapter:
+    def logger(self):
         return self._session.logger
 
-    def feed_data(self, data: bytes) -> None:
-        feed_data_call_time_s = time.perf_counter()
+    async def drain_from_primary_buffer(
+        self, drain_until: typing.Optional[int] = None
+    ) -> bytes:
+        """
+        Drain (return and remove) bytes from primary buffer:
 
-        # only increment external time if there was a last call time & session's cmd_stream not None
-        # (i.e. _connect done, so not simultaneously capturing session connection time in _connect)
-        if self._last_feed_data_call_time_s and self._session._cmd_stream:
-            self._session.captured_time_ms.increment_external_communication_time_ms(
-                (feed_data_call_time_s - self._last_feed_data_call_time_s) * 1000
+        - If drain_until is None, drain everything from the primary buffer
+
+        - If drain_until is not None, drain everything until that index (exclusive)
+        in the bytes array
+
+        - If drain_until is greater than current buffer's length, it treats equally as
+        draining everything from the buffer
+        """
+
+        if drain_until is None:
+            return await self.read(len(self._buffer))  # pyre-ignore
+
+        return await self.read(drain_until)
+
+    def drain_from_secondary_buffer(
+        self, drain_until: typing.Optional[int] = None
+    ) -> bytes:
+        """
+        Drain (return and remove) bytes from secondary buffer:
+
+        - If drain_until is None, drain everything from the secondary buffer
+
+        - If drain_until is not None, drain everything until that index (exclusive)
+        in the bytes array
+
+        - If drain_until is greater than current buffer's length, it treats equally as
+        draining everything from the buffer
+        """
+
+        if drain_until is None:
+            drain_until = len(self._secondary_buffer)
+
+        desired_bytes = bytes(self._secondary_buffer[:drain_until])
+        del self._secondary_buffer[:drain_until]
+        return desired_bytes
+
+    async def _fill_secondary_buffer(
+        self, is_last_command: bool = False, timeout: typing.Optional[int] = None
+    ) -> None:
+        """
+        Filling the secondary buffer from draining the bytes in primary buffer,
+        in the following manner:
+
+        - If is_last_command is false, drain the primary buffer until we see a newline (\n)
+          or return (\r) character and store the bytes in secondary buffer
+
+        - If is_last_command is true, drain everything that's currently in the primary buffer
+          and store the bytes in secondary buffer
+        """
+
+        if is_last_command:
+            self.logger.debug(
+                "Reached last command, draining everything from primary buffer to secondary buffer"
             )
+            remaining_bytes_in_primary_buffer = await self.read(
+                self._limit  # pyre-ignore
+            )
+            self._secondary_buffer.extend(remaining_bytes_in_primary_buffer)
+        else:
+            self.logger.debug(
+                "Filling secondary buffer with next line in primary buffer"
+            )
+            matched = await self.wait_for_primary_buffer(
+                lambda data: self._NEW_LINE_REGEX_PATTERN.search(data, 0), timeout
+            )
+            matched_bytes = await self.drain_from_primary_buffer(
+                drain_until=matched.span()[1]
+            )
+            self._secondary_buffer.extend(matched_bytes)
+            self.logger.debug(f"Filled secondary buffer with {matched_bytes}")
 
-        # Only update last call time if cmd_stream not None (i.e. _connect done)
-        # to prevent overlapping captured time with _connect (which may also call feed_data).
-        # If feed_data is called for the first time without going through wait_for,
-        # this will also start capturing the time for those non-wait_for feed_data calls.
-        if self._session._cmd_stream:
-            self._last_feed_data_call_time_s = feed_data_call_time_s
+    async def wait_for_secondary_buffer(
+        self,
+        predicate: typing.Callable,
+        timeout: typing.Optional[int] = None,
+        is_last_command: bool = False,
+    ) -> typing.Match:
+        """
+        Execute the predicate on secondary buffer until we have a match
+        predicate should be a regex operation that will return a Match object
 
-        return super().feed_data(data)
+        Upon predicate returns nothing (fail to find a match in secondary buffer),
+        we fill secondary buffer from primary buffer
+        """
 
-    async def wait_for(
+        await self._fill_secondary_buffer(
+            is_last_command=is_last_command, timeout=timeout
+        )
+        res = predicate(self._secondary_buffer)
+
+        while res is None:
+            self.logger.debug(
+                "Match failed in secondary buffer: "
+                f"{len(self._secondary_buffer)}: ..."
+                f"{self._secondary_buffer[-100:]}",
+            )
+            await self._fill_secondary_buffer(
+                is_last_command=is_last_command, timeout=timeout
+            )
+            res = predicate(self._secondary_buffer)
+
+        self.logger.debug(
+            f"Match found at: {res}, "
+            f"secondary buffer: ...{self._secondary_buffer[-100:]}",
+        )
+
+        return res
+
+    async def wait_for_primary_buffer(
         self, predicate: typing.Callable, timeout: typing.Optional[int] = None
     ) -> typing.Match:
         """
@@ -609,14 +723,11 @@ class CommandStreamReader(asyncio.StreamReader):
         """
 
         if self._exception is not None:  # pyre-ignore
-            raise StreamReaderErrorException(repr(self._exception)) from self._exception
+            raise self._exception
 
         res = predicate(self._buffer)  # pyre-ignore
 
         start_ts = time.time()
-        # Set an initial time so that first call to feed_data has a
-        # reference from which to capture how much time has passed
-        self._last_feed_data_call_time_s = time.perf_counter()
 
         while res is None:
             now = time.time()
@@ -630,14 +741,17 @@ class CommandStreamReader(asyncio.StreamReader):
                 )
 
             self.logger.debug(
-                f"match failed in: {len(self._buffer)}: {self._limit}: {self._buffer[-100:]}"  # pyre-ignore
+                "Match failed in primary buffer: "
+                f"{len(self._buffer)}: "
+                f"{self._limit}: "  # pyre-ignore
+                f"{self._buffer[-100:]}",
             )
             self._session.inc_counter("streamreader.wait_for_retry")
 
             if len(self._buffer) > self._limit:
                 self._session.inc_counter("streamreader.overrun")
                 raise StreamReaderErrorException(
-                    "Reader buffer overrun: %d: %d" % (len(self._buffer), self._limit)
+                    f"Reader buffer overrun: {len(self._buffer)}: {self._limit}"
                 )
 
             if now - start_ts > self.QUICK_COMMAND_RUNTIME:
@@ -661,18 +775,14 @@ class CommandStreamReader(asyncio.StreamReader):
 
             res = predicate(self._buffer)
 
-        self.logger.debug("match found at: %s", res)
-
-        # Reset last_feed_data_call_time_s to 0.0 so that in case of a later call to feed_data
-        # that doesn't go through wait_for, we don't accidentally capture the time from now until then
-        self._last_feed_data_call_time_s = 0.0
+        self.logger.debug(
+            f"Match found at: {res}, primary buffer: ...{self._buffer[-100:]}",
+        )
 
         return res
 
-    def _search_re(
-        self, regex: typing.Pattern, data: bytes, start: int = 0
-    ) -> typing.Optional[typing.Match]:
-        self.logger.debug(f"searching for: {regex}")
+    def _search_re(self, regex, data, start=0):
+        self.logger.debug("searching for: %s", regex)
         return regex.search(data, start)
 
     async def readuntil_re(
@@ -680,14 +790,41 @@ class CommandStreamReader(asyncio.StreamReader):
         regex: typing.Pattern,
         timeout: typing.Optional[int] = None,
         start: int = 0,
+        is_single_command: bool = True,
+        is_last_command: bool = False,
     ) -> ResponseMatch:
         """
-        Read data until a regex is matched on the input stream
+        Read the buffer (primary or secondary) until the regex pattern is found
+        drain and return the matched bytes in a ResponseMatch namedtuple
+
+        - If is_single_command is true, that means FCR sent a single command to the device
+        and is waiting for response. In this case, we directly perform regex matching on
+        primary buffer and try to find a match
+
+        - If is_single_command is false, that means FCR sent a string of multiple commands to
+        the device at once and is waiting for multiple responses. In this case, we activates
+        the secondary buffer mechanism and perform regex matching on secondary buffer
+
+        The start parameter specifies the starting position we should be looking at when performing
+        the regex matching
+
+        is_last_command specifies whether FCR should be expecting the last command from the buffer,
+        when FCR sent multiple commands at once to the device. This parameter will only be used when
+        is_single_command is true
         """
+
         self.logger.debug("readuntil_re: %s", regex)
 
         try:
-            match = await self.wait_for(lambda data: regex.search(data, start), timeout)
+            match: typing.Match
+            if is_single_command:
+                match = await self.wait_for_primary_buffer(
+                    lambda data: regex.search(data, start), timeout
+                )
+            else:
+                match = await self.wait_for_secondary_buffer(
+                    lambda data: regex.search(data, start), timeout, is_last_command
+                )
 
             m_beg, m_end = match.span()
             # We are matching against the data stored stored in bytebuffer
@@ -712,13 +849,17 @@ class CommandStreamReader(asyncio.StreamReader):
             # Out[43]: {'ignore': None, 'login': b'overwrite', 'passwd': None, 'prompt': None}
             #
             groupdict = match.groupdict()
-            rdata = await self.read(m_end)
+            rdata = (
+                await self.drain_from_primary_buffer(drain_until=m_end)
+                if is_single_command
+                else self.drain_from_secondary_buffer(drain_until=m_end)
+            )
             data = rdata[:m_beg]  # Data before the regex match
             matched = rdata[m_beg:m_end]  # portion that matched regex
         except AssertionError as exc:
             if self._eof:  # pyre-ignore
                 # We are at the EOF. Read the whole buffer and send it back
-                data = await self.read(len(self._buffer))  # pyre-ignore
+                data = await self.drain()
                 matched = b""
                 match = None
                 groupdict = None
@@ -730,10 +871,14 @@ class CommandStreamReader(asyncio.StreamReader):
 
     async def drain(self) -> bytes:
         """
-        Drain the read buffer. Typically used before sending a new commands to
-        make sure the stream in in sane state
+        Drain and return everything from the primary and secondary buffer
+        Typically used before sending a new commands to make sure the stream
+        is in a sane state
         """
-        return await self.read(len(self._buffer))  # pyre-ignore
+
+        return (
+            self.drain_from_secondary_buffer() + await self.drain_from_primary_buffer()
+        )
 
 
 class CommandStream(asyncio.StreamReaderProtocol):
@@ -829,25 +974,24 @@ class CliCommandSession(CommandSession):
         self,
         prompt_re: typing.Optional[typing.Pattern] = None,
         timeout: typing.Optional[int] = None,
+        start: typing.Optional[int] = None,
+        is_single_command: bool = True,
+        is_last_command: bool = False,
     ) -> ResponseMatch:
         """
-        Wait for a prompt
+        Wait for next prompt in the stream
+        Returns a ResponseMatch namedtuple containing bytes until the next prompt
+        from the stream
         """
-        return await self._stream_reader.readuntil_re(
-            prompt_re or self._devinfo.prompt_re,
-            timeout,
-            -self._MAX_PROMPT_SIZE,
-        )
 
-    async def _wait_response(
-        self, prompt_re: typing.Pattern, timeout: int
-    ) -> ResponseMatch:
-        """
-        Wait for command response from the device
-        """
-        self.logger.debug("Waiting for prompt")
-        resp = await self.wait_prompt(prompt_re=prompt_re, timeout=timeout)
-        return resp
+        self.logger.info("Waiting for prompt")
+        return await self._stream_reader.readuntil_re(
+            regex=prompt_re or self._devinfo.prompt_re,
+            timeout=timeout,
+            start=start if start is not None else -self._MAX_PROMPT_SIZE,
+            is_single_command=is_single_command,
+            is_last_command=is_last_command,
+        )
 
     def _fixup_whitespace(self, output: bytes) -> bytes:
         # we need to sanitize the output to remove '\r' and other chars.
@@ -909,11 +1053,29 @@ class CliCommandSession(CommandSession):
         prompt_re: typing.Optional[typing.Pattern] = None,
     ) -> bytes:
         """
-        Run a command and return response to user
+        Send the command bytes to device and return the resposne from the device
+        The command bytes may or may not contain multiple commands, specifically in the format of:
+
+        - single command: "show version"
+
+        - multiple commands: "show version\nshowversion"
+
+        We provide two mechanisms to run the commands:
+
+        - If split_single_command_by_line is true, FCR will perform a splitline and generate a list of
+          command and send them one by one to the device, also wait for response from the last sent command
+          before sending the next command
+
+        - If split_single_command_by_line is false, FCR wil send the command bytes at once to the device
+          and parse response from device output, which contains multiple respones from these commands
+
+        split_single_command_by_line is specified in extra_options dictionary in SessionData when user is
+        constructing the Device struct
         """
+
         if not self._connected:
             raise RuntimeErrorException(
-                "Not Connected", f"status: {self.exit_status!r}", self.key
+                "Not Connected", f"status: {self.exit_status, self.key}"
             )
 
         # Ideally there should be no data on the stream. We will in any case
@@ -921,35 +1083,61 @@ class CliCommandSession(CommandSession):
         # that we are in sane state
         stale_data = await self._stream_reader.drain()
         if len(stale_data) != 0:
-            self.logger.warning(f"Stale data on session: {stale_data}")
+            self.logger.warning("Stale data on session: %s", stale_data)
 
-        output = []
+        split_commands = (
+            self._extra_options.get("split_single_command_by_line", "yes") == "yes"
+        )
+        commands = command.strip().splitlines()
+        command_infos = [
+            self._devinfo.get_command_info(command, self._opts.get("command_prompts"))
+            for command in commands
+        ]
 
-        commands = command.splitlines()
-        for command in commands:
-            cmdinfo = self._devinfo.get_command_info(
-                command,
-                self._opts.get("command_prompts"),
-                self._opts.get("clear_command"),
-            )
+        # If split_single_command_by_line is set to false, send every bytes at once after post
+        # processed by get_command_info
+        if not split_commands:
+            # TODO: Support running precmd when sending commands without splitting lines
+            cmd = b"".join(cmdinfo.cmd for cmdinfo in command_infos)
+            self._stream_writer.write(cmd)
 
-            self.logger.info(f"RUN: {cmdinfo.cmd!r}")
+        output: typing.List[bytes] = []
+        prompt_endline_reg = self._devinfo.get_prompt_re(end_of_line=True, trailer=None)
+        prompt_reg = self._devinfo.get_prompt_re(end_of_line=False, trailer=None)
+        for idx, cmdinfo in enumerate(command_infos):
+            prompt: typing.Pattern
+            cmd_timeout: int = timeout or self._devinfo.vendor_data.cmd_timeout_sec
+            is_last_command: bool = idx == len(command_infos) - 1
 
-            # Send any precmd data (e.g. \x15 to clear the commandline)
-            if cmdinfo.precmd:
-                self._stream_writer.write(cmdinfo.precmd)
+            # If split_single_command_by_line is set to true, writes command
+            # to the stream by one by after split lines
+            if split_commands:
+                self.logger.info("RUN: %r", cmdinfo.cmd)
+                # Send any precmd data (e.g. \x15 to clear the commandline)
+                if cmdinfo.precmd:
+                    self._stream_writer.write(cmdinfo.precmd)
 
-            self._stream_writer.write(cmdinfo.cmd)
+                self._stream_writer.write(cmdinfo.cmd)
+                prompt = prompt_re or cmdinfo.prompt_re
+            else:
+                if prompt_re:
+                    prompt = prompt_re
+                else:
+                    prompt = prompt_reg if not is_last_command else prompt_endline_reg
 
             try:
-                prompt = prompt_re or cmdinfo.prompt_re
-                cmd_timeout = timeout or self._devinfo.vendor_data.cmd_timeout_sec
                 resp = await asyncio.wait_for(
-                    self._wait_response(prompt, cmd_timeout),
+                    self.wait_prompt(
+                        prompt_re=prompt,
+                        timeout=cmd_timeout,
+                        start=None,
+                        is_single_command=split_commands,
+                        is_last_command=is_last_command,
+                    ),
                     cmd_timeout,
                     loop=self._loop,
                 )
-                output.append(self._format_output(command, resp))
+                output.append(self._format_output(cmdinfo.cmd, resp))
             except asyncio.TimeoutError:
                 self.logger.error("Timeout waiting for command response")
                 data = await self._stream_reader.drain()
