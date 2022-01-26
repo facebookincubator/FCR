@@ -257,6 +257,38 @@ struct Session {
   4: string uuid;
 }
 
+struct DeviceCommands {
+  1: Device device;
+  /* List of commands to be run on the device.
+   * The commands in this list will be executed sequentially according
+   * to the order in the list.
+   */
+  2: list<string> commands;
+}
+
+struct BulkRunCommandRequest {
+  // A list of DeviceCommands struct
+  1: list<DeviceCommands> device_commands_list;
+  /*
+   * optional arguments
+   */
+  // max time (sec) to wait to get the full response of a single command.
+  // the max time it could take per device is timeout * number of commands
+  3: i32 timeout = 300;
+  // max time (sec) allowed to spend authenticating into the device
+  4: i32 open_timeout = 30;
+  /*
+   * don't populate the following arguments unless you know what you are doing
+   */
+  10: string client_ip = "";
+  11: string client_port = "";
+  12: string uuid = "";
+}
+
+struct BulkRunCommandResponse {
+  1: map<string, list<CommandResult>> device_to_result;
+}
+
 service Command extends fb303.FacebookService {
   /* Run a command on a device.
    *
@@ -312,6 +344,12 @@ service Command extends fb303.FacebookService {
     11: string client_port = "",
     12: string uuid = "",
   );
+
+  /* DO NOT USE THIS API. This is in the process of development.
+   * This is the version 2 of the bulk_run, with compliance to modern thrift guidance.
+   */
+
+  BulkRunCommandResponse bulk_run_v2(1: BulkRunCommandRequest request);
 
   /*
     * To USER: DO NOT use this function
