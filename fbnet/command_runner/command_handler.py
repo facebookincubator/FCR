@@ -246,6 +246,31 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
+    async def bulk_run_v2(
+        self, request: ttypes.BulkRunCommandRequest
+    ) -> ttypes.BulkRunCommandResponse:
+        device_to_commands = {}
+        for device_commands in request.device_commands_list:
+            device_details = device_commands.device
+            # Since this is in the handler, is it okay to have struct as a key?
+            device_to_commands[device_details] = device_commands.commands
+
+        result = await self.bulk_run(
+            device_to_commands,
+            request.timeout,
+            request.open_timeout,
+            request.client_ip,
+            request.client_port,
+            request.uuid,
+        )
+        response = ttypes.BulkRunCommandResponse()
+        response.device_to_result = result
+        return response
+
+    @ensure_thrift_exception
+    @input_fields_validator
+    @_append_debug_info_to_exception
+    @_ensure_uuid
     async def bulk_run(
         self, device_to_commands, timeout, open_timeout, client_ip, client_port, uuid
     ) -> typing.Dict[str, typing.List[ttypes.CommandResult]]:
