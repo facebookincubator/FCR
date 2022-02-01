@@ -9,7 +9,6 @@
 import json
 import os
 import re
-import typing
 
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import SessionType
 
@@ -92,18 +91,16 @@ class DeviceVendor(ServiceObj):
         stats_mgr.register_counter("device_vendor.all_sessions")
         stats_mgr.register_counter("device_vendor.unsupported_session")
 
-    def get_prompt_re(
-        self, end_of_line: bool = True, trailer: typing.Optional[bytes] = None
-    ) -> typing.Pattern:
+    def get_prompt_re(self, trailer=None):
         """
         Get prompt regex for the device. Optionally a trailer can be specified.
         This is extra text expected after the prompt. Mostly useful for
         interactive command. E.g. when we get a list of completion, the intial
         command is inserted after the prompt
         """
-        if not trailer and end_of_line:
+        if not trailer:
             return self._prompt_re
-        return self._get_prompt_re(end_of_line=end_of_line, trailer=trailer)
+        return self._get_prompt_re(trailer)
 
     def get_port(self):
         return self._config.port
@@ -169,9 +166,7 @@ class DeviceVendor(ServiceObj):
     def _update_prompts_re(self):
         self._prompt_re = self._get_prompt_re()
 
-    def _get_prompt_re(
-        self, end_of_line: bool = True, trailer: typing.Optional[bytes] = None
-    ) -> typing.Pattern:
+    def _get_prompt_re(self, trailer=None):
         prompts = self._config.prompt_regex
 
         if self._config.shell_prompts:
@@ -183,17 +178,10 @@ class DeviceVendor(ServiceObj):
         if self._config.bootstrap_prompts:
             prompts += self._config.bootstrap_prompts
 
-        return self._build_prompt_re(
-            prompts=prompts, trailer=trailer, end_of_line=end_of_line
-        )
+        return self._build_prompt_re(prompts, trailer)
 
     @classmethod
-    def _build_prompt_re(
-        cls,
-        prompts: bytes,
-        trailer: typing.Optional[bytes] = None,
-        end_of_line: bool = True,
-    ) -> typing.Pattern:
+    def _build_prompt_re(cls, prompts, trailer=None):
         all_prompts = (b"(%s)" % prompt for prompt in prompts)
         trailer = trailer or b""
         # the prompt must be at the start of the line.
@@ -202,13 +190,12 @@ class DeviceVendor(ServiceObj):
         # reduces the probability of this matching some random text in the
         # output. Not that we are matching at end of the text, not at the end of
         # each line in text (re.M is not specified)
-        prompt_bytes = (
-            b"(?<=[\n\r])(?P<prompt>" + b"|".join(all_prompts) + rb")\s*" + trailer
-        )
-        if end_of_line:
-            prompt_bytes += b"$"
         return re.compile(
-            prompt_bytes,
+            b"(?<=[\n\r])(?P<prompt>"
+            + b"|".join(all_prompts)
+            + rb")\s*"
+            + trailer
+            + b"$",
             re.M,
         )
 

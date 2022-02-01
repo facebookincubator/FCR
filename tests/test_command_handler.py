@@ -39,14 +39,12 @@ class TestCommandHandler(AsyncTestCase):
         name: str,
         console: str = "",
         command_prompts: typing.Optional[typing.Dict[str, str]] = None,
-        extra_options: typing.Optional[typing.Dict[str, str]] = None,
     ) -> Mock:
         return Mock(
             hostname=name,
             console=console,
             command_prompts=command_prompts,
             pre_setup_commands=[],
-            session_data=ttypes.SessionData(extra_options=extra_options),
             clear_command=None,
         )
 
