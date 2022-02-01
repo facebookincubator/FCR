@@ -115,7 +115,7 @@ class DeviceInfo(ServiceObj):
         use_mgmt_ip = options.get("mgmt_ip", False)
         if use_mgmt_ip:
             self.inc_counter("device_info.mgmt_ip")
-            ip_list = self.get_ip_list(self._pref_ips, use_mgmt_ip)
+            ip_list = self.get_ip_list(use_mgmt_ip=True)
             if len(ip_list) == 0:
                 # No valid MGMT IPs were found when user specifies use_mgmt_ip, raise
                 # LookupError
@@ -127,11 +127,7 @@ class DeviceInfo(ServiceObj):
 
         # Return all valid IP addresses sorted by pingability
         self.inc_counter("device_info.default_ip")
-        if self._ip.addr in [ip.addr for ip in self._pref_ips]:
-            total_ips = self._pref_ips
-        else:
-            total_ips = [self._ip] + self._pref_ips
-        ip_list = self.get_ip_list(total_ips)
+        ip_list = self.get_ip_list(use_mgmt_ip=use_mgmt_ip)
         if len(ip_list) == 0:
             # None of the IPs is valid, raise LookupError
             raise LookupErrorException(
@@ -139,32 +135,26 @@ class DeviceInfo(ServiceObj):
             )
         return ip_list
 
-    def get_ip_list(
-        self, ip_list: List[DeviceIP], use_mgmt_ip: bool = False
-    ) -> List[IPInfo]:
+    def get_ip_list(self, use_mgmt_ip: bool = False) -> List[IPInfo]:
         pingable_list: List[IPInfo] = []
         non_pingable_list: List[IPInfo] = []
-        for ip in ip_list:
+        for ip in self._pref_ips + [self._ip]:
             # ip.addr is None
             if not ip.addr:
                 continue
 
-            # Check if MGMT IP
-            if use_mgmt_ip:
-                # Go to the next IP if current IP is not MGMT
-                if not self._is_mgmt_ip(ip):
-                    continue
-                # Check if its pingable
-                if self.check_ip(ip):
-                    pingable_list.append(IPInfo(ip.addr, True))
-                else:
-                    non_pingable_list.append(IPInfo(ip.addr, False))
+            # Check if MGMT IP and go to the next IP if current IP is not MGMT
+            if use_mgmt_ip and not self._is_mgmt_ip(ip):
+                continue
 
             # Check if its pingable
             if self.check_ip(ip):
                 pingable_list.append(IPInfo(ip.addr, True))
             else:
-                non_pingable_list.append(IPInfo(ip.addr, False))
+                if ip.addr == self._ip.addr:
+                    non_pingable_list = [IPInfo(ip.addr, False)] + non_pingable_list
+                else:
+                    non_pingable_list.append(IPInfo(ip.addr, False))
         # Give preference to IPs that are pingable
         return pingable_list + non_pingable_list
 
