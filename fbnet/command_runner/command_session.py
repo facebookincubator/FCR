@@ -1093,7 +1093,9 @@ class SSHCommandSession(CliCommandSession):
                         traceback.format_exception(exc_type, exc_value, exc_traceback)
                     )
                     # Re-raise a new exception of the same class as the original one,
-                    # using custom message and the original traceback:
+                    # using custom message and the original traceback
+                    if isinstance(e, asyncssh.misc.DisconnectError):
+                        raise type(e)(code=e.code, reason=f"{msg}:{e.reason}")
                     raise type(e)(f"{msg}:{traceback_string}")
             finally:
                 self._extra_info["peer"] = PeerInfo(ip, ip_is_pingable, port)
