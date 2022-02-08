@@ -787,6 +787,9 @@ class CliCommandSession(CommandSession):
     A command session for CLI commands. Does prompt processing on the command stream.
     """
 
+    _SPECIAL_CHAR_REGEX = re.compile(br".\x08|\x07")
+    _NEWLINE_REPLACE_REGEX = re.compile(br"(\r+\n)|(\n\r+)|\r")
+
     def __init__(
         self,
         service: "FcrServiceBase",
@@ -854,14 +857,14 @@ class CliCommandSession(CommandSession):
         # List of chars that will be removed
         #        ' *\x08+': space* followed by backspace characters
         #          '\x07' : BEL(bell) char
-        output = re.sub(br".\x08|\x07", b"", output)
+        output = self._SPECIAL_CHAR_REGEX.sub(b"", output)
 
         #
         # We need to apply following transforms
         #   '\r+\n' -> '\n'
         #   '\n\r+' -> '\n'
         #   '\r' -> '\n'     standalone \r
-        output = re.sub(br"(\r+\n)|(\n\r+)|\r", b"\n", output)
+        output = self._NEWLINE_REPLACE_REGEX.sub(b"\n", output)
 
         return output.strip()
 
