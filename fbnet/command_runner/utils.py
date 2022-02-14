@@ -8,15 +8,27 @@
 
 import re
 import xml.etree.ElementTree as et
+from collections import namedtuple
 from functools import lru_cache, wraps
-from typing import Optional, Set, Union
+from typing import Optional, Set, Union, List, Dict, Any, NamedTuple, TYPE_CHECKING
 
-from fbnet.command_runner.exceptions import ValidationErrorException
+from fbnet.command_runner.exceptions import (
+    ValidationErrorException,
+    LookupErrorException,
+)
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 
 
+if TYPE_CHECKING:
+    from fbnet.command_runner.device_info import DeviceInfo
+    from fbnet.command_runner.service import FcrServiceBase
+
 _XML_NAMESPACE_REGEX: str = r"""\{[^}]*\}"""
 _NETCONF_BASE_CAPABILITY_REGEX: str = ".*netconf:base:[0-9]+[.][0-9]+$"
+
+CommandInfo = namedtuple("CommandInfo", "cmd precmd prompt_re")
+DeviceIP = namedtuple("DeviceIP", ["name", "addr", "mgmt_ip"])
+IPInfo = NamedTuple("IPInfo", [("addr", str), ("is_pingable", bool)])
 
 
 def canonicalize(val):
@@ -171,3 +183,124 @@ def input_fields_validator(fn):  # noqa C901
         return await fn(self, *args, **kwargs)
 
     return wrapper
+
+
+class IPUtils:
+    @classmethod
+    def proxy_required(cls, ip: str) -> bool:
+        """
+        Returns a boolean stating whether an IP address requires proxy connectivity
+        """
+
+        return False
+
+    @classmethod
+    def should_nat(cls, ip: str, service: Optional["FcrServiceBase"] = None) -> bool:
+        """
+        Returns a boolean stating whether an IP address requires NAT connectivity
+        """
+
+        return False
+
+    @classmethod
+    async def translate_address(
+        cls, ip: str, service: Optional["FcrServiceBase"] = None
+    ) -> str:
+        """
+        Returns the translated address (NAT) for a given IP address
+        """
+
+        return ip
+
+    @classmethod
+    def check_ip(cls, ip: str, service: Optional["FcrServiceBase"] = None) -> bool:
+        """
+        Returns a boolean stating whether an IP address is good for use
+        Common indicators are pingability / reachability
+        """
+
+        return True
+
+    @classmethod
+    def is_mgmt_ip(cls, ip: DeviceIP) -> bool:
+        """
+        Returns a boolean stating whether an IP address is a management IP or not
+        """
+
+        return False
+
+    @classmethod
+    def get_ip(
+        cls, options: Dict[str, Any], devinfo: "DeviceInfo", service: "FcrServiceBase"
+    ) -> List[IPInfo]:
+        """
+        Returns list of Tuple with IP address of the given DeviceInfo and whether it is pingable or not.
+
+        first_ip = devinfo.get_ip(...)[0]
+        ip_address = first_ip.addr
+        is_pingable = first_ip.is_pingable
+        """
+
+        # If user specified an ip address, then use it directly
+        ip_list: List[IPInfo] = []
+        ip_address = options.get("ip_address")
+        if ip_address:
+            return [IPInfo(ip_address, cls.check_ip(ip_address, service))]
+
+        # If use_mgmt_ip is True, then return list of MGMT IP addresses
+        use_mgmt_ip = options.get("mgmt_ip", False)
+        if use_mgmt_ip:
+            devinfo.inc_counter("device_info.mgmt_ip")
+            ip_list = cls._get_ip_list(
+                use_mgmt_ip=True, service=service, devinfo=devinfo
+            )
+            if len(ip_list) == 0:
+                # No valid MGMT IPs were found when user specifies use_mgmt_ip, raise
+                # LookupError
+                raise LookupErrorException(
+                    "User has set 'mgmt_ip=True' in the request but no mgmt ip is "
+                    f"found for {devinfo.hostname}"
+                )
+            return ip_list
+
+        # Return all valid IP addresses sorted by pingability
+        devinfo.inc_counter("device_info.default_ip")
+        ip_list = cls._get_ip_list(
+            use_mgmt_ip=use_mgmt_ip, service=service, devinfo=devinfo
+        )
+        if len(ip_list) == 0:
+            # None of the IPs is valid, raise LookupError
+            raise LookupErrorException(
+                f"No Valid IP address was found for the device {devinfo.hostname}"
+            )
+        return ip_list
+
+    @classmethod
+    def _get_ip_list(
+        cls, devinfo: "DeviceInfo", service: "FcrServiceBase", use_mgmt_ip: bool = False
+    ) -> List[IPInfo]:
+        """
+        A helper method for get_ip method
+        """
+
+        pingable_list: List[IPInfo] = []
+        non_pingable_list: List[IPInfo] = []
+        for ip in devinfo._pref_ips + [devinfo._ip]:
+            # ip.addr is None
+            if not ip.addr:
+                continue
+
+            # Check if MGMT IP and go to the next IP if current IP is not MGMT
+            if use_mgmt_ip and not cls.is_mgmt_ip(ip):
+                continue
+
+            # Check if its pingable
+            if cls.check_ip(ip, service):
+                pingable_list.append(IPInfo(ip.addr, True))
+            else:
+                if ip.addr == devinfo._ip.addr:
+                    non_pingable_list = [IPInfo(ip.addr, False)] + non_pingable_list
+                else:
+                    non_pingable_list.append(IPInfo(ip.addr, False))
+        # Give preference to IPs that are pingable
+        return pingable_list + non_pingable_list

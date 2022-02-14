@@ -1026,7 +1026,9 @@ class SSHCommandSession(CliCommandSession):
         return SSHCommandClient(self)
 
     async def dest_info(self) -> typing.Tuple[List[IPInfo], int, str, str]:
-        ip_list = self._devinfo.get_ip(self._opts)
+        ip_list = self.service.ip_utils.get_ip(
+            options=self._opts, devinfo=self._devinfo, service=self.service
+        )
         port = int(
             self._extra_options.get("port") or self._devinfo.vendor_data.get_port()
         )
@@ -1116,10 +1118,10 @@ class SSHCommandSession(CliCommandSession):
         subsystem: typing.Optional[str] = None,
         exec_command: typing.Optional[str] = None,
     ) -> asyncssh.SSHTCPSession:
-        if self._devinfo.proxy_required(ip):
+        if self.service.ip_utils.proxy_required(ip):
             host = self.service.get_http_proxy_url(ip)
-        elif self._devinfo.should_nat(ip):
-            host = await self._devinfo.translate_address(ip)
+        elif self.service.ip_utils.should_nat(ip, self.service):
+            host = await self.service.ip_utils.translate_address(ip, self.service)
         else:
             host = ip
 

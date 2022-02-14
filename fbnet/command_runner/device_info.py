@@ -8,10 +8,9 @@
 
 import re
 from collections import namedtuple
-from typing import List, NamedTuple
+from typing import NamedTuple
 
 from .base_service import ServiceObj
-from .exceptions import LookupErrorException
 
 
 CommandInfo = namedtuple("CommandInfo", "cmd precmd prompt_re")
@@ -77,86 +76,12 @@ class DeviceInfo(ServiceObj):
         _SessionType = self.get_session_type(options)
         return _SessionType(service, self, options, loop=loop)
 
-    @classmethod
-    def proxy_required(cls, ip):
-        return False
-
-    def should_nat(self, ip: str) -> bool:
-        return False
-
-    async def translate_address(self, ip: str) -> str:
-        """
-        Return a translated address (i.e. via NAT). Currently does nothing.
-        """
-        return ip
-
     def __repr__(self):
         return "Device[{0!r}]".format(self._hostname)
 
     @property
     def hostname(self):
         return self._hostname
-
-    def get_ip(self, options) -> List[IPInfo]:
-        """
-        Returns list of Tuple with IP address and whether it is pingable or not.
-
-        first_ip = devinfo.get_ip(...)[0]
-        ip_address = first_ip.addr
-        is_pingable = first_ip.is_pingable
-        """
-        # If user specified an ip address, then use it directly
-        ip_list: List[IPInfo] = []
-        ip_address = options.get("ip_address")
-        if ip_address:
-            return [IPInfo(ip_address, self.check_ip(ip_address))]
-
-        # If use_mgmt_ip is True, then return list of MGMT IP addresses
-        use_mgmt_ip = options.get("mgmt_ip", False)
-        if use_mgmt_ip:
-            self.inc_counter("device_info.mgmt_ip")
-            ip_list = self.get_ip_list(use_mgmt_ip=True)
-            if len(ip_list) == 0:
-                # No valid MGMT IPs were found when user specifies use_mgmt_ip, raise
-                # LookupError
-                raise LookupErrorException(
-                    "User has set 'mgmt_ip=True' in the request but no mgmt ip is "
-                    f"found for {self._hostname}"
-                )
-            return ip_list
-
-        # Return all valid IP addresses sorted by pingability
-        self.inc_counter("device_info.default_ip")
-        ip_list = self.get_ip_list(use_mgmt_ip=use_mgmt_ip)
-        if len(ip_list) == 0:
-            # None of the IPs is valid, raise LookupError
-            raise LookupErrorException(
-                f"No Valid IP address was found for the device {self._hostname}"
-            )
-        return ip_list
-
-    def get_ip_list(self, use_mgmt_ip: bool = False) -> List[IPInfo]:
-        pingable_list: List[IPInfo] = []
-        non_pingable_list: List[IPInfo] = []
-        for ip in self._pref_ips + [self._ip]:
-            # ip.addr is None
-            if not ip.addr:
-                continue
-
-            # Check if MGMT IP and go to the next IP if current IP is not MGMT
-            if use_mgmt_ip and not self._is_mgmt_ip(ip):
-                continue
-
-            # Check if its pingable
-            if self.check_ip(ip):
-                pingable_list.append(IPInfo(ip.addr, True))
-            else:
-                if ip.addr == self._ip.addr:
-                    non_pingable_list = [IPInfo(ip.addr, False)] + non_pingable_list
-                else:
-                    non_pingable_list.append(IPInfo(ip.addr, False))
-        # Give preference to IPs that are pingable
-        return pingable_list + non_pingable_list
 
     @property
     def role(self):
@@ -249,9 +174,3 @@ class DeviceInfo(ServiceObj):
 
             return ConsoleCommandSession
         return self._vendor_data.select_session_type(options)
-
-    def _is_mgmt_ip(self, ip):
-        return False
-
-    def check_ip(self, ip):
-        return True

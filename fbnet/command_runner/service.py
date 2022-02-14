@@ -9,6 +9,7 @@
 import asyncio
 import logging
 import signal
+import typing
 from concurrent.futures import ThreadPoolExecutor
 
 from fbnet.command_runner_asyncio.CommandRunner.Command import Client as FcrClient
@@ -23,6 +24,7 @@ from .exceptions import (
 )
 from .options import Option
 from .thrift_client import AsyncioThriftClient
+from .utils import IPUtils
 
 
 class FcrServiceBase:
@@ -106,6 +108,10 @@ class FcrServiceBase:
     @property
     def loop(self):
         return self._loop
+
+    @property
+    def ip_utils(self) -> typing.Type[IPUtils]:
+        return IPUtils
 
     def add_task(self, key, task):
         if key in self._tasks:
