@@ -13,9 +13,9 @@ import typing
 from fbnet.command_runner.command_session import ResponseMatch, SSHCommandSession
 from fbnet.command_runner.counters import Counters
 from fbnet.command_runner.exceptions import (
-    ValidationErrorException,
     CommandExecutionTimeoutErrorException,
     UnsupportedDeviceErrorException,
+    ValidationErrorException,
 )
 from fbnet.command_runner_asyncio.CommandRunner.ttypes import CommandResult
 

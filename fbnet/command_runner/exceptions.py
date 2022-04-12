@@ -7,7 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from functools import wraps
-from typing import ClassVar, Callable, Any, TypeVar, cast
+from typing import Any, Callable, cast, ClassVar, TypeVar
 
 import asyncssh
 from fbnet.command_runner_asyncio.CommandRunner import ttypes as fcr_ttypes

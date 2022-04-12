@@ -19,7 +19,7 @@ from fbnet.command_runner.utils import (
 )
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 
-from .testutil import AsyncTestCase, async_test
+from .testutil import async_test, AsyncTestCase
 
 
 class CanonicalizeTest(unittest.TestCase):

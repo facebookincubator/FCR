@@ -10,11 +10,11 @@ import re
 import xml.etree.ElementTree as et
 from collections import namedtuple
 from functools import lru_cache, wraps
-from typing import Optional, Set, Union, List, Dict, Any, NamedTuple, TYPE_CHECKING
+from typing import Any, Dict, List, NamedTuple, Optional, Set, TYPE_CHECKING, Union
 
 from fbnet.command_runner.exceptions import (
-    ValidationErrorException,
     LookupErrorException,
+    ValidationErrorException,
 )
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
 

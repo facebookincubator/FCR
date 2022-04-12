@@ -16,7 +16,7 @@ from .options import Option
 if typing.TYPE_CHECKING:
     from fbnet.command_runner_asyncio.CommandRunner.ttypes import Device
 
-    from .device_info import DeviceIP, DeviceInfo
+    from .device_info import DeviceInfo, DeviceIP
 
 
 class BaseDeviceDB(PeriodicServiceTask):

@@ -12,15 +12,15 @@ import typing
 import mock
 from fbnet.command_runner.command_session import CommandSession
 from fbnet.command_runner.exceptions import (
-    RuntimeErrorException,
-    LookupErrorException,
     CommandExecutionTimeoutErrorException,
     ConnectionTimeoutErrorException,
+    LookupErrorException,
+    RuntimeErrorException,
 )
 
 from .mock_session import MockCommandSession
 from .mocks import MockService
-from .testutil import AsyncTestCase, async_test
+from .testutil import async_test, AsyncTestCase
 
 
 log = logging.getLogger()

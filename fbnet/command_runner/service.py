@@ -19,8 +19,8 @@ from .command_server import CommandServer
 from .command_session import CommandSession
 from .exceptions import (
     LookupErrorException,
-    ValueErrorException,
     NotImplementedErrorException,
+    ValueErrorException,
 )
 from .options import Option
 from .thrift_client import AsyncioThriftClient

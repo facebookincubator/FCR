@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from fbnet.command_runner.command_session import CommandStreamReader, SSHCommandSession
 
 from .mocks import MockService
-from .testutil import AsyncTestCase, async_test
+from .testutil import async_test, AsyncTestCase
 
 if typing.TYPE_CHECKING:
     from .device_info import DeviceInfo

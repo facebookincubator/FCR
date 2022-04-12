@@ -14,7 +14,7 @@ from fbnet.command_runner_asyncio.CommandRunner import ttypes
 from mock import Mock
 
 from .mocks import MockService
-from .testutil import AsyncTestCase, async_test
+from .testutil import async_test, AsyncTestCase
 
 
 client_ip = "127.0.0.1"

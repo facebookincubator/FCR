@@ -12,7 +12,7 @@ from fbnet.command_runner.exceptions import ConnectionTimeoutErrorException
 from mock import Mock
 
 from .mocks import MockService
-from .testutil import AsyncTestCase, async_test
+from .testutil import async_test, AsyncTestCase
 
 if typing.TYPE_CHECKING:
     from fbnet.command_runner_asyncio.CommandRunner.ttypes import Device

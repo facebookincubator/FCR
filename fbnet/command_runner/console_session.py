@@ -9,15 +9,15 @@
 import asyncio
 import re
 from typing import (
-    List,
-    TYPE_CHECKING,
     Any,
     AnyStr,
     Dict,
+    List,
     NamedTuple,
     Optional,
     Pattern,
     Tuple,
+    TYPE_CHECKING,
     Union,
 )
 

@@ -22,9 +22,9 @@ from fb303_asyncio.FacebookBase import FacebookBase
 from fbnet.command_runner_asyncio.CommandRunner import constants, ttypes
 from fbnet.command_runner_asyncio.CommandRunner.Command import Iface as FcrIface
 
-from .command_session import CommandSession, CapturedTimeMS
+from .command_session import CapturedTimeMS, CommandSession
 from .counters import Counters
-from .exceptions import ensure_thrift_exception, convert_to_fcr_exception
+from .exceptions import convert_to_fcr_exception, ensure_thrift_exception
 from .global_namespace import GlobalNamespace
 from .options import Option
 from .utils import input_fields_validator
