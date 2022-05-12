@@ -739,7 +739,7 @@ class CommandStreamReader(asyncio.StreamReader):
 class CommandStream(asyncio.StreamReaderProtocol):
 
     # TODO: make this tweakable from configerator
-    _BUFFER_LIMIT = 100 * (2 ** 20)  # 100M
+    _BUFFER_LIMIT = 100 * (2**20)  # 100M
 
     def __init__(
         self, session: "CliCommandSession", loop: asyncio.AbstractEventLoop
@@ -787,8 +787,8 @@ class CliCommandSession(CommandSession):
     A command session for CLI commands. Does prompt processing on the command stream.
     """
 
-    _SPECIAL_CHAR_REGEX = re.compile(br".\x08|\x07")
-    _NEWLINE_REPLACE_REGEX = re.compile(br"(\r+\n)|(\n\r+)|\r")
+    _SPECIAL_CHAR_REGEX = re.compile(rb".\x08|\x07")
+    _NEWLINE_REPLACE_REGEX = re.compile(rb"(\r+\n)|(\n\r+)|\r")
 
     def __init__(
         self,
@@ -892,7 +892,7 @@ class CliCommandSession(CommandSession):
         #    b'^\s*show\s+version\s*$'
         # We also need to escape the words to handle characters like '|'
         cmd_words_esc = (re.escape(w) for w in cmd_words)
-        cmd_re = br"^\s*" + br"\s+".join(cmd_words_esc) + br"([ \t]*\n)*"
+        cmd_re = rb"^\s*" + rb"\s+".join(cmd_words_esc) + rb"([ \t]*\n)*"
 
         # Now replace the 'command string' in the output with a sanitized
         # version (redundant spaces removed)
