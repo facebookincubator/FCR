@@ -206,6 +206,22 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
     @input_fields_validator
     @_append_debug_info_to_exception
     @_ensure_uuid
+    async def run_v2(self, request: ttypes.RunCommandRequest) -> ttypes.CommandResult:
+        result = await self.run(
+            request.command,
+            request.device,
+            request.timeout,
+            request.open_timeout,
+            request.client_ip,
+            request.client_port,
+            request.uuid,
+        )
+        return result
+
+    @ensure_thrift_exception
+    @input_fields_validator
+    @_append_debug_info_to_exception
+    @_ensure_uuid
     async def run(
         self, command, device, timeout, open_timeout, client_ip, client_port, uuid
     ) -> ttypes.CommandResult:
