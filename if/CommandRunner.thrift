@@ -286,6 +286,25 @@ struct BulkRunCommandResponse {
   1: map<string, list<CommandResult>> device_to_result;
 }
 
+struct RunCommandRequest {
+  1: string command;
+  2: Device device;
+  /*
+   * optional arguments
+   */
+  // max time (sec) to wait to get the full response of a single command.
+  // the max time it could take per device is timeout * number of commands
+  3: i32 timeout = 300;
+  // max time (sec) allowed to spend authenticating into the device
+  4: i32 open_timeout = 30;
+  /*
+   * don't populate the following arguments unless you know what you are doing
+   */
+  10: string client_ip = "";
+  11: string client_port = "";
+  12: string uuid = "";
+}
+
 service Command extends fb303.FacebookService {
   /* Run a command on a device.
    *
@@ -314,6 +333,15 @@ service Command extends fb303.FacebookService {
     11: string client_port = "",
     12: string uuid = "",
   ) throws (1: SessionException se, 2: UnsupportedDeviceException ude);
+
+  /* DO NOT USE THIS API. This is in the process of development.
+   * This is the version 2 of the run, with compliance to modern thrift guidance.
+   */
+
+  CommandResult run_v2(1: RunCommandRequest request) throws (
+    1: SessionException se,
+    2: UnsupportedDeviceException ude,
+  );
 
   /* Run a list of commands on a list of devices.
    *
