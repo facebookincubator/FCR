@@ -83,7 +83,9 @@ def _ensure_uuid(fn):
         if "uuid" in callargs:
             uuid = callargs["uuid"] or uuid4().hex[:8]
             callargs["uuid"] = uuid
-
+        elif "request" in callargs:
+            uuid = callargs["request"].uuid or uuid4().hex[:8]
+            callargs["request"] = callargs["request"](uuid=uuid)
         # Note: this won't work for functions that specify positional-only or
         # kwarg-only parameters.
         result = await fn(**callargs)
@@ -93,13 +95,32 @@ def _ensure_uuid(fn):
         if isinstance(result, (ttypes.CommandResult, ttypes.Session)):
             result.uuid = uuid
         elif isinstance(result, dict):
-            for val in result.values():
+            # bulk_run() returns a dict of map<string, list<CommandResult>>
+            for val in result.values():  # val is list<CommandResult>
                 # If size of result is large, we can refactor to only check the
                 # first element. (time taken: ~100ns * N)
-                if not isinstance(val, ttypes.CommandResult):
+                if isinstance(val, typing.List):
+                    for i in range(len(val)):  # val[i] is CommandResult
+                        if isinstance(val[i], ttypes.CommandResult):
+                            if not val[i].uuid:
+                                val[i].uuid = uuid
+                        else:
+                            break
+                elif not isinstance(val, ttypes.CommandResult):
                     break
-                val.uuid = uuid
-
+                else:
+                    val.uuid = uuid
+        elif isinstance(result, ttypes.BulkRunCommandResponse):
+            d2r_values = {}
+            d2r_values.update(result.device_to_result)  # d2r_values is dict
+            for val in d2r_values.values():  # val is list<CommandResult>
+                for i in range(len(val)):  # val[i] is CommandResult
+                    if isinstance(val[i], ttypes.CommandResult):
+                        if not val[i].uuid:
+                            val[i].uuid = uuid
+                    else:
+                        break
+            result.device_to_result = d2r_values
         return result
 
     return wrapper
