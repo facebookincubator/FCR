@@ -96,8 +96,8 @@ class ConsoleCommandSession(SSHCommandSession):
         default=60,
     )
 
-    _CONFIG_CONSOLE_PROMPTS_RE_DICT: Optional[Dict[bytes, Pattern]] = None
-    _CONFIG_INTERACT_PROMPTS_RE_DICT: Optional[Dict[bytes, Dict[bytes, bytes]]] = None
+    _CONFIG_CONSOLE_PROMPTS_RE_DICT: Optional[Dict[int, Pattern]] = None
+    _CONFIG_INTERACT_PROMPTS_RE_DICT: Optional[Dict[int, Dict[bytes, bytes]]] = None
 
     def __init__(
         self,
@@ -112,8 +112,8 @@ class ConsoleCommandSession(SSHCommandSession):
     @classmethod
     def _build_and_set_prompts_re_dict(
         cls,
-        vendor_prompts: Optional[Dict[bytes, Dict[bytes, bytes]]] = None,
-        vendor_interact_prompts: Optional[Dict[bytes, Dict[bytes, bytes]]] = None,
+        vendor_prompts: Optional[Dict[int, Dict[bytes, bytes]]] = None,
+        vendor_interact_prompts: Optional[Dict[int, Dict[bytes, bytes]]] = None,
     ) -> None:
         """
         This method takes in a dictionary of a dictionary of vendor specific prompts, builds each
@@ -158,7 +158,7 @@ class ConsoleCommandSession(SSHCommandSession):
         return cls._DEFAULT_CONSOLE_PROMPTS_RE  # pyre-ignore
 
     @classmethod
-    def get_prompt_re(cls, vendor_name: Optional[str] = None) -> Pattern:
+    def get_prompt_re(cls, vendor_name: Optional[int] = None) -> Pattern:
         """
         This method takes in a vendor name and retrieves the pre-compiled group regex
         corresponding to that vendor from the _CONFIG_CONSOLE_PROMPTS_RE_DICT. If the vendor is not given or
@@ -168,7 +168,7 @@ class ConsoleCommandSession(SSHCommandSession):
         # This check ensure that _CONFIG_CONSOLE_PROMPTS_RE_DICT is not None, ignoring pyre warning
         if cls._CONFIG_CONSOLE_PROMPTS_RE_DICT and vendor_name:
             return cls._CONFIG_CONSOLE_PROMPTS_RE_DICT.get(  # pyre-ignore
-                vendor_name.encode("utf-8"), cls.get_default_console_prompt_re()
+                vendor_name, cls.get_default_console_prompt_re()
             )
 
         return cls.get_default_console_prompt_re()
@@ -396,11 +396,10 @@ class ConsoleCommandSession(SSHCommandSession):
         vendor_interact_prompts = self._DEFAULT_CONSOLE_PROMPTS
         if (
             self._CONFIG_INTERACT_PROMPTS_RE_DICT
-            and self._devinfo.vendor_name.encode("utf8")
-            in self._CONFIG_INTERACT_PROMPTS_RE_DICT
+            and self._devinfo.vendor_name in self._CONFIG_INTERACT_PROMPTS_RE_DICT
         ):
             vendor_interact_prompts = self._CONFIG_INTERACT_PROMPTS_RE_DICT.get(
-                self._devinfo.vendor_name.encode("utf8")
+                self._devinfo.vendor_name
             )
         interact_prompts = [
             b"(?P<%s>%s)" % (group, regex)
