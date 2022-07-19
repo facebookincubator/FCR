@@ -411,7 +411,7 @@ service Command extends fb303.FacebookService {
    *   fcr_client.run_session(session, 'show version')
    *   // push a configlet
    *   configlet = '''conf t
-snmp-server community TEST RO
+snmp-server community {SECRET}
 exit
 wr mem'''
    *   fcr_client.run_session(session, configlet)
