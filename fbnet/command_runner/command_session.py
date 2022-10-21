@@ -43,7 +43,9 @@ if typing.TYPE_CHECKING:
     from .device_info import DeviceInfo
 
 # Register additional key exchange algorithms
-asyncssh.public_key.register_public_key_alg(b"rsa-sha2-256", asyncssh.rsa._RSAKey)
+asyncssh.public_key.register_public_key_alg(
+    b"rsa-sha2-256", asyncssh.rsa.RSAKey, default=False
+)
 
 log = logging.getLogger("fcr.CommandSession")
 
