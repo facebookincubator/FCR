@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-certifi==2017.4.17
+certifi==2022.12.7
 chardet==3.0.4
 docker==2.3.0
 docker-pycreds==0.2.1
