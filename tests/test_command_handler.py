@@ -282,11 +282,22 @@ class TestCommandHandler(AsyncTestCase):
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port, uuid
+            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
+            #  got `Dict[Mock, List[str]]`.
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            commands,
+            1,
+            1,
+            client_ip,
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            client_port,
+            uuid,
         )
 
         for host in devices:
             for result in all_results[host]:
+                # pyre-fixme[6]: For 1st argument expected `CommandResult` but got
+                #  `CommandResult`.
                 self.assert_command_result(result)
 
     @async_test
@@ -295,7 +306,16 @@ class TestCommandHandler(AsyncTestCase):
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port, uuid
+            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
+            #  got `Dict[Mock, List[str]]`.
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            commands,
+            1,
+            1,
+            client_ip,
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            client_port,
+            uuid,
         )
 
         for host in devices:
@@ -308,6 +328,8 @@ class TestCommandHandler(AsyncTestCase):
                 self.assertIn("'Device not found', 'test-dev-0'", result.status)
                 continue
             for result in all_results[host]:
+                # pyre-fixme[6]: For 1st argument expected `CommandResult` but got
+                #  `CommandResult`.
                 self.assert_command_result(result)
         Option.config.lb_threshold = 20
 
@@ -321,7 +343,16 @@ class TestCommandHandler(AsyncTestCase):
         commands[onehost] = ["command timeout\n"]
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port, uuid
+            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
+            #  got `Dict[Mock, List[str]]`.
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            commands,
+            1,
+            1,
+            client_ip,
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            client_port,
+            uuid,
         )
 
         for host in devices:
@@ -334,6 +365,8 @@ class TestCommandHandler(AsyncTestCase):
                 self.assertIn("'Device not found', 'test-dev-0'", result.status)
                 continue
             for result in all_results[host]:
+                # pyre-fixme[6]: For 1st argument expected `CommandResult` but got
+                #  `CommandResult`.
                 self.assert_command_result(result)
 
     @async_test
@@ -348,7 +381,16 @@ class TestCommandHandler(AsyncTestCase):
         self.mock_options["connect_drop"] = True
 
         all_results = await self.cmd_handler.bulk_run_local(
-            commands, 1, 1, client_ip, client_port, uuid
+            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
+            #  got `Dict[Mock, List[str]]`.
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            commands,
+            1,
+            1,
+            client_ip,
+            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+            client_port,
+            uuid,
         )
 
         for host in devices:
@@ -376,7 +418,16 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.InstanceOverloaded) as exc:
             await self.cmd_handler.bulk_run_local(
-                commands, 1, 1, client_ip, client_port, uuid
+                # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]`
+                #  but got `Dict[Mock, List[str]]`.
+                # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+                commands,
+                1,
+                1,
+                client_ip,
+                # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
+                client_port,
+                uuid,
             )
 
         self.assertIn("Too many session open: 4", exc.exception.message)

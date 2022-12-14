@@ -65,6 +65,10 @@ class ExceptionTest(AsyncTestCase):
 
     # Other non-FcrBaseException exceptions that FCR knows about
     # Preconstruct exception with args since different exceptions have different args
+    # pyre-fixme[8]: Attribute has type `Dict[Type[Exception], FcrErrorCode]`; used
+    #  as `Dict[Union[AssertionError, AttributeError, LookupError, PermissionError,
+    #  RuntimeError, TimeoutError, TypeError, ValueError, DisconnectError],
+    #  FcrErrorCode]`.
     KNOWN_EXCEPTIONS: Dict[Type[Exception], FcrErrorCode] = {
         PermissionError("This is a known exception!"): FcrErrorCode.PERMISSION_ERROR,
         ValueError("This is a known exception!"): FcrErrorCode.VALUE_ERROR,
@@ -119,6 +123,8 @@ class ExceptionTest(AsyncTestCase):
 
         # Test that known exception types are converted correctly
         for exc in self.KNOWN_EXCEPTIONS:
+            # pyre-fixme[6]: For 1st argument expected `Exception` but got
+            #  `Type[Exception]`.
             converted_exc = convert_to_fcr_exception(exc)
             self.assertIsInstance(converted_exc, FcrBaseException)
             self.assertEqual(self.KNOWN_EXCEPTIONS[exc], converted_exc._CODE)
@@ -173,6 +179,8 @@ class ExceptionTest(AsyncTestCase):
         for exc in self.KNOWN_EXCEPTIONS:
             # Make sure that the exception is Thrift-defined now
             with self.assertRaises(fcr_ttypes.SessionException) as context:
+                # pyre-fixme[6]: For 2nd argument expected `Exception` but got
+                #  `Type[Exception]`.
                 res = await test_raise_exception(self, exc=exc, return_msg=return_msg)
 
             converted_exc = context.exception

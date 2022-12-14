@@ -39,6 +39,8 @@ class InputFieldsValidatorTest(AsyncTestCase):
         )
 
         with self.assertRaises(ValidationErrorException) as ex:
+            # pyre-fixme[6]: For 1st argument expected `Optional[types.Device]` but
+            #  got `Device`.
             _check_device(device=ttypes.Device())
 
         missing_list = ["hostname", "username", "password"]
@@ -54,6 +56,8 @@ class InputFieldsValidatorTest(AsyncTestCase):
         )
 
         with self.assertRaises(ValidationErrorException) as ex:
+            # pyre-fixme[6]: For 1st argument expected `Optional[types.Session]` but
+            #  got `Session`.
             _check_session(session=ttypes.Session())
 
         missing_list = ["hostname", "id", "name"]

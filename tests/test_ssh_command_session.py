@@ -16,6 +16,8 @@ from .mocks import MockService
 from .testutil import async_test, AsyncTestCase
 
 if typing.TYPE_CHECKING:
+    # pyre-fixme[21]: Could not find module
+    #  `nettools.fb_command_runner.oss.tests.device_info`.
     from .device_info import DeviceInfo
     from .testutil import FcrTestEventLoop
 
@@ -47,12 +49,13 @@ class SSHCommandSessionTest(AsyncTestCase):
     def mock_session(
         self,
         service: MockService,
+        # pyre-fixme[11]: Annotation `DeviceInfo` is not defined as a type.
         devinfo: "DeviceInfo",
         options: typing.Dict[str, typing.Any],
         loop: "FcrTestEventLoop",
     ) -> SSHCommandSession:
         session = SSHCommandSession(
-            service=service,  # pyre-ignore
+            service=service,
             devinfo=devinfo,
             options=options,
             loop=loop,
@@ -119,6 +122,8 @@ class SSHCommandSessionTest(AsyncTestCase):
         # External communication time is updated once during connect()
         self.assertTrue(session._connected)
         self.assertEqual(
+            # pyre-fixme[16]: Callable `increment_external_communication_time_ms`
+            #  has no attribute `call_count`.
             session.captured_time_ms.increment_external_communication_time_ms.call_count,
             1,
         )
@@ -126,6 +131,7 @@ class SSHCommandSessionTest(AsyncTestCase):
         # Reset mocks to specifically test that any feed_data calls
         # in _setup_connection() also increment time
         session._stream_reader.reset_mock()
+        # pyre-fixme[16]: `CapturedTimeMS` has no attribute `reset_mock`.
         session.captured_time_ms.reset_mock()
         await session._setup_connection()
         self.assertEqual(
@@ -184,6 +190,8 @@ class SSHCommandSessionTest(AsyncTestCase):
 
         self.assertTrue(session._connected)
         self.assertEqual(
+            # pyre-fixme[16]: Callable `increment_external_communication_time_ms`
+            #  has no attribute `call_count`.
             session.captured_time_ms.increment_external_communication_time_ms.call_count,
             1,
         )

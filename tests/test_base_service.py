@@ -121,6 +121,7 @@ class TestPeriodicService(AsyncTestCase):
                 if self._run_called == 5:
                     self.cancel()
 
+        # pyre-fixme[6]: For 1st argument expected `ServiceObj` but got `Mock`.
         service = DummyServiceTask(self._mock_service, "RunTest", 0.1)
 
         self.wait_for_tasks()
@@ -142,6 +143,7 @@ class TestPeriodicService(AsyncTestCase):
                 if self._run_called == 3:
                     raise RuntimeError(self._run_called)
 
+        # pyre-fixme[6]: For 1st argument expected `ServiceObj` but got `Mock`.
         service = DummyServiceTask(self._mock_service, "RunTest", 0.1)
 
         with self.assertRaises(RuntimeError) as ctx:

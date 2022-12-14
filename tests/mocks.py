@@ -66,6 +66,7 @@ class MockDeviceDB(BaseDeviceDB):
         addrs = [DeviceIP(a, a, False) for a in addrs]
         vendor_id = (idx // 5) + 1
         vendor = "vendor%d" % (vendor_id)
+        # pyre-fixme[20]: Argument `provisioning_state` expected.
         return DeviceInfo(
             self.service,
             "test-dev-%d" % (idx),

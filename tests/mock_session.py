@@ -10,9 +10,12 @@ import asyncio
 import typing
 
 from fbnet.command_runner import command_session
+
+# pyre-fixme[21]: Could not find name `IPInfo` in `fbnet.command_runner.device_info`.
 from fbnet.command_runner.device_info import IPInfo
 
 if typing.TYPE_CHECKING:
+    # pyre-fixme[21]: Could not find module `fbnet.command_runner.counters`.
     from fbnet.command_runner.counters import Counters
 
 
@@ -87,6 +90,7 @@ class MockSessionFactory:
     def __call__(self, *args, **kwargs) -> "MockCommandSession":
         return self._session_class(self._mock_options, *args, **kwargs)
 
+    # pyre-fixme[11]: Annotation `Counters` is not defined as a type.
     def register_counters(self, counter_mgr: "Counters") -> None:
         pass
 
@@ -120,8 +124,11 @@ class MockCommandSession(command_session.CliCommandSession):
 
     async def _connect(self) -> None:
         self._extra_info["peer_list"] = command_session.PeerInfoList(
-            [IPInfo("test-ip", True)], 22
+            # pyre-fixme[16]: Module `device_info` has no attribute `IPInfo`.
+            [IPInfo("test-ip", True)],
+            22,
         )
+        # pyre-fixme[6]: For 3rd argument expected `Optional[bool]` but got `int`.
         self._extra_info["peer"] = command_session.PeerInfo("test-ip", True, 22)
         if self._mock_options.get("connect_drop", False):
             return

@@ -12,10 +12,10 @@ import typing
 import unittest
 
 if typing.TYPE_CHECKING:
+    # pyre-fixme[21]: Could not find module `fbnet.command_runner.counters`.
     from fbnet.command_runner.counters import Counters
 
 # `asyncio.events.AbstractEventLoop` to have type `float` but is never initialized.
-# pyre-fixme[13]: Attribute `slow_callback_duration` inherited from abstract class
 class FcrTestEventLoop(asyncio.SelectorEventLoop):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -25,6 +25,7 @@ class FcrTestEventLoop(asyncio.SelectorEventLoop):
         if self._counter_mgr:
             self._counter_mgr.incCounter(name)
 
+    # pyre-fixme[11]: Annotation `Counters` is not defined as a type.
     def set_counter_mgr(self, counter_mgr: "Counters") -> None:
         self._counter_mgr = counter_mgr
 
