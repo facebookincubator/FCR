@@ -71,6 +71,8 @@ Test for user prompts
         response = self._gen_cmd_response(cmd)
         self._recv_data(response, self.command_delay())
 
+    # pyre-fixme[14]: `write` overrides method defined in `WriteTransport`
+    #  inconsistently.
     def write(self, data: bytes) -> None:
         self._run_command(data)
 
