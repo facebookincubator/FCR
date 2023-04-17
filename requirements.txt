@@ -11,7 +11,7 @@ appdirs==1.4.3
 asn1crypto==0.22.0
 asyncssh==1.10.1
 cffi==1.10.0
-cryptography==3.3.2
+cryptography==39.0.1
 future==0.16.0
 idna==2.5
 mock==2.0.0
