@@ -20,4 +20,4 @@ pbr==3.0.1
 pycparser==2.17
 pyparsing==2.2.0
 six==1.10.0
-setuptools==18.3.2
+setuptools==65.5.1
