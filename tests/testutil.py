@@ -44,11 +44,11 @@ class AsyncTestCase(unittest.TestCase):
         asyncio.set_event_loop(None)
 
     def tearDown(self) -> None:
-        pending = [t for t in asyncio.Task.all_tasks(self._loop) if not t.done()]
+        pending = [t for t in asyncio.all_tasks(self._loop) if not t.done()]
 
         if pending:
             # give opportunity to pending tasks to complete
-            res = self._run_loop(asyncio.wait(pending, timeout=1, loop=self._loop))
+            res = self._run_loop(asyncio.wait(pending, timeout=1))
             done, pending = res[0]
 
             for p in pending:
@@ -57,12 +57,12 @@ class AsyncTestCase(unittest.TestCase):
         self._loop.close()
 
     def wait_for_tasks(self, timeout: int = 10) -> None:
-        pending = asyncio.Task.all_tasks(self._loop)
-        self._loop.run_until_complete(asyncio.gather(*pending, loop=self._loop))
+        pending = asyncio.all_tasks(self._loop)
+        self._loop.run_until_complete(asyncio.gather(*pending))
 
     def _run_loop(self, *args) -> typing.List[typing.Any]:
         """
         Run a set of coroutines in a loop
         """
-        finished, _ = self._loop.run_until_complete(asyncio.wait(args, loop=self._loop))
+        finished, _ = self._loop.run_until_complete(asyncio.wait(args))
         return [task.result() for task in finished]
