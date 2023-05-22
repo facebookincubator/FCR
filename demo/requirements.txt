@@ -7,7 +7,7 @@ certifi==2017.4.17
 chardet==3.0.4
 docker==2.3.0
 docker-pycreds==0.2.1
-requests==2.20.0
+requests==2.31.0
 termcolor==1.1.0
 urllib3==1.26.5
 websocket-client==0.40.0
