@@ -7,11 +7,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import typing
+from unittest.mock import Mock
 
 from fbnet.command_runner.command_handler import CommandHandler
 from fbnet.command_runner.options import Option
 from fbnet.command_runner_asyncio.CommandRunner import ttypes
-from mock import Mock
 
 from .mocks import MockService
 from .testutil import async_test, AsyncTestCase
@@ -282,9 +282,6 @@ class TestCommandHandler(AsyncTestCase):
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
         all_results = await self.cmd_handler.bulk_run_local(
-            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
-            #  got `Dict[Mock, List[str]]`.
-            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
             commands,
             1,
             1,
@@ -306,9 +303,6 @@ class TestCommandHandler(AsyncTestCase):
         commands = {self.mock_device(name): ["show version\n"] for name in devices}
 
         all_results = await self.cmd_handler.bulk_run_local(
-            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
-            #  got `Dict[Mock, List[str]]`.
-            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
             commands,
             1,
             1,
@@ -343,9 +337,6 @@ class TestCommandHandler(AsyncTestCase):
         commands[onehost] = ["command timeout\n"]
 
         all_results = await self.cmd_handler.bulk_run_local(
-            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
-            #  got `Dict[Mock, List[str]]`.
-            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
             commands,
             1,
             1,
@@ -381,9 +372,6 @@ class TestCommandHandler(AsyncTestCase):
         self.mock_options["connect_drop"] = True
 
         all_results = await self.cmd_handler.bulk_run_local(
-            # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]` but
-            #  got `Dict[Mock, List[str]]`.
-            # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
             commands,
             1,
             1,
@@ -418,9 +406,6 @@ class TestCommandHandler(AsyncTestCase):
 
         with self.assertRaises(ttypes.InstanceOverloaded) as exc:
             await self.cmd_handler.bulk_run_local(
-                # pyre-fixme[6]: For 1st argument expected `Dict[Device, List[str]]`
-                #  but got `Dict[Mock, List[str]]`.
-                # pyre-fixme[6]: For 5th argument expected `str` but got `int`.
                 commands,
                 1,
                 1,

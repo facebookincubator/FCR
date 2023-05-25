@@ -9,7 +9,8 @@
 import logging
 import typing
 
-import mock
+import unittest.mock as mock
+
 from fbnet.command_runner.command_session import CommandSession
 from fbnet.command_runner.exceptions import (
     CommandExecutionTimeoutErrorException,
@@ -34,7 +35,6 @@ class CommandSessionTest(AsyncTestCase):
         self.mocks = MockService(self.mock_options, self._loop)
 
         test_device = self.mock_device("test-dev-1")
-        # pyre-fixme[6]: For 1st argument expected `Union[Device, str]` but got `Mock`.
         self.devinfo = self._run_loop(self.mocks.device_db.get(test_device))[0]
 
         self.options = {
@@ -135,7 +135,6 @@ class CommandSessionTest(AsyncTestCase):
     @async_test
     async def test_setup_success(self) -> None:
         device = self.mock_device("test-dev-1")
-        # pyre-fixme[6]: For 1st argument expected `Union[Device, str]` but got `Mock`.
         devinfo = await self.mocks.device_db.get(device)
 
         self.options["open_timeout"] = 2
@@ -154,7 +153,6 @@ class CommandSessionTest(AsyncTestCase):
     @async_test
     async def test_setup_prompt_timeout(self) -> None:
         device = self.mock_device("test-dev-1")
-        # pyre-fixme[6]: For 1st argument expected `Union[Device, str]` but got `Mock`.
         devinfo = await self.mocks.device_db.get(device)
 
         self.options["open_timeout"] = 2
@@ -174,7 +172,6 @@ class CommandSessionTest(AsyncTestCase):
     @async_test
     async def test_setup_command_timeout(self) -> None:
         device = self.mock_device("test-dev-1")
-        # pyre-fixme[6]: For 1st argument expected `Union[Device, str]` but got `Mock`.
         devinfo = await self.mocks.device_db.get(device)
 
         self.options["open_timeout"] = 2

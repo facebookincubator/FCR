@@ -7,9 +7,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import typing
+from unittest.mock import Mock
 
 from fbnet.command_runner.exceptions import ConnectionTimeoutErrorException
-from mock import Mock
 
 from .mocks import MockService
 from .testutil import async_test, AsyncTestCase
@@ -41,7 +41,6 @@ class DeviceInfoTest(AsyncTestCase):
 
         self.test_device = Mock()
         self.test_device.hostname = "test-dev-1"
-        # pyre-fixme[6]: For 1st argument expected `Union[Device, str]` but got `Mock`.
         self.test_devinfo = self._run_loop(self.mocks.device_db.get(self.test_device))[
             0
         ]
@@ -55,7 +54,6 @@ class DeviceInfoTest(AsyncTestCase):
     async def _get_device(self, name: str) -> "Device":
         device = Mock(hostname=name)
         # pyre-fixme[7]: Expected `Device` but got `DeviceInfo`.
-        # pyre-fixme[6]: For 1st argument expected `Union[Device, str]` but got `Mock`.
         return await self.mocks.device_db.get(device)
 
     def tearDown(self) -> None:

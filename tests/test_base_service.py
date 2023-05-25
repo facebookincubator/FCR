@@ -8,7 +8,8 @@
 
 import asyncio
 
-import mock
+import unittest.mock as mock
+
 from fbnet.command_runner.base_service import PeriodicServiceTask, ServiceTask
 
 from .testutil import AsyncTestCase
@@ -105,7 +106,7 @@ class TestPeriodicService(AsyncTestCase):
 
     def test_abstract_service(self) -> None:
         with self.assertRaises(TypeError):
-            PeriodicServiceTask(self._mock_service, "RunTest", 1)  # pyre-ignore
+            PeriodicServiceTask(self._mock_service, "RunTest", 1)
 
     def test_run(self) -> None:
         class DummyServiceTask(PeriodicServiceTask):
@@ -121,7 +122,6 @@ class TestPeriodicService(AsyncTestCase):
                 if self._run_called == 5:
                     self.cancel()
 
-        # pyre-fixme[6]: For 1st argument expected `ServiceObj` but got `Mock`.
         service = DummyServiceTask(self._mock_service, "RunTest", 0.1)
 
         self.wait_for_tasks()
@@ -143,7 +143,6 @@ class TestPeriodicService(AsyncTestCase):
                 if self._run_called == 3:
                     raise RuntimeError(self._run_called)
 
-        # pyre-fixme[6]: For 1st argument expected `ServiceObj` but got `Mock`.
         service = DummyServiceTask(self._mock_service, "RunTest", 0.1)
 
         with self.assertRaises(RuntimeError) as ctx:
