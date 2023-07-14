@@ -275,7 +275,7 @@ class CommandSession(ServiceObj):
         # session type, e.g., rpc base session, does not need this property)
         self._cmd_stream = None
         self._connected = False
-        self._event = asyncio.Condition(loop=self._loop)
+        self.__event = None
 
         self.logger.info("Created key=%s", self.key)
         # Record the session in the cache
@@ -288,6 +288,12 @@ class CommandSession(ServiceObj):
         # captures various types of communication and processing times
         # including external communication time
         self._captured_time_ms: CapturedTimeMS = CapturedTimeMS()
+
+    @property
+    def _event(self):
+        if self.__event is None:
+            self.__event = asyncio.Condition()
+        return self.__event
 
     def get_session_name(self) -> str:
         return self.objname
@@ -444,9 +450,7 @@ class CommandSession(ServiceObj):
     async def setup(self) -> "CommandSession":
         self.inc_counter(f"{self.objname}.setup")
         try:
-            await asyncio.wait_for(
-                self._create_connection(), self.open_timeout, loop=self._loop
-            )
+            await asyncio.wait_for(self._create_connection(), self.open_timeout)
         except asyncio.TimeoutError:
             self.logger.exception("Timeout during connection setup")
             data = []
@@ -558,7 +562,6 @@ class CommandSession(ServiceObj):
         await asyncio.wait_for(
             self._event.wait_for(lambda: predicate(self)),
             timeout=timeout,
-            loop=self._loop,
         )
         self._event.release()
 
@@ -652,7 +655,6 @@ class CommandStreamReader(asyncio.StreamReader):
                         await asyncio.wait_for(
                             fut,
                             timeout=self.COMMAND_DATA_TIMEOUT,
-                            loop=self._loop,  # pyre-ignore
                         )
                 except asyncio.TimeoutError:
                     # Now try to match the prompt
@@ -952,7 +954,6 @@ class CliCommandSession(CommandSession):
                 resp = await asyncio.wait_for(
                     self._wait_response(prompt, cmd_timeout),
                     cmd_timeout,
-                    loop=self._loop,
                 )
                 output.append(self._format_output(command, resp))
             except asyncio.TimeoutError:
@@ -977,7 +978,7 @@ class CliCommandSession(CommandSession):
         self._connected = True
 
         # Notify anyone waiting for session to be connected
-        asyncio.ensure_future(self._notify(), loop=self._loop)
+        self._loop.create_task(self._notify())
 
     def exit_status_received(self, status: str) -> None:
         self.logger.info(f"exit status received: {status}")

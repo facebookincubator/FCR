@@ -114,16 +114,23 @@ class ServiceTask(ServiceObj):
 
         # _update_event can be used to notify coroutines about the change in
         # state in this service. e.g. run() has completed
-        self._update_event = asyncio.Condition(loop=self.loop)
+        self.__update_event = None
 
         self.set_state(State.INIT)
 
         coro = self.start()
         # fixup task name to show actual task in logs
         coro.__qualname__ = self._objname
-        self._task = asyncio.ensure_future(coro, loop=self.loop)
+        self._task = self.loop.create_task(coro)
 
         self._ALL_TASKS[self._objname] = self
+
+    @property
+    def _update_event(self):
+        # Hopefully this is only called in a running loop
+        if self.__update_event is None:
+            self.__update_event = asyncio.Condition()
+        return self.__update_event
 
     @classmethod
     def all_tasks(cls):
@@ -208,4 +215,4 @@ class PeriodicServiceTask(ServiceTask):
         while True:
             await self.run()
             await self._notify()
-            await asyncio.sleep(self._period, loop=self.loop)
+            await asyncio.sleep(self._period)

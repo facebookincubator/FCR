@@ -52,7 +52,7 @@ class TestService(AsyncTestCase):
 
             async def run(self):
                 self._run_called = True
-                await asyncio.sleep(60, loop=self.service.loop)
+                await asyncio.sleep(60)
                 self._run_complete = True
 
         services = [
@@ -65,7 +65,7 @@ class TestService(AsyncTestCase):
             for svc in services:
                 svc.cancel()
 
-        asyncio.ensure_future(cancel_services(), loop=self._loop)
+        self._loop.create_task(cancel_services())
 
         self.wait_for_tasks()
 

@@ -359,7 +359,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
         ]
 
         all_results = {}
-        for task in asyncio.as_completed(tasks, loop=self.loop):
+        for task in asyncio.as_completed(tasks):
             result = await task
             all_results.update(result)
 
@@ -415,7 +415,7 @@ class CommandHandler(Counters, FacebookBase, FcrIface):
 
             # Run commands in parallel
             results: typing.List[DeviceResult] = await asyncio.gather(
-                *commands, loop=self.loop, return_exceptions=True
+                *commands, return_exceptions=True
             )
 
             # pyre-ignore: _run_commands always returns list of CommandResults

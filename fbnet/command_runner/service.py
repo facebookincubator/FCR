@@ -133,7 +133,7 @@ class FcrServiceBase:
     async def _clean_shutdown(self):
         try:
             coro = CommandSession.wait_sessions("Shutdown", service=self)
-            await asyncio.wait_for(coro, timeout=self.EXIT_MAX_WAIT, loop=self.loop)
+            await asyncio.wait_for(coro, timeout=self.EXIT_MAX_WAIT)
 
         except asyncio.TimeoutError:
             self.logger.error("Timeout waiting for sessions, shutting down anyway")
@@ -160,7 +160,7 @@ class FcrServiceBase:
             for name, task in ServiceTask.all_tasks():
                 self.logger.info("Stopping: %s", name)
                 task.cancel()
-            asyncio.ensure_future(self._clean_shutdown(), loop=self.loop)
+            self.loop.create_task(self._clean_shutdown())
         else:
             # Forcibly shutdown.
             self.terminate()
