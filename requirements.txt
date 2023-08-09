@@ -9,7 +9,7 @@ external/common/fb303/py
 
 appdirs==1.4.3
 asn1crypto==0.22.0
-asyncssh==1.10.1
+asyncssh==1.12.1
 cffi==1.10.0
 cryptography==39.0.1
 future==0.16.0
