@@ -211,7 +211,7 @@ class FCR(cmd.Cmd):
         return True
 
 
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("devices", nargs="+", help="list of devices")
     args = parser.parse_args()
@@ -221,3 +221,8 @@ if __name__ == "__main__":
         fcr.cmdloop()
     except KeyboardInterrupt:
         print("Received keyboard interrupt")
+
+
+if __name__ == "__main__":
+    # pyre-fixme[16]: Callable `bin` has no attribute `fcr-cli`.
+    main()  # pragma: no cover
