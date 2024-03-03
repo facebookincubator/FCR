@@ -126,9 +126,9 @@ class ConsoleCommandSession(SSHCommandSession):
 
         if vendor_prompts:
             for vendor, prompts in vendor_prompts.items():
-                cls._CONFIG_CONSOLE_PROMPTS_RE_DICT[  # pyre-ignore
-                    vendor
-                ] = cls._build_individual_prompt_re(prompts)
+                cls._CONFIG_CONSOLE_PROMPTS_RE_DICT[vendor] = (  # pyre-ignore
+                    cls._build_individual_prompt_re(prompts)
+                )
         if vendor_interact_prompts:
             cls._CONFIG_INTERACT_PROMPTS_RE_DICT = vendor_interact_prompts
 

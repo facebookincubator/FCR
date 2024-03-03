@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
     # pyre-fixme[21]: Could not find module `fbnet.command_runner.counters`.
     from fbnet.command_runner.counters import Counters
 
+
 # `asyncio.events.AbstractEventLoop` to have type `float` but is never initialized.
 class FcrTestEventLoop(asyncio.SelectorEventLoop):
     def __init__(self, *args, **kwargs) -> None:
