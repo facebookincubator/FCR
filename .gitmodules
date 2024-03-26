@@ -1,3 +1,0 @@
-[submodule "external/fbthrift"]
-	path = external/fbthrift
-	url = https://github.com/facebook/fbthrift.git
